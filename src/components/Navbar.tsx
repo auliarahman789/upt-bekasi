@@ -281,7 +281,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute, onRouteChange }) => {
                       {item.hasChildren && (
                         <div className="ml-1">
                           <img
-                            className={`w-[10px] h-[10px] transition-transform duration-200 ${
+                            className={`w-[7px] h-[7px] transition-transform duration-200 ${
                               openDropdown === item.id ? "rotate-90" : ""
                             } ${
                               isParentOrChildActive(item)
@@ -337,7 +337,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute, onRouteChange }) => {
             </div>
 
             {/* Admin Header Section - positioned after menu items */}
-            <div className="flex items-center ml-8">
+            <div className="flex items-center ml-30">
               {/* User Info */}
               <div className="flex flex-col mr-3">
                 <span className="text-white font-light text-sm">

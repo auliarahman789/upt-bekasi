@@ -22,7 +22,7 @@ const DefaultLayout: React.FC<DefaultLayoutProps> = ({ children }) => {
       {/* Main Content Area */}
       <main className="flex-1">
         {/* Content Container */}
-        <div className="max-w-screen mx-auto px-4 py-4">{children}</div>
+        <div className="max-w-screen mx-auto  py-4">{children}</div>
       </main>
     </div>
   );

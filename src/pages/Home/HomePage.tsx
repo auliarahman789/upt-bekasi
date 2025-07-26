@@ -8,7 +8,7 @@ const HomePage: React.FC = () => {
       <div className="relative w-full h-screen overflow-hidden ">
         {/* Background Image */}
         <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat mr-4"
           style={{
             backgroundImage: "url('MainMenu.svg')",
             backgroundSize: "100% 100%",
@@ -16,7 +16,7 @@ const HomePage: React.FC = () => {
         />
 
         {/* Main Content Image */}
-        <div className="absolute inset-0 flex items-center justify-center px-[59px] py-[48px]">
+        <div className="absolute inset-0 flex items-center justify-center px-[50px] py-[48px]">
           <div className="relative w-full ">
             {/* Front Image */}
             <div className="relative">
@@ -28,10 +28,10 @@ const HomePage: React.FC = () => {
 
               {/* Text Overlay */}
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent p-6 rounded-b-lg">
-                <h1 className="text-4xl font-bold text-yellow-400 mb-3">
+                <h1 className="text-[48px] font-bold text-yellow-400 mb-1">
                   LOREM IPSUM
                 </h1>
-                <p className="text-white text-base leading-relaxed ">
+                <p className="text-white text-[24px] leading-relaxed font-light">
                   Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
                   do eiusmod tempor incididunt ut labore et dolore magna aliqua.
                   Ut enim ad minim veniam, quis nostrud exercitation ullamco
