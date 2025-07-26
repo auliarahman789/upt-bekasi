@@ -1,11 +1,28 @@
-import React, { useState, ReactNode, useEffect } from "react";
-import axios from "axios";
+import { useState } from "react";
+import Navbar from "../components/Navbar";
 
-const DefaultLayout: React.FC<{ children: ReactNode }> = ({ children }) => {
+interface DefaultLayoutProps {
+  children: React.ReactNode;
+}
+
+const DefaultLayout: React.FC<DefaultLayoutProps> = ({ children }) => {
+  const [currentRoute, setCurrentRoute] = useState("/");
+
+  const handleRouteChange = (route: string) => {
+    setCurrentRoute(route);
+    // Here you can add actual routing logic
+    console.log("Navigating to:", route);
+  };
+
   return (
-    <div className="dark:bg-boxdark-2 dark:text-bodydark">
-      <main>
-        <div className="">{children}</div>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Navbar */}
+      <Navbar currentRoute={currentRoute} onRouteChange={handleRouteChange} />
+
+      {/* Main Content Area */}
+      <main className="flex-1">
+        {/* Content Container */}
+        <div className="max-w-screen mx-auto px-4 py-4">{children}</div>
       </main>
     </div>
   );

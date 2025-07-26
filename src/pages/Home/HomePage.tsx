@@ -4,45 +4,40 @@ import DefaultLayout from "../../layout/DefaultLayout";
 const HomePage: React.FC = () => {
   return (
     <DefaultLayout>
-      <div className="min-h-screen bg-black">
-        {/* Hero Section */}
-        <div className="h-[60vh] flex items-center justify-center text-white text-center bg-cover bg-center">
-          <div className="container mx-auto px-4">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              Plan Your Sacred Journey
-            </h1>
-            <h2 className="text-xl md:text-2xl mb-4">
-              Find the best Umrah packages tailored to your needs
-            </h2>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg mt-8 transition duration-300">
-              Explore Packages
-            </button>
-          </div>
-        </div>
+      {/* Hero Section with Background and Image */}
+      <div className="relative w-full h-screen overflow-hidden ">
+        {/* Background Image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: "url('MainMenu.svg')",
+            backgroundSize: "100% 100%",
+          }}
+        />
 
-        {/* Features Section */}
-        <div className="container mx-auto px-4 py-16">
-          <h2 className="text-3xl font-bold text-center mb-8">Why Choose Us</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
-            <div className="p-6 text-center border border-gray-200 rounded-lg hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-              <h3 className="text-xl font-semibold mb-3">Expert Guidance</h3>
-              <p className="text-gray-600">
-                Experienced guides to assist you throughout your journey
-              </p>
-            </div>
-            <div className="p-6 text-center border border-gray-200 rounded-lg hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-              <h3 className="text-xl font-semibold mb-3">
-                All-Inclusive Packages
-              </h3>
-              <p className="text-gray-600">
-                Complete arrangements including travel, accommodation, and visa
-              </p>
-            </div>
-            <div className="p-6 text-center border border-gray-200 rounded-lg hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-              <h3 className="text-xl font-semibold mb-3">24/7 Support</h3>
-              <p className="text-gray-600">
-                Round-the-clock assistance for a peaceful journey
-              </p>
+        {/* Main Content Image */}
+        <div className="absolute inset-0 flex items-center justify-center px-[59px] py-[48px]">
+          <div className="relative w-full ">
+            {/* Front Image */}
+            <div className="relative">
+              <img
+                src="frontImage.png"
+                alt="PLN UPT Bekasi Team"
+                className="w-full h-auto rounded-lg shadow-xl"
+              />
+
+              {/* Text Overlay */}
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent p-6 rounded-b-lg">
+                <h1 className="text-4xl font-bold text-yellow-400 mb-3">
+                  LOREM IPSUM
+                </h1>
+                <p className="text-white text-base leading-relaxed ">
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
+                  do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                  Ut enim ad minim veniam, quis nostrud exercitation ullamco
+                  laboris nisi ut...
+                </p>
+              </div>
             </div>
           </div>
         </div>
