@@ -1,11 +1,13 @@
 import React from "react";
 import DefaultLayout from "../../layout/DefaultLayout";
+import Article from "./Article"; // Import the Article component
+import Videos from "./Videos";
 
 const HomePage: React.FC = () => {
   return (
     <DefaultLayout>
       {/* Hero Section with Background and Image */}
-      <div className="relative w-full h-screen overflow-hidden ">
+      <div className="relative w-full h-screen overflow-hidden">
         {/* Background Image */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat mr-4"
@@ -17,7 +19,7 @@ const HomePage: React.FC = () => {
 
         {/* Main Content Image */}
         <div className="absolute inset-0 flex items-center justify-center px-[50px] py-[48px]">
-          <div className="relative w-full ">
+          <div className="relative w-full">
             {/* Front Image */}
             <div className="relative">
               <img
@@ -42,6 +44,10 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Article Section */}
+      <Article />
+      <Videos />
     </DefaultLayout>
   );
 };
