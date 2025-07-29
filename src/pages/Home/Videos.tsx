@@ -18,8 +18,8 @@ const mockVideos: VideoData[] = [
     description:
       "Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.",
     date: "22 Juli 2025",
-    videoId: "dQw4w9WgXcQ", // Example YouTube video ID
-    thumbnail: "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
+    videoId: "pEbeJRsXvI4", // Example YouTube video ID
+    thumbnail: "https://img.youtube.com/vi/pEbeJRsXvI4/maxresdefault.jpg",
   },
   {
     id: 2,
@@ -27,8 +27,8 @@ const mockVideos: VideoData[] = [
     description:
       "Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.",
     date: "21 Juli 2025",
-    videoId: "M7lc1UVf-VE", // Example YouTube video ID
-    thumbnail: "https://img.youtube.com/vi/M7lc1UVf-VE/maxresdefault.jpg",
+    videoId: "w7GA8wxXFQg", // Example YouTube video ID
+    thumbnail: "https://img.youtube.com/vi/w7GA8wxXFQg/maxresdefault.jpg",
   },
   {
     id: 3,
@@ -36,8 +36,8 @@ const mockVideos: VideoData[] = [
     description:
       "Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.",
     date: "20 Juli 2025",
-    videoId: "kJQP7kiw5Fk", // Example YouTube video ID
-    thumbnail: "https://img.youtube.com/vi/kJQP7kiw5Fk/maxresdefault.jpg",
+    videoId: "iuPef0V2Vo", // Example YouTube video ID
+    thumbnail: "https://img.youtube.com/vi/iuPef0V2Vo/maxresdefault.jpg",
   },
   {
     id: 4,
@@ -45,8 +45,8 @@ const mockVideos: VideoData[] = [
     description:
       "Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.",
     date: "19 Juli 2025",
-    videoId: "ZZ5LpwO-An4", // Example YouTube video ID
-    thumbnail: "https://img.youtube.com/vi/ZZ5LpwO-An4/maxresdefault.jpg",
+    videoId: "E2NyhjMbBZQ", // Example YouTube video ID
+    thumbnail: "https://img.youtube.com/vi/E2NyhjMbBZQ/maxresdefault.jpg",
   },
   {
     id: 5,
@@ -54,8 +54,8 @@ const mockVideos: VideoData[] = [
     description:
       "Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.",
     date: "18 Juli 2025",
-    videoId: "fJ9rUzIMcZQ", // Example YouTube video ID
-    thumbnail: "https://img.youtube.com/vi/fJ9rUzIMcZQ/maxresdefault.jpg",
+    videoId: "9JFDxPc-yyI", // Example YouTube video ID
+    thumbnail: "https://img.youtube.com/vi/9JFDxPc-yyI/maxresdefault.jpg",
   },
 ];
 
