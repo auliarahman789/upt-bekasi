@@ -227,7 +227,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute, onRouteChange }) => {
       }`}
     >
       <nav
-        className="bg-cover bg-center bg-no-repeat h-[67px] backdrop-blur-sm"
+        className="bg-cover bg-center bg-no-repeat h-[67px] backdrop-blur-sm mr-3"
         style={{
           backgroundImage: "url('bgNav.svg')",
         }}
