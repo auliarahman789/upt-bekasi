@@ -18,14 +18,14 @@ const HomePage: React.FC = () => {
         />
 
         {/* Main Content Image Container */}
-        <div className="absolute inset-0 flex items-center justify-center px-[50px] py-[48px]">
+        <div className="absolute inset-0 flex rounded-3xl items-center justify-center px-[50px] pb-[37px] pt-[48px]">
           <div className="relative w-full">
             {/* Front Image */}
-            <div className="relative">
+            <div className="relative rounded-3xl">
               <img
                 src="frontImage.jpg"
                 alt="PLN UPT Bekasi Team"
-                className="w-full rounded-lg shadow-2xl"
+                className="w-full h-full rounded-3xl"
                 style={{
                   aspectRatio: "1341/576",
                   objectFit: "cover",
@@ -33,7 +33,7 @@ const HomePage: React.FC = () => {
               />
 
               {/* Text Overlay */}
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent p-6 rounded-b-lg">
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent p-6 rounded-b-3xl">
                 <h1 className="text-[48px] font-bold text-yellow-400 mb-1">
                   LOREM IPSUM
                 </h1>
