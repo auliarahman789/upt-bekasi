@@ -17,7 +17,7 @@ const HomePage: React.FC = () => {
           }}
         />
 
-        {/* Main Content Image */}
+        {/* Main Content Image Container */}
         <div className="absolute inset-0 flex items-center justify-center px-[50px] py-[48px]">
           <div className="relative w-full">
             {/* Front Image */}
@@ -25,7 +25,11 @@ const HomePage: React.FC = () => {
               <img
                 src="frontImage.jpg"
                 alt="PLN UPT Bekasi Team"
-                className="w-full h-auto rounded-lg shadow-xl"
+                className="w-full rounded-lg shadow-2xl"
+                style={{
+                  aspectRatio: "1341/576",
+                  objectFit: "cover",
+                }}
               />
 
               {/* Text Overlay */}
