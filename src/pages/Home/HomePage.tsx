@@ -23,7 +23,7 @@ const HomePage: React.FC = () => {
             {/* Front Image */}
             <div className="relative">
               <img
-                src="frontImage.png"
+                src="frontImage.jpg"
                 alt="PLN UPT Bekasi Team"
                 className="w-full h-auto rounded-lg shadow-xl"
               />
