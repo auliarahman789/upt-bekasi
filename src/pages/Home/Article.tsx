@@ -294,7 +294,9 @@ const Article: React.FC = () => {
             {/* Right Side - 5 Small Article Cards */}
             <div
               className="w-[30%] rounded-lg shadow-xl overflow-hidden animate-slideInRight stagger-4 h-[616px] flex flex-col"
-              style={{ backgroundColor: "#13A2BA" }}
+              style={{
+                background: "linear-gradient(to bottom, #15677B, #179FB7)",
+              }}
             >
               {mockArticles.slice(0, 5).map((article, index) => (
                 <div
