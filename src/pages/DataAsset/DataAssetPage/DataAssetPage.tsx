@@ -1,4 +1,3 @@
-import React from "react";
 import DefaultLayout from "../../../layout/DefaultLayout";
 
 // Updated mock data to match the images
