@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 // Navbar Component
 interface MenuItem {
   id: string;
   label: string;
   icon: string;
-  route: string;
+  route?: string;
   hasChildren?: boolean;
   children?: MenuItem[];
 }
@@ -15,8 +16,10 @@ interface NavbarProps {
   onRouteChange: (route: string) => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ currentRoute, onRouteChange }) => {
+const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
+  const navigate = useNavigate();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [openSubDropdown, setOpenSubDropdown] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
@@ -24,140 +27,148 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute, onRouteChange }) => {
     {
       id: "home",
       label: "HOME",
-      icon: "Home.svg",
+      icon: "/Home.svg", // Changed to absolute path
       route: "/",
     },
     {
       id: "data-asset",
       label: "DATA ASSET",
-      icon: "dataAsset.svg",
-      route: "/data-asset",
+      icon: "/dataAsset.svg", // Changed to absolute path
       hasChildren: true,
       children: [
         {
-          id: "data-1",
-          label: "Data 1",
+          id: "data-karyawan",
+          label: "DATA KARYAWAN",
           icon: "",
-          route: "/data-asset/data-1",
+          route: "/data-asset/datakaryawan",
         },
         {
-          id: "data-2",
-          label: "Data 2",
+          id: "data-asset-main",
+          label: "DATA ASSET",
           icon: "",
-          route: "/data-asset/data-2",
+          route: "/data-asset/dataasset",
+        },
+        {
+          id: "mtu",
+          label: "MTU",
+          icon: "",
+          hasChildren: true,
+          children: [
+            {
+              id: "mtu-1",
+              label: "MONITORING KONDISI",
+              icon: "",
+              route: "/data-asset/mtu/monitoringkondisi",
+            },
+            {
+              id: "mtu-2",
+              label: "PENGGANTIAN",
+              icon: "",
+              route: "/data-asset/mtu/penggantian",
+            },
+          ],
+        },
+        {
+          id: "tower",
+          label: "TOWER",
+          icon: "",
+          hasChildren: true,
+          children: [
+            {
+              id: "tower-1",
+              label: "KRITIS",
+              icon: "",
+              route: "/data-asset/tower/kritis",
+            },
+            {
+              id: "tower-2",
+              label: "ROW KRITIS",
+              icon: "",
+              route: "/data-asset/tower/rowkritis",
+            },
+          ],
+        },
+        {
+          id: "sld",
+          label: "SLD",
+          icon: "",
+          route: "/data-asset/sld",
+        },
+        {
+          id: "slo",
+          label: "SLO",
+          icon: "",
+          route: "/data-asset/slo",
         },
       ],
     },
     {
-      id: "single-line",
-      label: "SINGLE LINE DIAGRAM",
-      icon: "singleline.svg",
-      route: "/single-line",
-    },
-    {
-      id: "historical",
-      label: "HISTORICAL",
-      icon: "historycal.svg",
-      route: "/historical",
+      id: "performance",
+      label: "PERFORMANCE",
+      icon: "/kinerja.svg", // Changed to absolute path
+      route: "/performance",
       hasChildren: true,
       children: [
         {
-          id: "hist-1",
-          label: "History 1",
+          id: "performance-1",
+          label: "REKAP ANOMALI",
           icon: "",
-          route: "/historical/hist-1",
+          route: "/performance/rekapanomali",
         },
         {
-          id: "hist-2",
-          label: "History 2",
+          id: "performance-2",
+          label: "PERSENTASI ANOMALI UPT",
           icon: "",
-          route: "/historical/hist-2",
+          route: "/performance/persentasianimali",
         },
       ],
     },
     {
       id: "kinerja",
-      label: "KINERJA UPT",
-      icon: "kinerja.svg",
+      label: "KINERJA",
+      icon: "/Time_progress_fill.svg", // Changed to absolute path
       route: "/kinerja",
       hasChildren: true,
       children: [
         {
           id: "kinerja-1",
-          label: "Kinerja 1",
+          label: "UPT",
           icon: "",
-          route: "/kinerja/kinerja-1",
+          route: "/kinerja/upt",
         },
         {
           id: "kinerja-2",
-          label: "Kinerja 2",
+          label: "ULTG",
           icon: "",
-          route: "/kinerja/kinerja-2",
+          route: "/kinerja/ultg",
         },
       ],
     },
     {
-      id: "lead-measure",
-      label: "LEAD MEASURE",
-      icon: "leadmeasure.svg",
-      route: "/lead-measure",
+      id: "monitoring",
+      label: "MONITORING",
+      icon: "/monitoring.svg", // Changed to absolute path
+      route: "/monitoring",
       hasChildren: true,
       children: [
         {
-          id: "lead-1",
-          label: "Lead 1",
+          id: "monitoring-1",
+          label: "LEAD MEASURE",
           icon: "",
-          route: "/lead-measure/lead-1",
+          route: "/monitoring/lead-measure",
         },
         {
-          id: "lead-2",
-          label: "Lead 2",
+          id: "monitoring-2",
+          label: "ANGGARAN",
           icon: "",
-          route: "/lead-measure/lead-2",
+          route: "/monitoring/anggaran",
         },
       ],
     },
     {
-      id: "statistik",
-      label: "STATISTIK GANGGUAN",
-      icon: "statistikgangguan.svg",
-      route: "/statistik",
-      hasChildren: true,
-      children: [
-        {
-          id: "stat-1",
-          label: "Statistik 1",
-          icon: "",
-          route: "/statistik/stat-1",
-        },
-        {
-          id: "stat-2",
-          label: "Statistik 2",
-          icon: "",
-          route: "/statistik/stat-2",
-        },
-      ],
-    },
-    {
-      id: "pengelola",
-      label: "PENGELOLA ANGGARAN",
-      icon: "anggaran.svg",
-      route: "/pengelola",
-      hasChildren: true,
-      children: [
-        {
-          id: "pengelola-1",
-          label: "Anggaran 1",
-          icon: "",
-          route: "/pengelola/anggran-1",
-        },
-        {
-          id: "pengelola-2",
-          label: "Anggaran 2",
-          icon: "",
-          route: "/pengelola/anggaran-2",
-        },
-      ],
+      id: "akun",
+      label: "ACCOUNT",
+      icon: "/account.svg", // Changed to absolute path
     },
   ];
 
@@ -166,20 +177,17 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute, onRouteChange }) => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
 
-      // Show navbar when scrolling up or at the top
       if (currentScrollY < lastScrollY || currentScrollY < 10) {
         setIsVisible(true);
-      }
-      // Hide navbar when scrolling down (after scrolling past 100px)
-      else if (currentScrollY > 100 && currentScrollY > lastScrollY) {
+      } else if (currentScrollY > 100 && currentScrollY > lastScrollY) {
         setIsVisible(false);
-        setOpenDropdown(null); // Close any open dropdowns when hiding
+        setOpenDropdown(null);
+        setOpenSubDropdown(null);
       }
 
       setLastScrollY(currentScrollY);
     };
 
-    // Throttle scroll events for better performance
     let timeoutId: number;
     const throttledHandleScroll = () => {
       clearTimeout(timeoutId);
@@ -196,26 +204,50 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute, onRouteChange }) => {
 
   const toggleDropdown = (menuId: string) => {
     setOpenDropdown((prev) => (prev === menuId ? null : menuId));
+    setOpenSubDropdown(null);
+  };
+
+  const toggleSubDropdown = (subMenuId: string) => {
+    setOpenSubDropdown((prev) => (prev === subMenuId ? null : subMenuId));
   };
 
   const handleMenuClick = (item: MenuItem) => {
+    console.log("Menu clicked:", item.label, "Route:", item.route);
+
     if (item.hasChildren) {
       toggleDropdown(item.id);
-    } else {
-      onRouteChange(item.route);
+    } else if (item.route && item.route.trim() !== "") {
+      console.log("Navigating to:", item.route);
+      navigate(item.route);
       setOpenDropdown(null);
+      setOpenSubDropdown(null);
     }
   };
 
-  const isActive = (route: string) => currentRoute === route;
+  const handleChildClick = (child: MenuItem) => {
+    console.log("Child menu clicked:", child.label, "Route:", child.route);
 
-  // Check if any child of a parent menu is active
-  const isChildActive = (item: MenuItem) => {
-    if (!item.hasChildren || !item.children) return false;
-    return item.children.some((child) => currentRoute === child.route);
+    if (child.hasChildren) {
+      toggleSubDropdown(child.id);
+    } else if (child.route && child.route.trim() !== "") {
+      console.log("Navigating to child route:", child.route);
+      navigate(child.route);
+      setOpenDropdown(null);
+      setOpenSubDropdown(null);
+    }
   };
 
-  // Check if parent or any child is active
+  const isActive = (route?: string) =>
+    route && route.trim() !== "" && currentRoute === route;
+
+  const isChildActive = (item: MenuItem): boolean => {
+    if (!item.hasChildren || !item.children) return false;
+    return item.children.some((child) => {
+      if (child.route && currentRoute === child.route) return true;
+      return isChildActive(child);
+    });
+  };
+
   const isParentOrChildActive = (item: MenuItem) => {
     return isActive(item.route) || isChildActive(item);
   };
@@ -229,27 +261,37 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute, onRouteChange }) => {
       <nav
         className="bg-cover bg-center bg-no-repeat h-[67px] backdrop-blur-sm mr-3"
         style={{
-          backgroundImage: "url('bgNav.svg')",
+          backgroundImage: "url('/bgNav.svg')", // Changed to absolute path
         }}
       >
         <div className="w-full px-3">
-          <div className="flex items-center h-12">
-            {/* Menu Items */}
-            <div className="flex space-x-1">
+          <div className="flex items-center justify-center h-12">
+            <div className="flex space-x-[36px] items-center">
               {menuItems.map((item) => (
-                <div key={item.id} className="relative">
+                <div key={item.id} className="relative group ">
                   <button
                     onClick={() => handleMenuClick(item)}
-                    className={`flex flex-col items-center px-3 py-3 text-xs font-bold transition-colors duration-200 h-14 relative ${
-                      isParentOrChildActive(item)
-                        ? "text-white"
-                        : "text-white hover:bg-teal-500/30"
-                    }`}
+                    className={`flex items-center justify-center py-3 text-xs font-bold transition-all duration-300 h-14 relative overflow-hidden
+                      w-12
+                      group-hover:w-auto group-hover:px-3 group-hover:justify-start
+                      ${
+                        openDropdown === item.id
+                          ? "w-auto px-3 justify-start"
+                          : ""
+                      }
+                      ${
+                        isParentOrChildActive(item)
+                          ? "text-white"
+                          : "text-white hover:bg-[#155C72]"
+                      }`}
                   >
-                    {/* Icon */}
-                    <div className="flex items-center justify-center mb-1">
+                    {isParentOrChildActive(item) && (
+                      <div className="absolute top-0 left-0 right-0 h-[6px] bg-yellow-400"></div>
+                    )}
+
+                    <div className="flex items-center justify-center flex-shrink-0">
                       <img
-                        className={`w-5 h-5 ${
+                        className={`w-6 h-6 ${
                           isParentOrChildActive(item)
                             ? "filter brightness-0 saturate-100"
                             : ""
@@ -267,9 +309,17 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute, onRouteChange }) => {
                       />
                     </div>
 
-                    <div className="whitespace-nowrap tracking-wide flex items-center justify-center gap-1">
+                    <div
+                      className={`whitespace-nowrap tracking-wide flex items-center ml-2 transition-all duration-300
+                      ${
+                        openDropdown === item.id || false
+                          ? "block"
+                          : "hidden group-hover:block"
+                      }
+                    `}
+                    >
                       <span
-                        className={`text-[10px] font-semibold ${
+                        className={` font-semibold ${
                           isParentOrChildActive(item)
                             ? "text-yellow-400"
                             : "text-white"
@@ -277,81 +327,90 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute, onRouteChange }) => {
                       >
                         {item.label}
                       </span>
-
-                      {item.hasChildren && (
-                        <div className="ml-1">
-                          <img
-                            className={`w-[7px] h-[7px] transition-transform duration-200 ${
-                              openDropdown === item.id ? "rotate-90" : ""
-                            } ${
-                              isParentOrChildActive(item)
-                                ? "filter brightness-0 saturate-100"
-                                : ""
-                            }`}
-                            style={
-                              isParentOrChildActive(item)
-                                ? {
-                                    filter:
-                                      "brightness(0) saturate(100%) invert(84%) sepia(68%) saturate(346%) hue-rotate(1deg) brightness(106%) contrast(106%)",
-                                  }
-                                : {}
-                            }
-                            src="/Polygon 1.svg"
-                            alt="dropdown arrow"
-                          />
-                        </div>
-                      )}
                     </div>
-
-                    {/* Active indicator bar */}
-                    {isParentOrChildActive(item) && (
-                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-yellow-400"></div>
-                    )}
                   </button>
 
-                  {/* Dropdown Menu */}
                   {item.hasChildren && openDropdown === item.id && (
-                    <div className="absolute top-full left-0 mt-0 w-48 bg-white rounded-b-md shadow-lg z-50 border-t-2 border-yellow-400">
+                    <div className="absolute top-full left-0 mt-0 w-56 bg-[#145C72]  rounded-b-md shadow-lg z-50 border-t-2 border-yellow-400">
                       <div className="py-1">
                         {item.children?.map((child) => (
-                          <button
-                            key={child.id}
-                            onClick={() => {
-                              onRouteChange(child.route);
-                              setOpenDropdown(null);
-                            }}
-                            className={`block w-full text-left px-4 py-2 text-sm transition-colors duration-200 ${
-                              isActive(child.route)
-                                ? "bg-yellow-400 text-gray-900 font-bold"
-                                : "text-gray-700 hover:bg-gray-100"
-                            }`}
-                          >
-                            {child.label}
-                          </button>
+                          <div key={child.id} className="relative">
+                            <button
+                              onClick={() => handleChildClick(child)}
+                              className={`flex items-center justify-between w-full text-left px-4 py-3 text-[16px] font-bold transition-colors duration-200 ${
+                                isActive(child.route)
+                                  ? "bg-yellow-400 text-white "
+                                  : "text-white hover:bg-yellow-300 hover:text-black"
+                              }`}
+                            >
+                              <span>{child.label}</span>
+                              {child.hasChildren && (
+                                <svg
+                                  className={`w-4 h-4 transition-transform duration-200 ${
+                                    openSubDropdown === child.id
+                                      ? "rotate-90"
+                                      : ""
+                                  }`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M9 5l7 7-7 7"
+                                  />
+                                </svg>
+                              )}
+                            </button>
+
+                            {child.hasChildren &&
+                              openSubDropdown === child.id && (
+                                <div className="absolute left-full top-0 w-48 bg-[#145C72] rounded-r-md shadow-lg border-l-2 border-yellow-400">
+                                  <div className="py-1">
+                                    {child.children?.map((subChild) => (
+                                      <button
+                                        key={subChild.id}
+                                        onClick={() => {
+                                          console.log(
+                                            "Sub-child clicked:",
+                                            subChild.label,
+                                            "Route:",
+                                            subChild.route
+                                          );
+                                          if (
+                                            subChild.route &&
+                                            subChild.route.trim() !== ""
+                                          ) {
+                                            console.log(
+                                              "Navigating to sub-child route:",
+                                              subChild.route
+                                            );
+                                            navigate(subChild.route);
+                                            setOpenDropdown(null);
+                                            setOpenSubDropdown(null);
+                                          }
+                                        }}
+                                        className={`block w-full text-left px-4 py-3 text-[16px] font-bold transition-colors duration-200 ${
+                                          isActive(subChild.route)
+                                            ? "bg-yellow-400 text-white "
+                                            : "text-white hover:bg-yellow-300 hover:text-black"
+                                        }`}
+                                      >
+                                        {subChild.label}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                          </div>
                         ))}
                       </div>
                     </div>
                   )}
                 </div>
               ))}
-            </div>
-
-            {/* Admin Header Section - positioned after menu items */}
-            <div className="flex items-center ml-30">
-              {/* User Info */}
-              <div className="flex flex-col mr-3">
-                <span className="text-white font-light text-sm">
-                  Aksa Apriyanto
-                </span>
-                <span className="text-white text-right text-xs font-semibold">
-                  ADMIN
-                </span>
-              </div>
-
-              {/* User Avatar */}
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-                <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
-              </div>
             </div>
           </div>
         </div>
