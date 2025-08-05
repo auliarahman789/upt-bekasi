@@ -1,4 +1,6 @@
+import { useState } from "react";
 import DefaultLayout from "../../../layout/DefaultLayout";
+import PetaTower from "./PetaTower";
 
 // Updated mock data to match the images
 const mockData = {
@@ -76,402 +78,490 @@ const mockData = {
 };
 
 const DataAssetPage = () => {
+  const [activeTab, setActiveTab] = useState("DATA_ASSET");
+
   const totalTransformers = mockData.gitet.transformer.reduce(
     (acc, curr) => acc + curr.jumlahUnit,
     0
   );
   const totalCapacity = "7400 MVA";
 
+  // Component for PETA GARDU INDUK tab
+  const PetaGarduIndukComponent = () => (
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="text-center text-2xl font-bold text-gray-700 mb-8">
+        PETA GARDU INDUK
+      </div>
+      <div className="bg-white p-8 rounded-2xl shadow-lg text-center">
+        <p className="text-gray-500 mb-4">
+          Content for Peta Gardu Induk will be displayed here
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <h3 className="font-semibold text-blue-800 mb-2">ULTG Bekasi</h3>
+            <p className="text-sm text-gray-600">
+              Gardu Induk: {mockData.petaGarduInduk.ultgSekasi}
+            </p>
+          </div>
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <h3 className="font-semibold text-blue-800 mb-2">ULTG Cikarang</h3>
+            <p className="text-sm text-gray-600">
+              Gardu Induk: {mockData.petaGarduInduk.ultgCikarang}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "DATA_ASSET":
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - GITET Section */}
+            <div className="space-y-4">
+              <div className="bg-white p-4 rounded-2xl shadow-lg">
+                {/* Jumlah GITET */}
+                <div
+                  className="text-white px-4 py-3 rounded-full mb-4 text-sm font-medium grid grid-cols-2 items-center"
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                >
+                  <span>Jumlah GITET</span>
+                  <div className="bg-white text-gray-800 px-4 py-1 rounded-full font-bold text-[16px] text-center">
+                    {mockData.gitet.jumlahGitet}
+                  </div>
+                </div>
+
+                {/* Jumlah Gardu Induk */}
+                <div
+                  className="text-white px-4 py-3 rounded-full mb-4 text-sm font-medium grid grid-cols-2 items-center"
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                >
+                  <span>Jumlah Gardu Induk</span>
+                  <div className="bg-white text-gray-800 px-4 py-1 rounded-full font-bold text-[16px] text-center">
+                    {mockData.gitet.jumlahGarduInduk}
+                  </div>
+                </div>
+
+                {/* Level Tegangan Gardu Induk */}
+                <div className="mb-4">
+                  <div className="text-gray-500 text-sm mb-2 px-2 grid grid-cols-2 text-center">
+                    <div>Level Tegangan Gardu Induk</div>
+                    <span className="float-right ">Jumlah Unit</span>
+                  </div>
+                  <div
+                    className="rounded-2xl p-4"
+                    style={{
+                      background:
+                        "linear-gradient(to bottom, #15677B, #179FB7)",
+                    }}
+                  >
+                    {mockData.gitet.levelTegangan.map((item, index) => (
+                      <div key={index} className="mb-2 last:mb-0">
+                        <div className="grid grid-cols-2 items-center space-x-2">
+                          <div className=" text-white  py-2 rounded-full text-sm font-medium flex-1">
+                            {item.level}
+                          </div>
+                          <div className="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-sm text-center">
+                            {item.jumlah}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Jumlah Transformer */}
+                <div className="mb-4">
+                  <div className="text-gray-500 text-sm mb-2 px-2 grid grid-cols-2 space-x-1  ">
+                    <div></div>
+                    <div className="grid grid-cols-2 space-x-1 text-center">
+                      <span className="text-xs text-gray-600">Total Unit</span>
+                      <span className="text-xs text-gray-600">
+                        Total Kapasitas
+                      </span>
+                    </div>
+                  </div>
+                  <div
+                    className="text-white px-4 py-3 rounded-full text-sm font-medium grid grid-cols-2 space-x-1  items-center"
+                    style={{
+                      background:
+                        "linear-gradient(to bottom, #15677B, #179FB7)",
+                    }}
+                  >
+                    <span>Jumlah Transformer</span>
+                    <div className="grid grid-cols-2 space-x-1">
+                      <div className="bg-white text-gray-800 px-3 py-1 rounded-full font-bold text-sm">
+                        <div className="font-bold">{totalTransformers}</div>
+                      </div>
+                      <div className="bg-white text-gray-800 px-3 py-1 rounded-full font-bold text-sm">
+                        <div className="font-bold">{totalCapacity}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Level Tegangan Trafo */}
+                <div className="mb-4">
+                  <div className="text-gray-500 text-sm mb-2 px-2 grid grid-cols-2 space-x-1  ">
+                    <div>Level Tegangan Trafo</div>
+                    <div className="grid grid-cols-2 space-x-1 text-center">
+                      <span className="float-right ">Total Unit</span>
+                      <span className="float-right">Total Kapasitas</span>
+                    </div>
+                  </div>
+
+                  <div
+                    className="rounded-2xl p-4"
+                    style={{
+                      background:
+                        "linear-gradient(to bottom, #15677B, #179FB7)",
+                    }}
+                  >
+                    {mockData.gitet.transformer.map((item, index) => (
+                      <div
+                        key={index}
+                        className="mb-2 last:mb-0 grid grid-cols-2"
+                      >
+                        <div className=" text-white py-2 rounded-full text-sm font-medium mb-2">
+                          {item.tegangan}
+                        </div>
+                        <div className="flex justify-between items-center space-x-2">
+                          <div className="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-sm flex-1 text-center">
+                            {item.jumlahUnit} Unit
+                          </div>
+                          <div className="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-sm flex-1 text-center">
+                            {item.totalKapasitas}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Tower Section */}
+              <div className="bg-white p-4 rounded-2xl shadow-lg">
+                {/* Jumlah Tower */}
+                <div
+                  className="text-white px-4 py-3 rounded-full mb-4 text-sm font-medium grid grid-cols-2 items-center"
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                >
+                  <span>Jumlah Tower</span>
+                  <div className="bg-white text-gray-800 px-4 py-1 rounded-full font-bold text-[16px] text-center">
+                    {mockData.gitet.tower.jumlahTower}
+                  </div>
+                </div>
+
+                {/* Total KMS Tower */}
+                <div
+                  className="text-white px-4 py-3 rounded-full mb-4 text-sm font-medium grid grid-cols-2 items-center"
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                >
+                  <span>Total KMS Tower</span>
+                  <div className="bg-white text-gray-800 px-4 py-1 rounded-full font-bold text-[16px] text-center">
+                    {mockData.gitet.tower.totalKms}
+                  </div>
+                </div>
+
+                {/* Level Tegangan Tower */}
+                <div className="mb-4">
+                  <div className="text-gray-500 text-sm mb-2 px-2 grid grid-cols-3 space-x-1  ">
+                    <div>Level Tegangan Tower</div>
+                    <div className="col-span-2 grid grid-cols-2 space-x-1 text-center">
+                      <span className="float-right  ">Jumlah (Unit)</span>
+                      <span className="float-right">Total KMS</span>
+                    </div>
+                  </div>
+
+                  <div
+                    className="rounded-2xl p-4"
+                    style={{
+                      background:
+                        "linear-gradient(to bottom, #15677B, #179FB7)",
+                    }}
+                  >
+                    {mockData.gitet.tower.levelTegangan.map((item, index) => (
+                      <div
+                        key={index}
+                        className="mb-2 last:mb-0 grid grid-cols-3"
+                      >
+                        <div className=" text-white py-2 rounded-full text-sm font-medium mb-2">
+                          {item.level}
+                        </div>
+                        <div className="flex justify-between items-center space-x-2 col-span-2">
+                          <div className="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-sm flex-1 text-center">
+                            {item.jumlah}
+                          </div>
+                          <div className="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-sm flex-1 text-center">
+                            {item.totalKms}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Middle Column - PETA TOWER Section */}
+            <div className="space-y-4">
+              <div className="bg-white p-4 rounded-2xl shadow-lg">
+                <div className="text-gray-500 text-sm mb-2 px-2 grid grid-cols-2 text-center">
+                  <div>Data Relay Proteksi</div>
+                  <span className="float-right ">Jumlah Unit</span>
+                </div>
+                <div
+                  className="rounded-lg p-4"
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                >
+                  {mockData.petaTower.dataRelay.map((item, index) => (
+                    <div key={index} className="mb-2 last:mb-0">
+                      <div className="grid grid-cols-2 items-center space-x-2">
+                        <div className=" text-white px-4 py-2 rounded-full text-sm flex-1">
+                          {item.name}
+                        </div>
+                        <div className="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-sm justify-center text-center">
+                          {item.jumlah}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl shadow-lg">
+                <div className="text-gray-500 text-sm mb-2 px-2 grid grid-cols-2 text-center">
+                  <div>Data Alat Perekam</div>
+
+                  <span className="float-right">Jumlah Unit</span>
+                </div>
+                <div
+                  className="rounded-lg p-4"
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                >
+                  {mockData.petaTower.dataAsset.map((item, index) => (
+                    <div key={index} className="mb-2 last:mb-0">
+                      <div className="grid grid-cols-2 items-center space-x-2">
+                        <div className=" text-white px-4 py-2 rounded-full text-sm flex-1">
+                          {item.name}
+                        </div>
+                        <div className="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-sm justify-center text-center">
+                          {item.jumlah}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - PETA GARDU INDUK Section */}
+            <div className="space-y-4">
+              <div className="bg-white p-4 rounded-2xl shadow-lg">
+                <div className="text-gray-500 text-sm mb-4 px-2 text-center">
+                  Detail Aset Per ULTG
+                </div>
+                <div className="flex mb-4">
+                  <div
+                    className="flex-1 text-white px-4 py-2 rounded-full text-center text-sm font-medium mr-2"
+                    style={{
+                      background:
+                        "linear-gradient(to bottom, #15677B, #179FB7)",
+                    }}
+                  >
+                    ULTG BEKASI
+                  </div>
+                  <div className="flex-1 bg-gray-300 text-black px-4 py-2 rounded-full text-center text-sm font-medium">
+                    ULTG CIKARANG
+                  </div>
+                </div>
+
+                {/* Jumlah Tower */}
+                <div
+                  className="text-white px-4 py-3 rounded-full mb-4 text-sm font-medium  grid grid-cols-2 items-center"
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                >
+                  <span>Jumlah Tower</span>
+                  <div className="bg-white text-gray-800 px-4 py-1 rounded-full font-bold text-[16px] text-center">
+                    {mockData.petaGarduInduk.jumlahTower}
+                  </div>
+                </div>
+
+                {/* Total KMS Tower */}
+                <div
+                  className="text-white px-4 py-3 rounded-full mb-4 text-sm font-medium grid grid-cols-2 items-center"
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                >
+                  <span>Total KMS Tower</span>
+                  <div className="bg-white text-gray-800 px-4 py-1 rounded-full font-bold text-[16px] text-center">
+                    {mockData.petaGarduInduk.totalKmsTower}
+                  </div>
+                </div>
+
+                {/* Level Tegangan GI */}
+                <div className="mb-4">
+                  <div className="text-gray-500 text-sm mb-2 px-2 grid grid-cols-2 text-center">
+                    <div>Level Tegangan GI</div>
+
+                    <span className="float-right">Jumlah GI</span>
+                  </div>
+                  <div
+                    className="rounded-2xl p-4"
+                    style={{
+                      background:
+                        "linear-gradient(to bottom, #15677B, #179FB7)",
+                    }}
+                  >
+                    {mockData.petaGarduInduk.levelTegangan.map(
+                      (item, index) => (
+                        <div key={index} className="mb-2 last:mb-0">
+                          <div className="grid grid-cols-2 items-center space-x-2">
+                            <div className=" text-white px-4 py-2 rounded-full text-sm flex-1">
+                              {item.level}
+                            </div>
+                            <div className="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-sm justify-center text-center">
+                              {item.jumlah}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+
+                {/* FTK Pegawai */}
+                <div className="mb-4">
+                  <div className="text-gray-500 text-sm mb-2 px-2 grid grid-cols-2 text-center">
+                    <div> FTK Pegawai</div>
+
+                    <span className="float-right">Jumlah Personil</span>
+                  </div>
+                  <div
+                    className="rounded-2xl p-4"
+                    style={{
+                      background:
+                        "linear-gradient(to bottom, #15677B, #179FB7)",
+                    }}
+                  >
+                    {mockData.petaGarduInduk.personalData.map((item, index) => (
+                      <div key={index} className="mb-2 last:mb-0">
+                        <div className="grid grid-cols-2 items-center space-x-2">
+                          <div className=" text-white px-4 py-2 rounded-full text-sm flex-1">
+                            {item.position}
+                          </div>
+                          <div className="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-sm justify-center text-center">
+                            {item.jumlah}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Total Asset */}
+              <div
+                style={{
+                  background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                }}
+                className="text-white p-6 rounded-2xl"
+              >
+                <div className="flex items-center mb-2">
+                  <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center mr-3">
+                    <span className="text-teal-600 font-bold text-[16px]">
+                      ₹
+                    </span>
+                  </div>
+                  <span className="text-sm font-medium">
+                    TOTAL ASSET KESELURUHAN
+                  </span>
+                </div>
+                <div className="text-2xl font-bold">{mockData.totalAsset}</div>
+              </div>
+            </div>
+          </div>
+        );
+      case "PETA_TOWER":
+        return <PetaTower />;
+      case "PETA_GARDU_INDUK":
+        return <PetaGarduIndukComponent />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <DefaultLayout>
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-gray-50 p-4">
         {/* Header Tabs */}
         <div className="flex mb-6 space-x-2 text-sm">
           <button
-            style={{
-              background: "linear-gradient(to bottom, #15677B, #179FB7)",
-            }}
-            className="text-white py-2 px-4 rounded-full font-semibold"
+            onClick={() => setActiveTab("DATA_ASSET")}
+            className={`py-2 px-4 rounded-full font-semibold transition-colors ${
+              activeTab === "DATA_ASSET"
+                ? "text-white"
+                : "bg-gray-300 text-gray-700 hover:bg-gray-400"
+            }`}
+            style={
+              activeTab === "DATA_ASSET"
+                ? { background: "linear-gradient(to bottom, #15677B, #179FB7)" }
+                : {}
+            }
           >
             DATA ASSET
           </button>
-          <button className="bg-gray-300 text-gray-700 py-2 px-4 rounded-full font-semibold">
+          <button
+            onClick={() => setActiveTab("PETA_TOWER")}
+            className={`py-2 px-4 rounded-full font-semibold transition-colors ${
+              activeTab === "PETA_TOWER"
+                ? "text-white"
+                : "bg-gray-300 text-gray-700 hover:bg-gray-400"
+            }`}
+            style={
+              activeTab === "PETA_TOWER"
+                ? { background: "linear-gradient(to bottom, #15677B, #179FB7)" }
+                : {}
+            }
+          >
             PETA TOWER
           </button>
-          <button className="bg-gray-300 text-gray-700 py-2 px-4 rounded-full font-semibold">
+          <button
+            onClick={() => setActiveTab("PETA_GARDU_INDUK")}
+            className={`py-2 px-4 rounded-full font-semibold transition-colors ${
+              activeTab === "PETA_GARDU_INDUK"
+                ? "text-white"
+                : "bg-gray-300 text-gray-700 hover:bg-gray-400"
+            }`}
+            style={
+              activeTab === "PETA_GARDU_INDUK"
+                ? { background: "linear-gradient(to bottom, #15677B, #179FB7)" }
+                : {}
+            }
+          >
             PETA GARDU INDUK
           </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - GITET Section */}
-          <div className="space-y-4">
-            <div className="bg-white p-4 rounded-2xl shadow-lg">
-              {/* Jumlah GITET */}
-              <div
-                className="text-white px-4 py-3 rounded-full mb-4 text-sm font-medium grid grid-cols-2 items-center"
-                style={{
-                  background: "linear-gradient(to bottom, #15677B, #179FB7)",
-                }}
-              >
-                <span>Jumlah GITET</span>
-                <div className="bg-white text-gray-800 px-4 py-1 rounded-full font-bold text-[16px] text-center">
-                  {mockData.gitet.jumlahGitet}
-                </div>
-              </div>
-
-              {/* Jumlah Gardu Induk */}
-              <div
-                className="text-white px-4 py-3 rounded-full mb-4 text-sm font-medium grid grid-cols-2 items-center"
-                style={{
-                  background: "linear-gradient(to bottom, #15677B, #179FB7)",
-                }}
-              >
-                <span>Jumlah Gardu Induk</span>
-                <div className="bg-white text-gray-800 px-4 py-1 rounded-full font-bold text-[16px] text-center">
-                  {mockData.gitet.jumlahGarduInduk}
-                </div>
-              </div>
-
-              {/* Level Tegangan Gardu Induk */}
-              <div className="mb-4">
-                <div className="text-gray-500 text-sm mb-2 px-2 grid grid-cols-2 text-center">
-                  <div>Level Tegangan Gardu Induk</div>
-                  <span className="float-right ">Jumlah Unit</span>
-                </div>
-                <div
-                  className="rounded-2xl p-4"
-                  style={{
-                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
-                  }}
-                >
-                  {mockData.gitet.levelTegangan.map((item, index) => (
-                    <div key={index} className="mb-2 last:mb-0">
-                      <div className="grid grid-cols-2 items-center space-x-2">
-                        <div className=" text-white  py-2 rounded-full text-sm font-medium flex-1">
-                          {item.level}
-                        </div>
-                        <div className="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-sm text-center">
-                          {item.jumlah}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Jumlah Transformer */}
-              <div className="mb-4">
-                <div className="text-gray-500 text-sm mb-2 px-2 grid grid-cols-2 space-x-1  ">
-                  <div></div>
-                  <div className="grid grid-cols-2 space-x-1 text-center">
-                    <span className="text-xs text-gray-600">Total Unit</span>
-                    <span className="text-xs text-gray-600">
-                      Total Kapasitas
-                    </span>
-                  </div>
-                </div>
-                <div
-                  className="text-white px-4 py-3 rounded-full text-sm font-medium grid grid-cols-2 space-x-1  items-center"
-                  style={{
-                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
-                  }}
-                >
-                  <span>Jumlah Transformer</span>
-                  <div className="grid grid-cols-2 space-x-1">
-                    <div className="bg-white text-gray-800 px-3 py-1 rounded-full font-bold text-sm">
-                      <div className="font-bold">{totalTransformers}</div>
-                    </div>
-                    <div className="bg-white text-gray-800 px-3 py-1 rounded-full font-bold text-sm">
-                      <div className="font-bold">{totalCapacity}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Level Tegangan Trafo */}
-              <div className="mb-4">
-                <div className="text-gray-500 text-sm mb-2 px-2 grid grid-cols-2 space-x-1  ">
-                  <div>Level Tegangan Trafo</div>
-                  <div className="grid grid-cols-2 space-x-1 text-center">
-                    <span className="float-right ">Total Unit</span>
-                    <span className="float-right">Total Kapasitas</span>
-                  </div>
-                </div>
-
-                <div
-                  className="rounded-2xl p-4"
-                  style={{
-                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
-                  }}
-                >
-                  {mockData.gitet.transformer.map((item, index) => (
-                    <div
-                      key={index}
-                      className="mb-2 last:mb-0 grid grid-cols-2"
-                    >
-                      <div className=" text-white py-2 rounded-full text-sm font-medium mb-2">
-                        {item.tegangan}
-                      </div>
-                      <div className="flex justify-between items-center space-x-2">
-                        <div className="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-sm flex-1 text-center">
-                          {item.jumlahUnit} Unit
-                        </div>
-                        <div className="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-sm flex-1 text-center">
-                          {item.totalKapasitas}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Tower Section */}
-            <div className="bg-white p-4 rounded-2xl shadow-lg">
-              {/* Jumlah Tower */}
-              <div
-                className="text-white px-4 py-3 rounded-full mb-4 text-sm font-medium grid grid-cols-2 items-center"
-                style={{
-                  background: "linear-gradient(to bottom, #15677B, #179FB7)",
-                }}
-              >
-                <span>Jumlah Tower</span>
-                <div className="bg-white text-gray-800 px-4 py-1 rounded-full font-bold text-[16px] text-center">
-                  {mockData.gitet.tower.jumlahTower}
-                </div>
-              </div>
-
-              {/* Total KMS Tower */}
-              <div
-                className="text-white px-4 py-3 rounded-full mb-4 text-sm font-medium grid grid-cols-2 items-center"
-                style={{
-                  background: "linear-gradient(to bottom, #15677B, #179FB7)",
-                }}
-              >
-                <span>Total KMS Tower</span>
-                <div className="bg-white text-gray-800 px-4 py-1 rounded-full font-bold text-[16px] text-center">
-                  {mockData.gitet.tower.totalKms}
-                </div>
-              </div>
-
-              {/* Level Tegangan Tower */}
-              <div className="mb-4">
-                <div className="text-gray-500 text-sm mb-2 px-2 grid grid-cols-3 space-x-1  ">
-                  <div>Level Tegangan Tower</div>
-                  <div className="col-span-2 grid grid-cols-2 space-x-1 text-center">
-                    <span className="float-right  ">Jumlah (Unit)</span>
-                    <span className="float-right">Total KMS</span>
-                  </div>
-                </div>
-
-                <div
-                  className="rounded-2xl p-4"
-                  style={{
-                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
-                  }}
-                >
-                  {mockData.gitet.tower.levelTegangan.map((item, index) => (
-                    <div
-                      key={index}
-                      className="mb-2 last:mb-0 grid grid-cols-3"
-                    >
-                      <div className=" text-white py-2 rounded-full text-sm font-medium mb-2">
-                        {item.level}
-                      </div>
-                      <div className="flex justify-between items-center space-x-2 col-span-2">
-                        <div className="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-sm flex-1 text-center">
-                          {item.jumlah}
-                        </div>
-                        <div className="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-sm flex-1 text-center">
-                          {item.totalKms}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Middle Column - PETA TOWER Section */}
-          <div className="space-y-4">
-            <div className="bg-white p-4 rounded-2xl shadow-lg">
-              <div className="text-gray-500 text-sm mb-2 px-2 grid grid-cols-2 text-center">
-                <div>Data Relay Proteksi</div>
-                <span className="float-right ">Jumlah Unit</span>
-              </div>
-              <div
-                className="rounded-lg p-4"
-                style={{
-                  background: "linear-gradient(to bottom, #15677B, #179FB7)",
-                }}
-              >
-                {mockData.petaTower.dataRelay.map((item, index) => (
-                  <div key={index} className="mb-2 last:mb-0">
-                    <div className="grid grid-cols-2 items-center space-x-2">
-                      <div className=" text-white px-4 py-2 rounded-full text-sm flex-1">
-                        {item.name}
-                      </div>
-                      <div className="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-sm justify-center text-center">
-                        {item.jumlah}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-white p-4 rounded-2xl shadow-lg">
-              <div className="text-gray-500 text-sm mb-2 px-2 grid grid-cols-2 text-center">
-                <div>Data Alat Perekam</div>
-
-                <span className="float-right">Jumlah Unit</span>
-              </div>
-              <div
-                className="rounded-lg p-4"
-                style={{
-                  background: "linear-gradient(to bottom, #15677B, #179FB7)",
-                }}
-              >
-                {mockData.petaTower.dataAsset.map((item, index) => (
-                  <div key={index} className="mb-2 last:mb-0">
-                    <div className="grid grid-cols-2 items-center space-x-2">
-                      <div className=" text-white px-4 py-2 rounded-full text-sm flex-1">
-                        {item.name}
-                      </div>
-                      <div className="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-sm justify-center text-center">
-                        {item.jumlah}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column - PETA GARDU INDUK Section */}
-          <div className="space-y-4">
-            <div className="bg-white p-4 rounded-2xl shadow-lg">
-              <div className="text-gray-500 text-sm mb-4 px-2 text-center">
-                Detail Aset Per ULTG
-              </div>
-              <div className="flex mb-4">
-                <div
-                  className="flex-1 text-white px-4 py-2 rounded-full text-center text-sm font-medium mr-2"
-                  style={{
-                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
-                  }}
-                >
-                  ULTG BEKASI
-                </div>
-                <div className="flex-1 bg-gray-300 text-black px-4 py-2 rounded-full text-center text-sm font-medium">
-                  ULTG CIKARANG
-                </div>
-              </div>
-
-              {/* Jumlah Tower */}
-              <div
-                className="text-white px-4 py-3 rounded-full mb-4 text-sm font-medium  grid grid-cols-2 items-center"
-                style={{
-                  background: "linear-gradient(to bottom, #15677B, #179FB7)",
-                }}
-              >
-                <span>Jumlah Tower</span>
-                <div className="bg-white text-gray-800 px-4 py-1 rounded-full font-bold text-[16px] text-center">
-                  {mockData.petaGarduInduk.jumlahTower}
-                </div>
-              </div>
-
-              {/* Total KMS Tower */}
-              <div
-                className="text-white px-4 py-3 rounded-full mb-4 text-sm font-medium grid grid-cols-2 items-center"
-                style={{
-                  background: "linear-gradient(to bottom, #15677B, #179FB7)",
-                }}
-              >
-                <span>Total KMS Tower</span>
-                <div className="bg-white text-gray-800 px-4 py-1 rounded-full font-bold text-[16px] text-center">
-                  {mockData.petaGarduInduk.totalKmsTower}
-                </div>
-              </div>
-
-              {/* Level Tegangan GI */}
-              <div className="mb-4">
-                <div className="text-gray-500 text-sm mb-2 px-2 grid grid-cols-2 text-center">
-                  <div>Level Tegangan GI</div>
-
-                  <span className="float-right">Jumlah GI</span>
-                </div>
-                <div
-                  className="rounded-2xl p-4"
-                  style={{
-                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
-                  }}
-                >
-                  {mockData.petaGarduInduk.levelTegangan.map((item, index) => (
-                    <div key={index} className="mb-2 last:mb-0">
-                      <div className="grid grid-cols-2 items-center space-x-2">
-                        <div className=" text-white px-4 py-2 rounded-full text-sm flex-1">
-                          {item.level}
-                        </div>
-                        <div className="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-sm justify-center text-center">
-                          {item.jumlah}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* FTK Pegawai */}
-              <div className="mb-4">
-                <div className="text-gray-500 text-sm mb-2 px-2 grid grid-cols-2 text-center">
-                  <div> FTK Pegawai</div>
-
-                  <span className="float-right">Jumlah Personil</span>
-                </div>
-                <div
-                  className="rounded-2xl p-4"
-                  style={{
-                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
-                  }}
-                >
-                  {mockData.petaGarduInduk.personalData.map((item, index) => (
-                    <div key={index} className="mb-2 last:mb-0">
-                      <div className="grid grid-cols-2 items-center space-x-2">
-                        <div className=" text-white px-4 py-2 rounded-full text-sm flex-1">
-                          {item.position}
-                        </div>
-                        <div className="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-sm justify-center text-center">
-                          {item.jumlah}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Total Asset */}
-            <div
-              style={{
-                background: "linear-gradient(to bottom, #15677B, #179FB7)",
-              }}
-              className="text-white p-6 rounded-2xl"
-            >
-              <div className="flex items-center mb-2">
-                <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center mr-3">
-                  <span className="text-teal-600 font-bold text-[16px]">₹</span>
-                </div>
-                <span className="text-sm font-medium">
-                  TOTAL ASSET KESELURUHAN
-                </span>
-              </div>
-              <div className="text-2xl font-bold">{mockData.totalAsset}</div>
-            </div>
-          </div>
-        </div>
+        {/* Tab Content */}
+        {renderTabContent()}
       </div>
     </DefaultLayout>
   );
