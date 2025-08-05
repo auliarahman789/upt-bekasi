@@ -10,6 +10,7 @@ type TowerData = {
   voltage: number;
   operationYear: number;
   locationName: string;
+  penghantar: string;
   substation: string;
   region: string;
   status: string;
@@ -267,6 +268,7 @@ const PetaTower: React.FC = ({}) => {
           "ID",
           "Functloc",
         ]);
+        const penghantar = findColumnValue(row, ["Penghantar"]);
 
         const latitude = parseFloat(latStr.replace(",", ".")) || 0;
         const longitude = parseFloat(lngStr.replace(",", ".")) || 0;
@@ -278,6 +280,7 @@ const PetaTower: React.FC = ({}) => {
           latitude,
           longitude,
           towerType: cleanString(towerType || "Unknown"),
+          penghantar: penghantar,
           voltage: voltageNum,
           operationYear: 0,
           locationName: cleanString(location || "Unknown Location"),
@@ -648,7 +651,7 @@ const PetaTower: React.FC = ({}) => {
 
   return (
     <div className="w-full  min-h-screen  p-4">
-      <div className=" rounded-lg w-full max-h-[550px]  flex flex-col">
+      <div className=" rounded-lg w-full min-h-[550px]  flex flex-col">
         {/* Main Content */}
         <div className="flex flex-1 overflow-hidden space-x-2">
           {/* Sidebar */}
@@ -745,7 +748,21 @@ const PetaTower: React.FC = ({}) => {
                         {selectedTower.unitName}
                       </div>
                     </div>
-
+                    {/* Ruas Penghantar */}
+                    <div>
+                      <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+                        Ruas Penghantar
+                      </label>
+                      <div
+                        style={{
+                          background:
+                            "linear-gradient(to bottom, #15677B, #179FB7)",
+                        }}
+                        className=" text-white px-3 py-2 rounded-full text-sm font-medium"
+                      >
+                        {selectedTower.penghantar}
+                      </div>
+                    </div>
                     {/* Gardu */}
                     <div>
                       <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
@@ -792,6 +809,37 @@ const PetaTower: React.FC = ({}) => {
                       >
                         {selectedTower.latitude.toFixed(6)},{" "}
                         {selectedTower.longitude.toFixed(6)}
+                      </div>
+                    </div>
+                    {/* No Serifikat */}
+                    <div>
+                      <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+                        Nomor Sertifikat Tower
+                      </label>
+                      <div
+                        style={{
+                          background:
+                            "linear-gradient(to bottom, #15677B, #179FB7)",
+                        }}
+                        className=" text-white px-3 py-2 rounded-full text-sm font-medium"
+                      >
+                        0329847609348678093
+                      </div>
+                    </div>
+                    {/* Luas Tanah */}
+                    <div>
+                      <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+                        Luas Tanah (M³)
+                      </label>
+
+                      <div
+                        style={{
+                          background:
+                            "linear-gradient(to bottom, #15677B, #179FB7)",
+                        }}
+                        className=" text-white px-3 py-2 rounded-full text-sm font-medium"
+                      >
+                        500000098
                       </div>
                     </div>
                   </div>
