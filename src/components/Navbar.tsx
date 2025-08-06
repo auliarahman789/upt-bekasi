@@ -254,7 +254,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
 
   return (
     <div
-      className={`fixed top-0 z-50 w-full transition-transform duration-300 ease-in-out ${
+      className={`fixed top-0 z-[1000] w-full transition-transform duration-300 ease-in-out ${
         isVisible ? "translate-y-0" : "-translate-y-full"
       }`}
     >

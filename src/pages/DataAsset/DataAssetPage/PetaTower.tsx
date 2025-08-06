@@ -1097,7 +1097,7 @@ const PetaTower: React.FC = ({}) => {
             />
 
             {/* Search Bar - positioned on top right of map */}
-            <div className="absolute top-4 right-4 z-[1000]">
+            <div className="absolute top-4 right-4 z-[50]">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <input
