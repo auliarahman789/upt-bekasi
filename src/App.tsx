@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import PageTitle from "./components/PageTitle";
 import HomePage from "./pages/Home/HomePage";
 import DataAssetPage from "./pages/DataAsset/DataAssetPage/DataAssetPage";
+import MTUMonitoringPage from "./pages/DataAsset/DataAssetPage/MTUMonitoringPage";
 
 // Main App Content Component (needs to be inside Router to use hooks)
 function AppContent() {
@@ -57,13 +58,7 @@ function AppContent() {
         element={
           <>
             <PageTitle title="UPT Bekasi - MTU Monitoring" />
-            {/* <MTUMonitoringPage /> */}
-            <div className="p-8">
-              <h1 className="text-2xl font-bold">
-                MTU Monitoring Kondisi Page
-              </h1>
-              <p>Current route: {currentRoute}</p>
-            </div>
+            <MTUMonitoringPage />
           </>
         }
       />

@@ -259,13 +259,22 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
       }`}
     >
       <nav
-        className="bg-cover bg-center bg-no-repeat h-[67px] backdrop-blur-sm mr-3"
+        className="bg-cover bg-center bg-no-repeat h-[67px] backdrop-blur-sm mr-3 relative"
         style={{
           backgroundImage: "url('/bgNav.svg')", // Changed to absolute path
         }}
       >
+        {/* Logo - Only visible on desktop */}
+        <div className="hidden lg:flex absolute left-4 top-1/3 transform -translate-y-1/2 z-10">
+          <img
+            src="/danantara.svg"
+            alt="Danantara Indonesia"
+            className="pl-4"
+          />
+        </div>
+
         <div className="w-full px-3">
-          <div className="flex items-center justify-center h-12">
+          <div className="flex items-center justify-center h-12 lg:justify-center">
             <div className="flex space-x-[36px] items-center">
               {menuItems.map((item) => (
                 <div key={item.id} className="relative group ">

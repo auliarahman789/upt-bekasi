@@ -672,7 +672,7 @@ const PetaTower: React.FC = ({}) => {
                       onClick={() => setSelectedTower(null)}
                       className="text-gray-400 hover:text-gray-600"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-4 w-4 rounded-full bg-red-500 text-white font-bold" />
                     </button>
                   </div>
 
