@@ -10,6 +10,7 @@ import HomePage from "./pages/Home/HomePage";
 import DataAssetPage from "./pages/DataAsset/DataAssetPage/DataAssetPage";
 import MTUMonitoringPage from "./pages/DataAsset/DataAssetPage/MTUMonitoringPage";
 import MTUPenggantiPage from "./pages/DataAsset/DataAssetPage/MTUPenggantiPage";
+import KinerjaUptPage from "./pages/Kinerja/KinerjaUptPage";
 
 // Main App Content Component (needs to be inside Router to use hooks)
 function AppContent() {
@@ -124,19 +125,7 @@ function AppContent() {
           </>
         }
       />
-      <Route
-        path="/performance"
-        element={
-          <>
-            <PageTitle title="UPT Bekasi - Performance" />
-            {/* <PerformancePage /> */}
-            <div className="p-8">
-              <h1 className="text-2xl font-bold">Performance Page</h1>
-              <p>Current route: {currentRoute}</p>
-            </div>
-          </>
-        }
-      />
+
       <Route
         path="/performance/rekapanomali"
         element={
@@ -165,29 +154,13 @@ function AppContent() {
           </>
         }
       />
-      <Route
-        path="/kinerja"
-        element={
-          <>
-            <PageTitle title="UPT Bekasi - Kinerja" />
-            {/* <KinerjaPage /> */}
-            <div className="p-8">
-              <h1 className="text-2xl font-bold">Kinerja Page</h1>
-              <p>Current route: {currentRoute}</p>
-            </div>
-          </>
-        }
-      />
+
       <Route
         path="/kinerja/upt"
         element={
           <>
             <PageTitle title="UPT Bekasi - Kinerja UPT" />
-            {/* <KinerjaUPTPage /> */}
-            <div className="p-8">
-              <h1 className="text-2xl font-bold">Kinerja UPT Page</h1>
-              <p>Current route: {currentRoute}</p>
-            </div>
+            <KinerjaUptPage />
           </>
         }
       />
