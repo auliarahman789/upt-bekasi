@@ -144,7 +144,7 @@ const PerformanceCard: React.FC<{
   value,
   target = 80,
   icon,
-  color = "#179FB7",
+
   index,
 }) => {
   // Determine background color based on index
