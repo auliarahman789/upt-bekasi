@@ -8,6 +8,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  Tooltip,
 } from "recharts";
 import DefaultLayout from "../../layout/DefaultLayout";
 
@@ -472,7 +473,6 @@ const RekapAnomaliPage = () => {
 
             {/* Main Content */}
             <div className="flex-1 bg-[#F4F4F4] p-4 rounded-lg">
-              {/* Top Section - Pie Chart and Bar Chart */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                 {/* Pie Chart */}
                 <div className="bg-white rounded-lg p-6 shadow">
@@ -495,6 +495,18 @@ const RekapAnomaliPage = () => {
                               <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
                           </Pie>
+                          <Tooltip
+                            formatter={(value, _, props) => [
+                              `${value}% (${props.payload.count} Anomali)`,
+                              props.payload.name,
+                            ]}
+                            labelStyle={{ color: "#145C72" }}
+                            contentStyle={{
+                              backgroundColor: "white",
+                              border: "1px solid #ccc",
+                              borderRadius: "4px",
+                            }}
+                          />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -550,6 +562,19 @@ const RekapAnomaliPage = () => {
                           height={60}
                         />
                         <YAxis tick={{ fontSize: 12 }} />
+                        <Tooltip
+                          formatter={(value, name) => [
+                            `${value} Anomali`,
+                            name,
+                          ]}
+                          labelFormatter={(label) => `Anomaly Type: ${label}`}
+                          labelStyle={{ color: "#145C72", fontWeight: "bold" }}
+                          contentStyle={{
+                            backgroundColor: "white",
+                            border: "1px solid #ccc",
+                            borderRadius: "4px",
+                          }}
+                        />
                         <Bar dataKey="BEKASI" fill="#145C72" />
                         <Bar dataKey="CIKARANG" fill="#179FB7" />
                       </BarChart>
