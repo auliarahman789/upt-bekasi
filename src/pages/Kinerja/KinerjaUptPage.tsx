@@ -156,15 +156,8 @@ const PerformanceCard: React.FC<{
       className="rounded-xl shadow-sm border max-w-[267.8px] max-h-[212px] p-4"
       style={{ backgroundColor }}
     >
-      <div className="flex items-start ">
-        {icon && (
-          <div
-            className={`p-2 rounded-lg`}
-            style={{ backgroundColor: `${color}20` }}
-          >
-            {icon}
-          </div>
-        )}
+      <div className="flex items-start gap-2">
+        {icon && <img src={`${icon}`} alt="" />}
         <div className="flex-1">
           <h3 className="text-xs font-medium text-gray-600 uppercase tracking-wide">
             {title}
@@ -179,9 +172,9 @@ const PerformanceCard: React.FC<{
             <ReactSpeedometer
               value={value}
               minValue={0}
-              maxValue={100}
-              segments={3}
-              segmentColors={["#ef4444", "#f59e0b", "#10b981"]}
+              maxValue={target * 2}
+              segments={2}
+              segmentColors={["#10b981", "#ef4444"]}
               needleColor="#333333"
               textColor="#333333"
               currentValueText="-"
@@ -195,13 +188,19 @@ const PerformanceCard: React.FC<{
         </div>
       </div>
       <div className="w-full">
-        <div className="flex items-center w-full justify-between px-10 gap-2 text-xs">
-          <span className="px-2 py-1 bg-green-100 text-green-700 rounded font-medium">
-            Target {target}
-          </span>
-          <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded font-medium">
-            Nilai {value}
-          </span>
+        <div className="flex justify-between px-4">
+          <div className="flex gap-2 items-center">
+            <div className="h-4 w-4 bg-[#10b981]"></div>
+            <span className="px-2 py-1  text-green-700 rounded font-medium text-xs">
+              Target
+            </span>
+          </div>
+          <div className="flex gap-2 items-center">
+            <p className="text-[#145C72] text-[11px]">Nilai</p>
+            <span className="px-4 py-1 bg-[#6EF584] text-[#1B8A2E] rounded-full font-medium text-xs">
+              {value}
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -214,12 +213,17 @@ const CombinedFactorCard: React.FC<{
   transmisiValue: number;
   trafoTarget?: number;
   transmisiTarget?: number;
-}> = ({ trafoValue, transmisiValue, trafoTarget = 80 }) => {
+}> = ({
+  trafoValue,
+  transmisiValue,
+  trafoTarget = 80,
+  transmisiTarget = 80,
+}) => {
   return (
     <div className="bg-white rounded-xl shadow-sm border max-h-[212px] p-4">
       <div className="flex items-center gap-3 mb-3">
-        <div className="p-2 rounded-lg bg-blue-100">
-          <div className="w-4 h-4 bg-blue-500 rounded"></div>
+        <div className="">
+          <img src="/IconKinerja/6&7.svg" alt="" />
         </div>
         <div className="flex-1">
           <h3 className="text-xs font-medium text-gray-600 uppercase tracking-wide">
@@ -234,9 +238,9 @@ const CombinedFactorCard: React.FC<{
           <ReactSpeedometer
             value={trafoValue}
             minValue={0}
-            maxValue={100}
-            segments={3}
-            segmentColors={["#ef4444", "#f59e0b", "#10b981"]}
+            maxValue={trafoTarget * 2}
+            segments={2}
+            segmentColors={["#10b981", "#ef4444"]}
             needleColor="#333333"
             textColor="#333333"
             currentValueText="-"
@@ -253,9 +257,9 @@ const CombinedFactorCard: React.FC<{
           <ReactSpeedometer
             value={transmisiValue}
             minValue={0}
-            maxValue={100}
-            segments={3}
-            segmentColors={["#ef4444", "#f59e0b", "#10b981"]}
+            maxValue={transmisiTarget * 2}
+            segments={2}
+            segmentColors={["#10b981", "#ef4444"]}
             needleColor="#333333"
             textColor="#333333"
             currentValueText="-"
@@ -268,12 +272,18 @@ const CombinedFactorCard: React.FC<{
         </div>
       </div>
       <div className="flex justify-between px-4">
-        <span className="px-2 py-1 bg-green-100 text-green-700 rounded font-medium text-xs">
-          Target {trafoTarget}
-        </span>
-        <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded font-medium text-xs">
-          Nilai {transmisiValue}
-        </span>
+        <div className="flex gap-2 items-center">
+          <div className="h-4 w-4 bg-[#10b981]"></div>
+          <span className="px-2 py-1  text-green-700 rounded font-medium text-xs">
+            Target
+          </span>
+        </div>
+        <div className="flex gap-2 items-center">
+          <p className="text-[#145C72] text-[11px]">Nilai</p>
+          <span className="px-4 py-1 bg-[#6EF584] text-[#1B8A2E] rounded-full font-medium text-xs">
+            {transmisiValue}
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -316,6 +326,7 @@ const KinerjaUptPage: React.FC = () => {
       subtitle: "DURATION ( JAM / MNT)",
       value: 11.0,
       target: 15.0,
+      icon: "/IconKinerja/1.svg",
       color: "#10b981",
     },
     {
@@ -323,6 +334,7 @@ const KinerjaUptPage: React.FC = () => {
       subtitle: "DURATION ( JAM / MNT)",
       value: 11.0,
       target: 15.0,
+      icon: "/IconKinerja/2.svg",
       color: "#10b981",
     },
     {
@@ -330,6 +342,7 @@ const KinerjaUptPage: React.FC = () => {
       subtitle: "FREQUENCY ( JAM / MNT)",
       value: 11.0,
       target: 15.0,
+      icon: "/IconKinerja/1.svg",
       color: "#10b981",
     },
     {
@@ -337,6 +350,7 @@ const KinerjaUptPage: React.FC = () => {
       subtitle: "FREQUENCY ( JAM / MNT)",
       value: 11.0,
       target: 15.0,
+      icon: "/IconKinerja/2.svg",
       color: "#10b981",
     },
     {
@@ -344,6 +358,7 @@ const KinerjaUptPage: React.FC = () => {
       subtitle: "(JAM)",
       value: 8.5,
       target: 10.0,
+      icon: "/IconKinerja/5.svg",
       color: "#10b981",
     },
     {
@@ -351,6 +366,7 @@ const KinerjaUptPage: React.FC = () => {
       subtitle: "SECURITY",
       value: 65.0,
       target: 80.0,
+      icon: "/IconKinerja/8.svg",
       color: "#f59e0b",
     },
   ];
@@ -361,6 +377,7 @@ const KinerjaUptPage: React.FC = () => {
       subtitle: "TRAFO (%)",
       value: 11.0,
       target: 80.0,
+      icon: "/IconKinerja/9.svg",
       color: "#10b981",
     },
     {
@@ -368,6 +385,7 @@ const KinerjaUptPage: React.FC = () => {
       subtitle: "PROYEK (%)",
       value: 64.0,
       target: 80.0,
+      icon: "/IconKinerja/10.svg",
       color: "#f59e0b",
     },
     {
@@ -375,6 +393,7 @@ const KinerjaUptPage: React.FC = () => {
       subtitle: "Op. JAM",
       value: 41.0,
       target: 80.0,
+      icon: "/IconKinerja/11.svg",
       color: "#f59e0b",
     },
     {
@@ -382,6 +401,7 @@ const KinerjaUptPage: React.FC = () => {
       subtitle: "EKSELEN (%)",
       value: 45.0,
       target: 80.0,
+      icon: "/IconKinerja/12.svg",
       color: "#f59e0b",
     },
     {
@@ -389,6 +409,7 @@ const KinerjaUptPage: React.FC = () => {
       subtitle: "T3R (%)",
       value: 50.5,
       target: 80.0,
+      icon: "/IconKinerja/13.svg",
       color: "#f59e0b",
     },
     {
@@ -396,6 +417,7 @@ const KinerjaUptPage: React.FC = () => {
       subtitle: "(PERSIL)",
       value: 0.0,
       target: 80.0,
+      icon: "/IconKinerja/14.svg",
       color: "#ef4444",
     },
     {
@@ -403,6 +425,7 @@ const KinerjaUptPage: React.FC = () => {
       subtitle: "(%)",
       value: 41.0,
       target: 80.0,
+      icon: "/IconKinerja/15.svg",
       color: "#f59e0b",
     },
     {
@@ -410,6 +433,7 @@ const KinerjaUptPage: React.FC = () => {
       subtitle: "(%)",
       value: 43.0,
       target: 80.0,
+      icon: "/IconKinerja/16.svg",
       color: "#f59e0b",
     },
   ];
@@ -483,6 +507,7 @@ const KinerjaUptPage: React.FC = () => {
                   key={index}
                   index={index}
                   title={item.title}
+                  icon={item.icon}
                   subtitle={item.subtitle}
                   value={item.value}
                   target={item.target}
@@ -498,6 +523,7 @@ const KinerjaUptPage: React.FC = () => {
                 title={performanceData[4].title}
                 subtitle={performanceData[4].subtitle}
                 value={performanceData[4].value}
+                icon={performanceData[4].icon}
                 target={performanceData[4].target}
                 color={performanceData[4].color}
               />
@@ -516,6 +542,7 @@ const KinerjaUptPage: React.FC = () => {
                 title={performanceData[5].title}
                 subtitle={performanceData[5].subtitle}
                 value={performanceData[5].value}
+                icon={performanceData[5].icon}
                 target={performanceData[5].target}
                 color={performanceData[5].color}
               />
@@ -529,6 +556,7 @@ const KinerjaUptPage: React.FC = () => {
                 key={index}
                 title={item.title}
                 subtitle={item.subtitle}
+                icon={item.icon}
                 value={item.value}
                 target={item.target}
                 color={item.color}
