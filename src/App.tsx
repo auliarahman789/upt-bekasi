@@ -11,6 +11,7 @@ import DataAssetPage from "./pages/DataAsset/DataAssetPage/DataAssetPage";
 import MTUMonitoringPage from "./pages/DataAsset/DataAssetPage/MTUMonitoringPage";
 import MTUPenggantiPage from "./pages/DataAsset/DataAssetPage/MTUPenggantiPage";
 import KinerjaUptPage from "./pages/Kinerja/KinerjaUptPage";
+import RekapAnomaliPage from "./pages/Performance/RekapAnomaliPage";
 
 // Main App Content Component (needs to be inside Router to use hooks)
 function AppContent() {
@@ -131,11 +132,7 @@ function AppContent() {
         element={
           <>
             <PageTitle title="UPT Bekasi - Rekap Anomali" />
-            {/* <RekapAnomaliPage /> */}
-            <div className="p-8">
-              <h1 className="text-2xl font-bold">Rekap Anomali Page</h1>
-              <p>Current route: {currentRoute}</p>
-            </div>
+            <RekapAnomaliPage />
           </>
         }
       />
