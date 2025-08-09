@@ -14,45 +14,47 @@ interface VideoData {
 const mockVideos: VideoData[] = [
   {
     id: 1,
-    title: "Judul Video 1",
+    title: "Manajemen PLN UPT Bekasi Laksanakan Care for Asset",
     description:
-      "Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.",
-    date: "22 Juli 2025",
-    videoId: "pEbeJRsXvI4", // Example YouTube video ID
-    thumbnail: "https://img.youtube.com/vi/pEbeJRsXvI4/maxresdefault.jpg",
+      "Sebagai bentuk komitmen dalam menjaga keandalan sistem transmisi dan keselamatan instalasi, Manajemen PLN UPT Bekasi melaksanakan kegiatan Care for Asset dengan melakukan perbaikan kebocoran pada sleakbox bay busbar B 150 kV GI Suzuki di wilayah kerja ULTG Cikarang.",
+    date: "21 Juli 2025",
+    videoId: "fLgU4xlfNK8", // Example YouTube video ID
+    thumbnail: "https://img.youtube.com/vi/fLgU4xlfNK8/maxresdefault.jpg",
   },
   {
     id: 2,
-    title: "Judul Video 2",
+    title:
+      "Bersama Jaga Alam: PLN UPT Bekasi dan Aksi Nyata Revitalisasi Mangrove",
     description:
-      "Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.",
-    date: "21 Juli 2025",
-    videoId: "w7GA8wxXFQg", // Example YouTube video ID
-    thumbnail: "https://img.youtube.com/vi/w7GA8wxXFQg/maxresdefault.jpg",
+      "Bersama masyarakat sekitar, kami menanam harapan lewat pohon-pohon mangrove dan berbagi pengetahuan agar lingkungan tetap lestari dan bisa dimanfaatkan secara berkelanjutan.",
+    date: "22 Juli 2025",
+    videoId: "F0-FHo10gfo", // Example YouTube video ID
+    thumbnail: "https://img.youtube.com/vi/F0-FHo10gfo/maxresdefault.jpg",
   },
+
   {
     id: 3,
-    title: "Judul Video 3",
+    title: "PLN UPT Bekasi Siap Jadi Zona Integritas! ✨",
     description:
-      "Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.",
-    date: "20 Juli 2025",
-    videoId: "iuPef0V2Vo", // Example YouTube video ID
-    thumbnail: "https://img.youtube.com/vi/iuPef0V2Vo/maxresdefault.jpg",
+      "Ini bukan cuma soal aturan, tapi soal komitmen bersama untuk membangun budaya kerja yang jujur, profesional, dan bebas dari praktik yang merugikan. Karena pelayanan terbaik dimulai dari integritas! 🙌",
+    date: "08 Agustus 2025",
+    videoId: "60CLb7blo6k", // Example YouTube video ID
+    thumbnail: "https://img.youtube.com/vi/60CLb7blo6k/maxresdefault.jpg",
   },
   {
     id: 4,
-    title: "Judul Video 4",
+    title: "CAPAIAN TRANSFORMASI PLN",
     description:
-      "Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.",
-    date: "19 Juli 2025",
+      "Dengan berbasis inovasi dan digitalisasi, PLN mengubah seluruh proses bisnis secara end to end.",
+    date: "4 November 2023",
     videoId: "E2NyhjMbBZQ", // Example YouTube video ID
     thumbnail: "https://img.youtube.com/vi/E2NyhjMbBZQ/maxresdefault.jpg",
   },
   {
     id: 5,
-    title: "Judul Video 5",
+    title: "Listrik IKN Nusantara Smart, Green, & Beautiful",
     description:
-      "Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.",
+      "Inilah persembahan PLN mengukseskan pembangunan IKN Nusantara. Mewujudkan kemandirian energi nasional, mempercepat transformasi Indonesia dan mengakselerasi transisi energi.",
     date: "18 Juli 2025",
     videoId: "9JFDxPc-yyI", // Example YouTube video ID
     thumbnail: "https://img.youtube.com/vi/9JFDxPc-yyI/maxresdefault.jpg",
@@ -406,8 +408,10 @@ const Videos: React.FC = () => {
                 <div
                   key={video.id}
                   onClick={() => handleVideoSelect(video)}
-                  className={`flex-1 p-4 ${
-                    index < 4 ? "border-b-2 border-white/20" : ""
+                  className={`flex-1  ${
+                    index < mockVideos.length - 1
+                      ? "border-b-2 p-3 border-white/20"
+                      : "p-3"
                   } ${
                     selectedVideo.id === video.id
                       ? "bg-white/20 border-yellow-300/70"
@@ -417,17 +421,22 @@ const Videos: React.FC = () => {
                   } relative flex gap-3 min-h-0`}
                 >
                   {/* Video Thumbnail */}
-                  <div className="flex-shrink-0 w-20 h-14 rounded overflow-hidden bg-gray-800 items-center justify-center">
+                  <div className="flex-shrink-0   overflow-hidden  items-center justify-center">
                     <img
                       src={video.thumbnail}
                       alt={video.title}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                      className="w-20 h-14 rounded-lg mt-2  object-cover transition-transform duration-300 group-hover:scale-110"
                       onError={(e) => {
                         // Fallback if thumbnail fails to load
                         const target = e.target as HTMLImageElement;
                         target.src = `https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg`;
                       }}
                     />
+                    <div className=" opacity-70 group-hover:opacity-100 transition-all duration-300 delay-200">
+                      <span className="text-yellow-300 text-xs font-medium">
+                        {video.date}
+                      </span>
+                    </div>
                     {/* Play Icon Overlay */}
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   </div>
@@ -435,7 +444,7 @@ const Videos: React.FC = () => {
                   {/* Video Info */}
                   <div className="flex-1 flex flex-col justify-center min-w-0">
                     <h4
-                      className={`text-[18px] font-bold mb-1 group-hover:text-yellow-200 transition-all duration-300 transform group-hover:translate-x-2 line-clamp-2 ${
+                      className={`text-[18px] font-bold line-clamp-2 mb-1 group-hover:text-yellow-200 transition-all duration-300 transform group-hover:translate-x-2  ${
                         selectedVideo.id === video.id
                           ? "text-yellow-300"
                           : "text-[#FFF11E] text-shimmer"
@@ -446,11 +455,6 @@ const Videos: React.FC = () => {
                     <p className="text-white text-[12px] leading-relaxed italic opacity-90 group-hover:opacity-100 transition-all duration-400 transform group-hover:translate-x-1 delay-100 flex-1 line-clamp-2 ">
                       {video.description}
                     </p>
-                    <div className=" opacity-70 group-hover:opacity-100 transition-all duration-300 delay-200">
-                      <span className="text-yellow-300 text-xs font-medium">
-                        {video.date}
-                      </span>
-                    </div>
                   </div>
 
                   {/* Active Indicator */}

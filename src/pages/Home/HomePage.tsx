@@ -7,7 +7,7 @@ const HomePage: React.FC = () => {
   return (
     <DefaultLayout>
       {/* Hero Section with Background and Image */}
-      <div className="relative w-full h-screen overflow-hidden">
+      <div className="relative w-full h-screen overflow-hidden bg-white ">
         {/* Background Image */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat mr-4"
@@ -35,7 +35,7 @@ const HomePage: React.FC = () => {
               {/* Text Overlay */}
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent p-6 rounded-b-3xl">
                 <h1 className="text-[48px] font-bold text-yellow-400 mb-1">
-                  LOREM IPSUM
+                  UPT BEKASI
                 </h1>
                 <p className="text-white text-[24px] leading-relaxed font-light">
                   Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
