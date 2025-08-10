@@ -328,17 +328,51 @@ const Videos: React.FC = () => {
         .overlay-transition {
           transition: all 0.3s ease-in-out;
         }
+
+        /* Mobile specific styles */
+        @media (max-width: 768px) {
+          .hover-lift:hover {
+            transform: none;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+          }
+          
+          .text-shimmer {
+            -webkit-text-fill-color: #FFF11E;
+            background: none;
+          }
+          
+          /* Disable hover animations on mobile */
+          .group:hover .group-hover\\:scale-110 {
+            transform: none;
+          }
+          
+          .group:hover .group-hover\\:translate-x-2 {
+            transform: none;
+          }
+          
+          .group:hover .group-hover\\:translate-x-1 {
+            transform: none;
+          }
+        }
+
+        /* Responsive video container for mobile */
+        @media (max-width: 640px) {
+          .video-container {
+            padding-bottom: 50%; /* Adjust aspect ratio for mobile if needed */
+          }
+        }
       `}</style>
 
-      <div className="w-full bg-white py-8 min-h-screen">
+      <div className="w-full bg-white py-4 sm:py-8 ">
         {/* Header Section with video.svg background */}
-        <div className="flex w-full h-20 mb-8 items-start justify-start">
-          <img src="videos.svg" alt="" />
+        <div className="flex w-full h-12 sm:h-16 lg:h-20 mb-4 sm:mb-6 lg:mb-8 items-start justify-start ">
+          <img src="videos.svg" alt="" className="h-full object-contain" />
         </div>
 
-        {/* Videos Layout */}
-        <div className="px-4">
-          <div className="flex gap-6 h-[616px]">
+        {/* Videos Layout - Responsive */}
+        <div className="px-2 sm:px-4">
+          {/* Desktop Layout (lg and above) */}
+          <div className="hidden lg:flex gap-6 h-[616px]">
             {/* Left Side - 1 Large Featured Video */}
             <div className="flex-1">
               <div
@@ -359,7 +393,7 @@ const Videos: React.FC = () => {
                   />
                 </div>
 
-                {/* Video Info Overlay - Now conditionally rendered */}
+                {/* Video Info Overlay */}
                 <div
                   className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-6 z-10 overlay-transition ${
                     showOverlay && !isVideoPlaying
@@ -383,7 +417,7 @@ const Videos: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Play button overlay for better UX when video is not playing */}
+                {/* Play button overlay */}
                 {!isVideoPlaying && showOverlay && (
                   <div
                     className="absolute inset-0 flex items-center justify-center z-20 cursor-pointer"
@@ -427,7 +461,6 @@ const Videos: React.FC = () => {
                       alt={video.title}
                       className="w-20 h-14 rounded-lg mt-2  object-cover transition-transform duration-300 group-hover:scale-110"
                       onError={(e) => {
-                        // Fallback if thumbnail fails to load
                         const target = e.target as HTMLImageElement;
                         target.src = `https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg`;
                       }}
@@ -437,8 +470,6 @@ const Videos: React.FC = () => {
                         {video.date}
                       </span>
                     </div>
-                    {/* Play Icon Overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   </div>
 
                   {/* Video Info */}
@@ -470,8 +501,159 @@ const Videos: React.FC = () => {
               ))}
             </div>
           </div>
+
+          {/* Mobile and Tablet Layout (below lg) */}
+          <div className="lg:hidden">
+            {/* Featured Video */}
+            <div className="mb-6">
+              <div
+                className="relative rounded-lg overflow-hidden shadow-lg bg-black animate-fadeInUp"
+                onTouchStart={handleIframeClick}
+              >
+                {/* YouTube Video Embed */}
+                <div className="video-container">
+                  <iframe
+                    ref={iframeRef}
+                    src={`https://www.youtube.com/embed/${selectedVideo.videoId}?autoplay=0&rel=0&modestbranding=1&enablejsapi=1`}
+                    title={selectedVideo.title}
+                    allowFullScreen
+                    className="rounded-lg"
+                    onClick={handleIframeClick}
+                    onTouchStart={handleIframeClick}
+                  />
+                </div>
+
+                {/* Mobile Video Info - Always visible below video */}
+                <div className="bg-gradient-to-t from-black/95 via-black/80 to-transparent p-4">
+                  <h3 className="text-[#FFF11E] text-xl sm:text-2xl md:text-3xl font-bold mb-2">
+                    {selectedVideo.title}
+                  </h3>
+                  <p className="text-white text-sm sm:text-base leading-relaxed mb-2 italic opacity-90">
+                    {selectedVideo.description}
+                  </p>
+                  <p className="text-gray-300 text-sm sm:text-base font-light">
+                    {selectedVideo.date}
+                  </p>
+                </div>
+
+                {/* Mobile Play Button */}
+                {!isVideoPlaying && (
+                  <div
+                    className="absolute inset-0 flex items-center justify-center z-20"
+                    onClick={handleIframeClick}
+                    onTouchStart={handleIframeClick}
+                  >
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-black/50 rounded-full flex items-center justify-center">
+                      <div className="w-0 h-0 border-l-[16px] sm:border-l-[20px] border-l-white border-t-[10px] sm:border-t-[12px] border-t-transparent border-b-[10px] sm:border-b-[12px] border-b-transparent ml-1"></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Video List - Horizontal scroll on mobile, vertical on tablet */}
+            <div className="animate-slideInLeft">
+              <h4 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 px-2">
+                More Videos
+              </h4>
+
+              {/* Mobile: Horizontal Scroll */}
+              <div className="block md:hidden">
+                <div className="flex gap-4 overflow-x-auto pb-4 px-2 -mx-2 scrollbar-hide">
+                  {mockVideos.map((video, index) => (
+                    <div
+                      key={video.id}
+                      onClick={() => handleVideoSelect(video)}
+                      className={`flex-shrink-0 w-72 rounded-lg overflow-hidden shadow-lg cursor-pointer transition-all duration-300 ${
+                        selectedVideo.id === video.id
+                          ? "ring-2 ring-yellow-400 bg-gradient-to-br from-[#15677B] to-[#179FB7]"
+                          : "bg-gradient-to-br from-[#15677B] to-[#179FB7]"
+                      }`}
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      <div className="flex p-3 gap-3 h-24">
+                        <img
+                          src={video.thumbnail}
+                          alt={video.title}
+                          className="w-20 h-16 rounded object-cover flex-shrink-0"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = `https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg`;
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h5 className="text-white font-semibold text-sm line-clamp-2 mb-1">
+                            {video.title}
+                          </h5>
+                          <p className="text-yellow-200 text-xs">
+                            {video.date}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tablet: Vertical List */}
+              <div className="hidden md:block lg:hidden">
+                <div className="grid gap-4">
+                  {mockVideos.map((video, index) => (
+                    <div
+                      key={video.id}
+                      onClick={() => handleVideoSelect(video)}
+                      className={`rounded-lg overflow-hidden shadow-lg cursor-pointer transition-all duration-300 ${
+                        selectedVideo.id === video.id
+                          ? "ring-2 ring-yellow-400 bg-gradient-to-r from-[#15677B to-[#179FB7]"
+                          : "bg-gradient-to-r from-[#15677B] to-[#179FB7]"
+                      }`}
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      <div className="flex p-4 gap-4">
+                        <img
+                          src={video.thumbnail}
+                          alt={video.title}
+                          className="w-32 h-20 rounded object-cover flex-shrink-0"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = `https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg`;
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h5 className="text-white font-bold text-lg mb-2 line-clamp-2">
+                            {video.title}
+                          </h5>
+                          <p className="text-white text-sm opacity-90 line-clamp-2 mb-2">
+                            {video.description}
+                          </p>
+                          <p className="text-yellow-200 text-sm">
+                            {video.date}
+                          </p>
+                        </div>
+                        {selectedVideo.id === video.id && (
+                          <div className="flex items-center">
+                            <div className="w-3 h-3 bg-yellow-300 rounded-full animate-pulse-slow"></div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+
+      <style>{`
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </>
   );
 };
