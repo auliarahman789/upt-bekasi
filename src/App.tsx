@@ -12,6 +12,7 @@ import MTUMonitoringPage from "./pages/DataAsset/DataAssetPage/MTUMonitoringPage
 import MTUPenggantiPage from "./pages/DataAsset/DataAssetPage/MTUPenggantiPage";
 import KinerjaUptPage from "./pages/Kinerja/KinerjaUptPage";
 import RekapAnomaliPage from "./pages/Performance/RekapAnomaliPage";
+import LevelHSSEPage from "./pages/Monitoring/HSSE/LevelHSSEPage";
 
 // Main App Content Component (needs to be inside Router to use hooks)
 function AppContent() {
@@ -210,6 +211,67 @@ function AppContent() {
               <h1 className="text-2xl font-bold">Anggaran Page</h1>
               <p>Current route: {currentRoute}</p>
             </div>
+          </>
+        }
+      />
+      <Route
+        path="/monitoring/konstruksi/adkondalkon"
+        element={
+          <>
+            <PageTitle title="UPT Bekasi - Adkon Dalkon" />
+            {/* <AnggaranPage /> */}
+            <div className="p-8">
+              <h1 className="text-2xl font-bold">Anggaran Page</h1>
+              <p>Current route: {currentRoute}</p>
+            </div>
+          </>
+        }
+      />
+      <Route
+        path="/monitoring/konstruksi/logistik"
+        element={
+          <>
+            <PageTitle title="UPT Bekasi - Logistik" />
+            {/* <AnggaranPage /> */}
+            <div className="p-8">
+              <h1 className="text-2xl font-bold">Anggaran Page</h1>
+              <p>Current route: {currentRoute}</p>
+            </div>
+          </>
+        }
+      />
+      <Route
+        path="/monitoring/hsse/jadwalk3"
+        element={
+          <>
+            <PageTitle title="UPT Bekasi - Jadwal Pekerjaan K3" />
+            {/* <AnggaranPage /> */}
+            <div className="p-8">
+              <h1 className="text-2xl font-bold">Anggaran Page</h1>
+              <p>Current route: {currentRoute}</p>
+            </div>
+          </>
+        }
+      />
+      <Route
+        path="/monitoring/hsse/perandsar"
+        element={
+          <>
+            <PageTitle title="UPT Bekasi - Peralatan Dan Sarana" />
+            {/* <AnggaranPage /> */}
+            <div className="p-8">
+              <h1 className="text-2xl font-bold">Anggaran Page</h1>
+              <p>Current route: {currentRoute}</p>
+            </div>
+          </>
+        }
+      />
+      <Route
+        path="/monitoring/hsse/levelhsse"
+        element={
+          <>
+            <PageTitle title="UPT Bekasi - Maturing Level HSSE" />
+            <LevelHSSEPage />
           </>
         }
       />

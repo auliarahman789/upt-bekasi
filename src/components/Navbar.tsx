@@ -163,6 +163,52 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
           icon: "",
           route: "/monitoring/anggaran",
         },
+        {
+          id: "monitoring-3",
+          label: "KONSTRUKSI",
+          icon: "",
+          hasChildren: true,
+          children: [
+            {
+              id: "konstruksi-1",
+              label: "ADKON DALKON",
+              icon: "",
+              route: "/monitoring/konstruksi/adkondalkon",
+            },
+            {
+              id: "konstruksi-2",
+              label: "LOGISTIK",
+              icon: "",
+              route: "/monitoring/konstruksi/logistik",
+            },
+          ],
+        },
+        {
+          id: "monitoring-4",
+          label: "HSSE PERFORMANCE",
+          icon: "",
+          hasChildren: true,
+          children: [
+            {
+              id: "hsse-1",
+              label: "JADWAL PEKERJAAN K3",
+              icon: "",
+              route: "/monitoring/hsse/jadwalk3",
+            },
+            {
+              id: "hsse-2",
+              label: "PERALATAN DAN SARANA",
+              icon: "",
+              route: "/monitoring/hsse/perandsar",
+            },
+            {
+              id: "hsse-3",
+              label: "MATURING LEVEL HSSE",
+              icon: "",
+              route: "/monitoring/hsse/levelhsse",
+            },
+          ],
+        },
       ],
     },
     {
