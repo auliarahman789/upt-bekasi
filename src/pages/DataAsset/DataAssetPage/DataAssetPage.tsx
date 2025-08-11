@@ -1,6 +1,7 @@
 import { useState } from "react";
 import DefaultLayout from "../../../layout/DefaultLayout";
 import PetaTower from "./PetaTower";
+import PetaGI from "./PetaGI";
 
 // Updated mock data to match the images
 const mockData = {
@@ -87,32 +88,6 @@ const DataAssetPage = () => {
   const totalCapacity = "7400 MVA";
 
   // Component for PETA GARDU INDUK tab
-  const PetaGarduIndukComponent = () => (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="text-center text-2xl font-bold text-gray-700 mb-8">
-        PETA GARDU INDUK
-      </div>
-      <div className="bg-white p-8 rounded-2xl shadow-lg text-center">
-        <p className="text-gray-500 mb-4">
-          Content for Peta Gardu Induk will be displayed here
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h3 className="font-semibold text-blue-800 mb-2">ULTG Bekasi</h3>
-            <p className="text-sm text-gray-600">
-              Gardu Induk: {mockData.petaGarduInduk.ultgSekasi}
-            </p>
-          </div>
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h3 className="font-semibold text-blue-800 mb-2">ULTG Cikarang</h3>
-            <p className="text-sm text-gray-600">
-              Gardu Induk: {mockData.petaGarduInduk.ultgCikarang}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -502,7 +477,7 @@ const DataAssetPage = () => {
       case "PETA_TOWER":
         return <PetaTower />;
       case "PETA_GARDU_INDUK":
-        return <PetaGarduIndukComponent />;
+        return <PetaGI />;
       default:
         return null;
     }
