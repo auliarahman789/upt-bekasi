@@ -66,8 +66,7 @@ const LevelHSSEPage: React.FC = () => {
   const apiKey = import.meta.env.VITE_API_LINK_KEY || "";
   const sheetid = import.meta.env.VITE_API_LINK_SHEETID || "";
   const k3SheetGid = import.meta.env.VITE_API_LINK_SHEEGID || "";
-  const kamSheetGid = "1230200164";
-
+  const kamSheetGid = import.meta.env.VITE_API_LINK_SHEEGID2 || "";
   // Configuration for sheets
   const SHEET_CONFIGS: Record<"k3" | "kam", SheetConfig> = {
     k3: {
