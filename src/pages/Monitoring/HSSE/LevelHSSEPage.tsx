@@ -362,10 +362,6 @@ const LevelHSSEPage: React.FC = () => {
       }
     }
 
-    console.log("Parsed summary data:", summary);
-    console.log("Parsed detail data:", details);
-    console.log("Expected criteria count:", activeSheet === "k3" ? 7 : 8);
-
     // Calculate averages for criteria that have sub-criteria
     const updatedSummary = calculateAveragesForCriteria(summary, details);
 
@@ -652,66 +648,100 @@ const LevelHSSEPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          <div className="bg-[#CDE9ED] p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-white mr-4">
-                <TrendingUp className="h-6 w-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Target PLN Pusat Semester 1
-                </p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {targetPlnPusat.sem1.toFixed(2)}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-[#CDE9ED] p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-white mr-4">
-                <TrendingUp className="h-6 w-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Target PLN Pusat Semester 2
-                </p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {targetPlnPusat.sem2.toFixed(2)}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-purple-100 mr-4">
-                <TrendingUp className="h-6 w-6 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-[#145C72]">
-                  Pencapaian Semester 1
-                </p>
-                <p className="text-2xl font-semibold text-[#145C72]">
-                  {totalAchievement.sem1.toFixed(2)}
-                </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {/* Semester 1 Card */}
+          <div className="bg-[#CDE9ED] p-6 px-10 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between h-full hover:shadow-md transition-shadow">
+            <div>
+              <p className="text-xl font-bold mb-4 text-[#145C72]">
+                Semester 1
+              </p>
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-3 rounded-full bg-white">
+                    <TrendingUp className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">
+                      Target PLN Pusat
+                    </p>
+                    <p className="text-xl font-semibold text-gray-900">
+                      {targetPlnPusat.sem1.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="p-3 rounded-full bg-white">
+                    <TrendingUp className="h-6 w-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-[#145C72]">
+                      Pencapaian
+                    </p>
+                    <p className="text-xl font-semibold text-[#145C72]">
+                      {totalAchievement.sem1.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
+            <div>
+              <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#145C72] transition-all"
+                  style={{ width: `${pencapaianPercentages.sem1}%` }}
+                ></div>
+              </div>
+              <p className="text-xl font-medium text-[#145C72] mt-1">
+                {pencapaianPercentages.sem1.toFixed(2)}%
+              </p>
+            </div>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-purple-100 mr-4">
-                <TrendingUp className="h-6 w-6 text-purple-600" />
+
+          {/* Semester 2 Card */}
+          <div className="bg-[#CDE9ED] p-6 px-10 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between h-full hover:shadow-md transition-shadow">
+            <div>
+              <p className="text-xl font-bold mb-4 text-[#145C72]">
+                Semester 2
+              </p>
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-3 rounded-full bg-white">
+                    <TrendingUp className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">
+                      Target PLN Pusat
+                    </p>
+                    <p className="text-xl font-semibold text-gray-900">
+                      {targetPlnPusat.sem2.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="p-3 rounded-full bg-white">
+                    <TrendingUp className="h-6 w-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-[#145C72]">
+                      Pencapaian
+                    </p>
+                    <p className="text-xl font-semibold text-[#145C72]">
+                      {totalAchievement.sem2.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium text-[#145C72]">
-                  Pencapaian Semester 2
-                </p>
-                <p className="text-2xl font-semibold text-[#145C72]">
-                  {totalAchievement.sem2.toFixed(2)}
-                </p>
+            </div>
+            <div>
+              <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#145C72] transition-all"
+                  style={{ width: `${pencapaianPercentages.sem2}%` }}
+                ></div>
               </div>
+              <p className="text-xl font-medium text-[#145C72] mt-1">
+                {pencapaianPercentages.sem2.toFixed(2)}%
+              </p>
             </div>
           </div>
         </div>
