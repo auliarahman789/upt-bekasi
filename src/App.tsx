@@ -13,6 +13,7 @@ import MTUPenggantiPage from "./pages/DataAsset/DataAssetPage/MTUPenggantiPage";
 import KinerjaUptPage from "./pages/Kinerja/KinerjaUptPage";
 import RekapAnomaliPage from "./pages/Performance/RekapAnomaliPage";
 import LevelHSSEPage from "./pages/Monitoring/HSSE/LevelHSSEPage";
+import PeralatanDanSaranaPage from "./pages/Monitoring/HSSE/PeralatanDanSaranaPage";
 
 // Main App Content Component (needs to be inside Router to use hooks)
 function AppContent() {
@@ -258,11 +259,7 @@ function AppContent() {
         element={
           <>
             <PageTitle title="UPT Bekasi - Peralatan Dan Sarana" />
-            {/* <AnggaranPage /> */}
-            <div className="p-8">
-              <h1 className="text-2xl font-bold">Anggaran Page</h1>
-              <p>Current route: {currentRoute}</p>
-            </div>
+            <PeralatanDanSaranaPage />
           </>
         }
       />
