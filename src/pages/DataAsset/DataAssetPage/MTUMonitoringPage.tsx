@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -11,159 +11,94 @@ import {
   YAxis,
 } from "recharts";
 import DefaultLayout from "../../../layout/DefaultLayout";
+import axios from "axios";
 
-// Mock data for the monitoring cards
-const mockData = {
-  trafo: {
-    title: "TRAFO",
-    barData: [
-      { name: "P1", value: 16, color: "#145C72" },
-      { name: "P2", value: 33, color: "#189FB7" },
-      { name: "P3", value: 26, color: "#65CFE2" },
-    ],
-    donutData: [
-      { name: "Muda", value: 75, color: "#1f2937" },
-      { name: "Tua", value: 15, color: "#145C72" },
-      { name: "Sangat Tua", value: 16, color: "#189FB7" },
-    ],
-    legendData: [
-      { name: "P1", value: 16, color: "#145C72", showPercent: false },
-      { name: "P2", value: 33, color: "#189FB7", showPercent: false },
-      { name: "P3", value: 26, color: "#65CFE2", showPercent: false },
-      { name: "Muda", value: 75, color: "#1f2937", showPercent: true },
-      { name: "Tua", value: 15, color: "#145C72", showPercent: true },
-      { name: "Sangat Tua", value: 16, color: "#189FB7", showPercent: true },
-    ],
-  },
-  city: {
-    title: "CITY",
-    barData: [
-      { name: "P1", value: 18, color: "#145C72" },
-      { name: "P2", value: 28, color: "#189FB7" },
-      { name: "P3", value: 22, color: "#65CFE2" },
-    ],
-    donutData: [
-      { name: "Muda", value: 65, color: "#1f2937" },
-      { name: "Tua", value: 12, color: "#145C72" },
-      { name: "Sangat Tua", value: 8, color: "#189FB7" },
-    ],
-    legendData: [
-      { name: "P1", value: 18, color: "#145C72", showPercent: false },
-      { name: "P2", value: 28, color: "#189FB7", showPercent: false },
-      { name: "P3", value: 22, color: "#65CFE2", showPercent: false },
-      { name: "Muda", value: 65, color: "#1f2937", showPercent: true },
-      { name: "Tua", value: 12, color: "#145C72", showPercent: true },
-      { name: "Sangat Tua", value: 8, color: "#189FB7", showPercent: true },
-    ],
-  },
-  pms: {
-    title: "PMS",
-    barData: [
-      { name: "P1", value: 20, color: "#145C72" },
-      { name: "P2", value: 25, color: "#189FB7" },
-      { name: "P3", value: 18, color: "#65CFE2" },
-    ],
-    donutData: [
-      { name: "Muda", value: 70, color: "#1f2937" },
-      { name: "Tua", value: 10, color: "#145C72" },
-      { name: "Sangat Tua", value: 12, color: "#189FB7" },
-    ],
-    legendData: [
-      { name: "P1", value: 20, color: "#145C72", showPercent: false },
-      { name: "P2", value: 25, color: "#189FB7", showPercent: false },
-      { name: "P3", value: 18, color: "#65CFE2", showPercent: false },
-      { name: "Muda", value: 70, color: "#1f2937", showPercent: true },
-      { name: "Tua", value: 10, color: "#145C72", showPercent: true },
-      { name: "Sangat Tua", value: 12, color: "#189FB7", showPercent: true },
-    ],
-  },
-  pmt: {
-    title: "PMT",
-    barData: [
-      { name: "P1", value: 22, color: "#145C72" },
-      { name: "P2", value: 30, color: "#189FB7" },
-      { name: "P3", value: 25, color: "#65CFE2" },
-    ],
-    donutData: [
-      { name: "Muda", value: 68, color: "#1f2937" },
-      { name: "Tua", value: 14, color: "#145C72" },
-      { name: "Sangat Tua", value: 11, color: "#189FB7" },
-    ],
-    legendData: [
-      { name: "P1", value: 22, color: "#145C72", showPercent: false },
-      { name: "P2", value: 30, color: "#189FB7", showPercent: false },
-      { name: "P3", value: 25, color: "#65CFE2", showPercent: false },
-      { name: "Muda", value: 68, color: "#1f2937", showPercent: true },
-      { name: "Tua", value: 14, color: "#145C72", showPercent: true },
-      { name: "Sangat Tua", value: 11, color: "#189FB7", showPercent: true },
-    ],
-  },
-  la: {
-    title: "LA",
-    barData: [
-      { name: "P1", value: 15, color: "#145C72" },
-      { name: "P2", value: 24, color: "#189FB7" },
-      { name: "P3", value: 19, color: "#65CFE2" },
-    ],
-    donutData: [
-      { name: "Muda", value: 72, color: "#1f2937" },
-      { name: "Tua", value: 8, color: "#145C72" },
-      { name: "Sangat Tua", value: 6, color: "#189FB7" },
-    ],
-    legendData: [
-      { name: "P1", value: 15, color: "#145C72", showPercent: false },
-      { name: "P2", value: 24, color: "#189FB7", showPercent: false },
-      { name: "P3", value: 19, color: "#65CFE2", showPercent: false },
-      { name: "Muda", value: 72, color: "#1f2937", showPercent: true },
-      { name: "Tua", value: 8, color: "#145C72", showPercent: true },
-      { name: "Sangat Tua", value: 6, color: "#189FB7", showPercent: true },
-    ],
-  },
-  ct: {
-    title: "CT",
-    barData: [
-      { name: "P1", value: 12, color: "#145C72" },
-      { name: "P2", value: 20, color: "#189FB7" },
-      { name: "P3", value: 16, color: "#65CFE2" },
-    ],
-    donutData: [
-      { name: "Muda", value: 74, color: "#1f2937" },
-      { name: "Tua", value: 9, color: "#145C72" },
-      { name: "Sangat Tua", value: 5, color: "#189FB7" },
-    ],
-    legendData: [
-      { name: "P1", value: 12, color: "#145C72", showPercent: false },
-      { name: "P2", value: 20, color: "#189FB7", showPercent: false },
-      { name: "P3", value: 16, color: "#65CFE2", showPercent: false },
-      { name: "Muda", value: 74, color: "#1f2937", showPercent: true },
-      { name: "Tua", value: 9, color: "#145C72", showPercent: true },
-      { name: "Sangat Tua", value: 5, color: "#189FB7", showPercent: true },
-    ],
-  },
-  flabelpower: {
-    title: "KABEL POWER",
-    barData: [
-      { name: "P1", value: 14, color: "#145C72" },
-      { name: "P2", value: 26, color: "#189FB7" },
-      { name: "P3", value: 18, color: "#65CFE2" },
-    ],
-    donutData: [
-      { name: "Muda", value: 69, color: "#1f2937" },
-      { name: "Tua", value: 11, color: "#145C72" },
-      { name: "Sangat Tua", value: 7, color: "#189FB7" },
-    ],
-    legendData: [
-      { name: "P1", value: 14, color: "#145C72", showPercent: false },
-      { name: "P2", value: 26, color: "#189FB7", showPercent: false },
-      { name: "P3", value: 18, color: "#65CFE2", showPercent: false },
-      { name: "Muda", value: 69, color: "#1f2937", showPercent: true },
-      { name: "Tua", value: 11, color: "#145C72", showPercent: true },
-      { name: "Sangat Tua", value: 7, color: "#189FB7", showPercent: true },
-    ],
-  },
+// Color scheme for consistency
+const colors = {
+  primary: "#145C72",
+  secondary: "#189FB7",
+  tertiary: "#65CFE2",
+  dark: "#1f2937",
 };
 
-// Custom Tooltip Components
+// Function to transform API data to component format
+const transformApiData = (apiData: any) => {
+  const transformed: any = {};
+
+  // Map API keys to display titles
+  const titleMap: { [key: string]: string } = {
+    trafo: "TRAFO",
+    cb: "CB", // Circuit Breaker
+    ct: "CT",
+    cvt: "CVT",
+    ds: "DS",
+    kabel_power: "KABEL POWER",
+    la: "LA",
+  };
+
+  Object.entries(apiData).forEach(([key, value]: [string, any]) => {
+    // Skip non-equipment keys
+    if (!titleMap[key] || !value.status_usia || !value.prioritas) return;
+
+    const statusUsia = value.status_usia;
+    const prioritas = value.prioritas;
+
+    // Create bar data from prioritas (assuming P1, P2, P3 priority levels)
+    // Since your API only has one priority entry with "-", we'll need to adapt this
+    const barData = [
+      {
+        name: "P1",
+        value: Math.floor(prioritas[0]?.jumlah * 0.3) || 0,
+        color: colors.primary,
+      },
+      {
+        name: "P2",
+        value: Math.floor(prioritas[0]?.jumlah * 0.4) || 0,
+        color: colors.secondary,
+      },
+      {
+        name: "P3",
+        value: Math.floor(prioritas[0]?.jumlah * 0.3) || 0,
+        color: colors.tertiary,
+      },
+    ];
+
+    // Create donut data from status_usia
+    const donutData = statusUsia.map((item: any) => {
+      let color = colors.dark;
+      if (item.status_usia === "TUA") color = colors.primary;
+      else if (item.status_usia === "SANGAT TUA") color = colors.secondary;
+
+      return {
+        name:
+          item.status_usia === "MUDA"
+            ? "Muda"
+            : item.status_usia === "TUA"
+            ? "Tua"
+            : "Sangat Tua",
+        value: item.jumlah,
+        color: color,
+      };
+    });
+
+    // Create legend data combining both bar and donut data
+    const legendData = [
+      ...barData.map((item) => ({ ...item, showPercent: false })),
+      ...donutData.map((item: any) => ({ ...item, showPercent: true })),
+    ];
+
+    transformed[key] = {
+      title: titleMap[key],
+      barData,
+      donutData,
+      legendData,
+    };
+  });
+
+  return transformed;
+};
+
+// Custom Tooltip Components (keep existing)
 const BarTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
@@ -190,7 +125,7 @@ const PieTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-// Recharts Bar Chart Component with custom colors
+// Keep existing chart components (RechartsBarChart, RechartsPieChart, MonitorCard)
 const RechartsBarChart = ({ data }: { data: any }) => {
   return (
     <ResponsiveContainer width="100%" height="100%">
@@ -217,11 +152,8 @@ const RechartsBarChart = ({ data }: { data: any }) => {
   );
 };
 
-// Recharts Pie Chart Component
 const RechartsPieChart = ({ data }: { data: any }) => {
   const total = data.reduce((sum: any, item: any) => sum + item.value, 0);
-
-  // Add total to each data point for percentage calculation in tooltip
   const dataWithTotal = data.map((item: any) => ({
     ...item,
     totalValue: total,
@@ -249,7 +181,6 @@ const RechartsPieChart = ({ data }: { data: any }) => {
   );
 };
 
-// Monitor Card Component with 3-section layout
 const MonitorCard = ({
   title,
   barData,
@@ -268,38 +199,38 @@ const MonitorCard = ({
   );
 
   return (
-    <div className="bg-neutral-100 rounded-2xl shadow-sm border p-3">
-      {/* 3-section layout: Bar Chart | Pie Chart | Legend */}
-      <div className="grid grid-cols-3 gap-4">
-        {/* Left section - Bar Chart */}
-        <div className="flex flex-col rounded-2xl justify-between bg-white p-3">
+    <div className="bg-neutral-100 rounded-2xl shadow-sm border p-3 h-full flex flex-col">
+      {/* Mobile Layout - Stack vertically */}
+      <div className="md:hidden flex flex-col gap-4 flex-1">
+        {/* Title and Bar Chart */}
+        <div className="flex flex-col rounded-2xl justify-between bg-white p-3 min-h-[200px]">
           <div className="flex items-center mb-2">
             <div className="p-1 rounded mr-2">
               <span className="text-sm">
-                <img src="/box.svg"></img>
+                <img src="/box.svg" alt="box" />
               </span>
             </div>
             <h3 className="font-semibold text-gray-700 text-sm">{title}</h3>
           </div>
-          <RechartsBarChart data={barData} />
+          <div className="flex-1 min-h-[150px]">
+            <RechartsBarChart data={barData} />
+          </div>
         </div>
 
-        {/* Middle section - Pie Chart */}
-        <div className="flex flex-col items-center justify-center rounded-2xl bg-white p-3">
+        {/* Pie Chart */}
+        <div className="flex flex-col items-center justify-center rounded-2xl bg-white p-3 min-h-[150px]">
           <RechartsPieChart data={donutData} />
         </div>
 
-        {/* Right section - Total and Legend */}
-        <div className="flex flex-col rounded-2xl bg-white p-3">
-          {/* Total badge at top */}
-          <div className="bg-[#145C72] text-white rounded-full  items-center grid grid-cols-6 px-1 py-1 mb-6">
+        {/* Legend */}
+        <div className="flex flex-col rounded-2xl bg-white p-3 min-h-[200px]">
+          <div className="bg-[#145C72] text-white rounded-full items-center grid grid-cols-6 px-1 py-1 mb-6">
             <span className="text-sm font-medium col-span-4 pl-2">Total</span>
             <div className="bg-white text-gray-800 rounded-full px-3 py-1 font-bold text-sm min-w-[40px] text-center col-span-2">
               {total}
             </div>
           </div>
 
-          {/* Legend items with new design */}
           <div className="space-y-2 flex-1">
             {legendData.map((item: any, index: any) => {
               const percentage = item.showPercent
@@ -308,7 +239,59 @@ const MonitorCard = ({
               return (
                 <div
                   key={index}
-                  className={` items-center justify-between rounded-full p-1 text-white font-medium text-sm ${
+                  className={`items-center justify-between rounded-full p-1 text-white font-medium text-sm ${
+                    index === 3 ? "mt-6" : ""
+                  }`}
+                  style={{ backgroundColor: item.color }}
+                >
+                  <div className="grid grid-cols-6 items-center">
+                    <span className="bg-white text-gray-800 text-center rounded-full px-2 py-1 font-bold text-xs mr-2 col-span-2">
+                      {percentage !== null ? `${percentage}%` : item.value}
+                    </span>
+                    <span className="text-white col-span-4">{item.name}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Layout - Grid columns */}
+      <div className="hidden md:grid grid-cols-3 gap-4 flex-1">
+        <div className="flex flex-col rounded-2xl justify-between bg-white p-3">
+          <div className="flex items-center mb-2">
+            <div className="p-1 rounded mr-2">
+              <span className="text-sm">
+                <img src="/box.svg" alt="box" />
+              </span>
+            </div>
+            <h3 className="font-semibold text-gray-700 text-sm">{title}</h3>
+          </div>
+          <RechartsBarChart data={barData} />
+        </div>
+
+        <div className="flex flex-col items-center justify-center rounded-2xl bg-white p-3">
+          <RechartsPieChart data={donutData} />
+        </div>
+
+        <div className="flex flex-col rounded-2xl bg-white p-3">
+          <div className="bg-[#145C72] text-white rounded-full items-center grid grid-cols-6 px-1 py-1 mb-6">
+            <span className="text-sm font-medium col-span-4 pl-2">Total</span>
+            <div className="bg-white text-gray-800 rounded-full px-3 py-1 font-bold text-sm min-w-[40px] text-center col-span-2">
+              {total}
+            </div>
+          </div>
+
+          <div className="space-y-2 flex-1">
+            {legendData.map((item: any, index: any) => {
+              const percentage = item.showPercent
+                ? Math.round((item.value / donutTotal) * 100)
+                : null;
+              return (
+                <div
+                  key={index}
+                  className={`items-center justify-between rounded-full p-1 text-white font-medium text-sm ${
                     index === 3 ? "mt-6" : ""
                   }`}
                   style={{ backgroundColor: item.color }}
@@ -328,221 +311,88 @@ const MonitorCard = ({
     </div>
   );
 };
-interface LocationFilters {
-  [key: string]: boolean;
-}
-
-interface StatusFilters {
-  [key: string]: boolean;
-}
-
-interface FilterProps {
-  locationFilters: LocationFilters;
-  statusFilters: StatusFilters;
-  onLocationChange: (key: string) => void;
-  onStatusChange: (key: string) => void;
-}
-
-// Filter Dropdown Component
-interface FilterProps {
-  isOpen: boolean;
-  onClose: () => void;
-  locationFilters: LocationFilters;
-  statusFilters: StatusFilters;
-  onLocationChange: (key: string) => void;
-  onStatusChange: (key: string) => void;
-  onApplyFilter: () => void;
-}
-
-const FilterModal: React.FC<FilterProps> = ({
-  isOpen,
-  locationFilters,
-  statusFilters,
-  onLocationChange,
-  onStatusChange,
-  onApplyFilter,
-}) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="absolute top-full left-0 mt-2 bg-white rounded-2xl shadow-4xl border p-4 w-64 z-50">
-      {/* Location Filter */}
-      <div className="mb-4">
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Lokasi ULTG</h4>
-        <div className="space-y-2">
-          {Object.entries(locationFilters).map(
-            ([key, checked]: [string, boolean]) => (
-              <label key={key} className="flex items-center cursor-pointer">
-                <div className="relative">
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => onLocationChange(key)}
-                    className="sr-only"
-                  />
-                  <div
-                    className={`w-4 h-4 border-2 rounded flex items-center justify-center ${
-                      checked
-                        ? "bg-[#179FB7] border-[#179FB7]"
-                        : "bg-white border-gray-300 hover:border-[#179FB7]"
-                    } transition-colors duration-200`}
-                  >
-                    {checked && (
-                      <svg
-                        className="w-3 h-3 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    )}
-                  </div>
-                </div>
-                <span className="ml-3 text-sm text-[#179FB7] font-medium">
-                  {key === "bekasi" ? "ULTG Bekasi" : "ULTG Cikarang"}
-                </span>
-              </label>
-            )
-          )}
-        </div>
-      </div>
-
-      {/* Status Filter */}
-      <div className="mb-4">
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Status</h4>
-        <div className="space-y-2">
-          {Object.entries(statusFilters).map(
-            ([key, checked]: [string, boolean]) => (
-              <label key={key} className="flex items-center cursor-pointer">
-                <div className="relative">
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => onStatusChange(key)}
-                    className="sr-only"
-                  />
-                  <div
-                    className={`w-4 h-4 border-2 rounded flex items-center justify-center ${
-                      checked
-                        ? "bg-[#179FB7] border-[#179FB7]"
-                        : "bg-white border-gray-300 hover:border-[#179FB7]"
-                    } transition-colors duration-200`}
-                  >
-                    {checked && (
-                      <svg
-                        className="w-3 h-3 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    )}
-                  </div>
-                </div>
-                <span className="ml-3 text-sm text-[#179FB7] font-medium capitalize">
-                  {key}
-                </span>
-              </label>
-            )
-          )}
-        </div>
-      </div>
-
-      {/* Apply Filter Button */}
-      <button
-        onClick={onApplyFilter}
-        className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-2xl transition-colors text-sm"
-      >
-        TERAPKAN FILTER
-      </button>
-    </div>
-  );
-};
 
 const MTUMonitoringPage = () => {
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [locationFilters, setLocationFilters] = useState({
-    bekasi: true,
-    cikarang: true,
-  });
-  const [statusFilters, setStatusFilters] = useState({
-    open: true,
-    progress: true,
-    closed: true,
-  });
+  const [monitoringData, setMonitoringData] = useState<any>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleLocationChange = (location: string) => {
-    setLocationFilters((prev) => ({
-      ...prev,
-      [location]: !prev[location as keyof typeof prev],
-    }));
+  useEffect(() => {
+    fetchMTUMonitoring();
+  }, []);
+
+  const fetchMTUMonitoring = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_LINK_BE}/api/data-asset/mtu/kondisi`
+      );
+
+      console.log("MTU monitoring data fetched successfully:", response.data);
+
+      // Transform API data to component format
+      const transformedData = transformApiData(response.data);
+      setMonitoringData(transformedData);
+    } catch (err) {
+      console.error("Error fetching MTU monitoring data:", err);
+      setError("Failed to fetch monitoring data");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleStatusChange = (status: string) => {
-    setStatusFilters((prev) => ({
-      ...prev,
-      [status]: !prev[status as keyof typeof prev],
-    }));
-  };
+  if (loading) {
+    return (
+      <DefaultLayout>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#145C72] mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading monitoring data...</p>
+          </div>
+        </div>
+      </DefaultLayout>
+    );
+  }
 
-  const handleApplyFilter = () => {
-    console.log("Applied filters:", { locationFilters, statusFilters });
-    setIsFilterOpen(false);
-  };
+  if (error) {
+    return (
+      <DefaultLayout>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">{error}</p>
+            <button
+              onClick={fetchMTUMonitoring}
+              className="bg-[#145C72] text-white px-4 py-2 rounded-lg hover:bg-[#0f4a5c]"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </DefaultLayout>
+    );
+  }
 
   return (
     <DefaultLayout>
       <div className="min-h-screen bg-gray-50">
         <div className="p-4">
-          <div className="flex items-center justify-between mb-6">
-            {/* Global Filter Button with Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className="flex items-center text-[16px] font-bold bg-white justify-between border-[1px] border-zinc-300 hover:bg-gray-200 px-4 py-2 rounded-full text-[#145C72] transition-colors shadow-2xl"
-              >
-                <div>FILTER</div>
-                <div className="ml-6">
-                  <img src="/filter.svg" />
-                </div>
-              </button>
-
-              {/* Filter Dropdown */}
-              <FilterModal
-                isOpen={isFilterOpen}
-                onClose={() => setIsFilterOpen(false)}
-                locationFilters={locationFilters}
-                statusFilters={statusFilters}
-                onLocationChange={handleLocationChange}
-                onStatusChange={handleStatusChange}
-                onApplyFilter={handleApplyFilter}
-              />
-            </div>
-          </div>
-
-          {/* Grid of monitoring cards - 2 per row on desktop, 1 on mobile */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {Object.entries(mockData).map(([key, data]) => (
-              <MonitorCard
-                key={key}
-                title={data.title}
-                barData={data.barData}
-                donutData={data.donutData}
-                legendData={data.legendData}
-              />
-            ))}
+          <h1 className="text-2xl md:text-[32px] text-center font-bold text-[#155C72] mb-6">
+            MONITORING KONDISI MTU
+          </h1>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 auto-rows-fr">
+            {Object.entries(monitoringData).map(
+              ([key, data]: [string, any]) => (
+                <MonitorCard
+                  key={key}
+                  title={data.title}
+                  barData={data.barData}
+                  donutData={data.donutData}
+                  legendData={data.legendData}
+                />
+              )
+            )}
           </div>
         </div>
       </div>
