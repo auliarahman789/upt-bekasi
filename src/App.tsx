@@ -14,6 +14,7 @@ import KinerjaUptPage from "./pages/Kinerja/KinerjaUptPage";
 import RekapAnomaliPage from "./pages/Performance/RekapAnomaliPage";
 import LevelHSSEPage from "./pages/Monitoring/HSSE/LevelHSSEPage";
 import PeralatanDanSaranaPage from "./pages/Monitoring/HSSE/PeralatanDanSaranaPage";
+import PersentasiAnomaliPage from "./pages/Performance/PersentasiAnomaliPage";
 
 // Main App Content Component (needs to be inside Router to use hooks)
 function AppContent() {
@@ -143,13 +144,7 @@ function AppContent() {
         element={
           <>
             <PageTitle title="UPT Bekasi - Persentasi Anomali" />
-            {/* <PersentasiAnomaliPage /> */}
-            <div className="p-8">
-              <h1 className="text-2xl font-bold">
-                Persentasi Anomali UPT Page
-              </h1>
-              <p>Current route: {currentRoute}</p>
-            </div>
+            <PersentasiAnomaliPage />
           </>
         }
       />
