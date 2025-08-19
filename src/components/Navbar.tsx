@@ -20,6 +20,9 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
   const navigate = useNavigate();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [openSubDropdown, setOpenSubDropdown] = useState<string | null>(null);
+  const [openSubSubDropdown, setOpenSubSubDropdown] = useState<string | null>(
+    null
+  );
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
@@ -27,13 +30,13 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
     {
       id: "home",
       label: "HOME",
-      icon: "/Home.svg", // Changed to absolute path
+      icon: "/Home.svg",
       route: "/",
     },
     {
       id: "data-asset",
       label: "DATA ASSET",
-      icon: "/dataAsset.svg", // Changed to absolute path
+      icon: "/dataAsset.svg",
       hasChildren: true,
       children: [
         {
@@ -105,7 +108,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
     {
       id: "performance",
       label: "PERFORMANCE",
-      icon: "/kinerja.svg", // Changed to absolute path
+      icon: "/kinerja.svg",
       route: "/performance",
       hasChildren: true,
       children: [
@@ -126,7 +129,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
     {
       id: "kinerja",
       label: "KINERJA",
-      icon: "/Time_progress_fill.svg", // Changed to absolute path
+      icon: "/Time_progress_fill.svg",
       route: "/kinerja",
       hasChildren: true,
       children: [
@@ -147,7 +150,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
     {
       id: "monitoring",
       label: "MONITORING",
-      icon: "/monitoring.svg", // Changed to absolute path
+      icon: "/monitoring.svg",
       route: "/monitoring",
       hasChildren: true,
       children: [
@@ -179,7 +182,21 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
               id: "konstruksi-2",
               label: "LOGISTIK",
               icon: "",
-              route: "/monitoring/konstruksi/logistik",
+              hasChildren: true,
+              children: [
+                {
+                  id: "konstruksi-2-1",
+                  label: "MONITORING GUDANG",
+                  icon: "",
+                  route: "/monitoring/konstruksi/logistik/monitoringgudang",
+                },
+                {
+                  id: "konstruksi-2-2",
+                  label: "SIGESIT",
+                  icon: "",
+                  route: "/monitoring/konstruksi/logistik/sigesit",
+                },
+              ],
             },
           ],
         },
@@ -214,7 +231,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
     {
       id: "akun",
       label: "ACCOUNT",
-      icon: "/account.svg", // Changed to absolute path
+      icon: "/account.svg",
     },
   ];
 
@@ -229,6 +246,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
         setIsVisible(false);
         setOpenDropdown(null);
         setOpenSubDropdown(null);
+        setOpenSubSubDropdown(null);
       }
 
       setLastScrollY(currentScrollY);
@@ -251,10 +269,18 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
   const toggleDropdown = (menuId: string) => {
     setOpenDropdown((prev) => (prev === menuId ? null : menuId));
     setOpenSubDropdown(null);
+    setOpenSubSubDropdown(null);
   };
 
   const toggleSubDropdown = (subMenuId: string) => {
     setOpenSubDropdown((prev) => (prev === subMenuId ? null : subMenuId));
+    setOpenSubSubDropdown(null);
+  };
+
+  const toggleSubSubDropdown = (subSubMenuId: string) => {
+    setOpenSubSubDropdown((prev) =>
+      prev === subSubMenuId ? null : subSubMenuId
+    );
   };
 
   const handleMenuClick = (item: MenuItem) => {
@@ -267,6 +293,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
       navigate(item.route);
       setOpenDropdown(null);
       setOpenSubDropdown(null);
+      setOpenSubSubDropdown(null);
     }
   };
 
@@ -280,6 +307,21 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
       navigate(child.route);
       setOpenDropdown(null);
       setOpenSubDropdown(null);
+      setOpenSubSubDropdown(null);
+    }
+  };
+
+  const handleSubChildClick = (subChild: MenuItem) => {
+    console.log("Sub-child clicked:", subChild.label, "Route:", subChild.route);
+
+    if (subChild.hasChildren) {
+      toggleSubSubDropdown(subChild.id);
+    } else if (subChild.route && subChild.route.trim() !== "") {
+      console.log("Navigating to sub-child route:", subChild.route);
+      navigate(subChild.route);
+      setOpenDropdown(null);
+      setOpenSubDropdown(null);
+      setOpenSubSubDropdown(null);
     }
   };
 
@@ -307,7 +349,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
       <nav
         className="bg-cover bg-center bg-no-repeat h-[67px] backdrop-blur-sm mr-3 relative"
         style={{
-          backgroundImage: "url('/bgNav.svg')", // Changed to absolute path
+          backgroundImage: "url('/bgNav.svg')",
         }}
       >
         {/* Logo - Only visible on desktop */}
@@ -386,7 +428,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
                   </button>
 
                   {item.hasChildren && openDropdown === item.id && (
-                    <div className="absolute top-full left-0 mt-0 w-56 bg-[#145C72]  rounded-b-md shadow-lg z-50 border-t-2 border-yellow-400">
+                    <div className="absolute top-full left-0 mt-0 w-56 bg-[#145C72] rounded-b-md shadow-lg z-50 border-t-2 border-yellow-400">
                       <div className="py-1">
                         {item.children?.map((child) => (
                           <div key={child.id} className="relative">
@@ -394,7 +436,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
                               onClick={() => handleChildClick(child)}
                               className={`flex items-center justify-between w-full text-left px-4 py-3 text-[16px] font-bold transition-colors duration-200 ${
                                 isActive(child.route)
-                                  ? "bg-yellow-400 text-white "
+                                  ? "bg-yellow-400 text-white"
                                   : "text-white hover:bg-yellow-300 hover:text-black"
                               }`}
                             >
@@ -422,39 +464,99 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
 
                             {child.hasChildren &&
                               openSubDropdown === child.id && (
-                                <div className="absolute left-full top-0 w-48 bg-[#145C72] rounded-r-md shadow-lg border-l-2 border-yellow-400">
+                                <div className="absolute left-full top-0 w-56 bg-[#145C72] rounded-r-md shadow-lg border-l-2 border-yellow-400">
                                   <div className="py-1">
                                     {child.children?.map((subChild) => (
-                                      <button
+                                      <div
                                         key={subChild.id}
-                                        onClick={() => {
-                                          console.log(
-                                            "Sub-child clicked:",
-                                            subChild.label,
-                                            "Route:",
-                                            subChild.route
-                                          );
-                                          if (
-                                            subChild.route &&
-                                            subChild.route.trim() !== ""
-                                          ) {
-                                            console.log(
-                                              "Navigating to sub-child route:",
-                                              subChild.route
-                                            );
-                                            navigate(subChild.route);
-                                            setOpenDropdown(null);
-                                            setOpenSubDropdown(null);
-                                          }
-                                        }}
-                                        className={`block w-full text-left px-4 py-3 text-[16px] font-bold transition-colors duration-200 ${
-                                          isActive(subChild.route)
-                                            ? "bg-yellow-400 text-white "
-                                            : "text-white hover:bg-yellow-300 hover:text-black"
-                                        }`}
+                                        className="relative"
                                       >
-                                        {subChild.label}
-                                      </button>
+                                        <button
+                                          onClick={() =>
+                                            handleSubChildClick(subChild)
+                                          }
+                                          className={`flex items-center justify-between w-full text-left px-4 py-3 text-[16px] font-bold transition-colors duration-200 ${
+                                            isActive(subChild.route)
+                                              ? "bg-yellow-400 text-white"
+                                              : "text-white hover:bg-yellow-300 hover:text-black"
+                                          }`}
+                                        >
+                                          <span>{subChild.label}</span>
+                                          {subChild.hasChildren && (
+                                            <svg
+                                              className={`w-4 h-4 transition-transform duration-200 ${
+                                                openSubSubDropdown ===
+                                                subChild.id
+                                                  ? "rotate-90"
+                                                  : ""
+                                              }`}
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M9 5l7 7-7 7"
+                                              />
+                                            </svg>
+                                          )}
+                                        </button>
+
+                                        {subChild.hasChildren &&
+                                          openSubSubDropdown ===
+                                            subChild.id && (
+                                            <div className="absolute left-full top-0 w-52 bg-[#145C72] rounded-r-md shadow-lg border-l-2 border-yellow-400">
+                                              <div className="py-1">
+                                                {subChild.children?.map(
+                                                  (subSubChild) => (
+                                                    <button
+                                                      key={subSubChild.id}
+                                                      onClick={() => {
+                                                        console.log(
+                                                          "Sub-sub-child clicked:",
+                                                          subSubChild.label,
+                                                          "Route:",
+                                                          subSubChild.route
+                                                        );
+                                                        if (
+                                                          subSubChild.route &&
+                                                          subSubChild.route.trim() !==
+                                                            ""
+                                                        ) {
+                                                          console.log(
+                                                            "Navigating to sub-sub-child route:",
+                                                            subSubChild.route
+                                                          );
+                                                          navigate(
+                                                            subSubChild.route
+                                                          );
+                                                          setOpenDropdown(null);
+                                                          setOpenSubDropdown(
+                                                            null
+                                                          );
+                                                          setOpenSubSubDropdown(
+                                                            null
+                                                          );
+                                                        }
+                                                      }}
+                                                      className={`block w-full text-left px-4 py-3 text-[16px] font-bold transition-colors duration-200 ${
+                                                        isActive(
+                                                          subSubChild.route
+                                                        )
+                                                          ? "bg-yellow-400 text-white"
+                                                          : "text-white hover:bg-yellow-300 hover:text-black"
+                                                      }`}
+                                                    >
+                                                      {subSubChild.label}
+                                                    </button>
+                                                  )
+                                                )}
+                                              </div>
+                                            </div>
+                                          )}
+                                      </div>
                                     ))}
                                   </div>
                                 </div>
