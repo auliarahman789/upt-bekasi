@@ -58,15 +58,15 @@ const AnggaranPage: React.FC = () => {
 
   // Mock data for Anggaran Operasi
   const anggaranOperasiSemester1: AnggaranOperasiData[] = [
-    { name: "POS 5.2", PAGU: 100, REALISASI: 50 },
-    { name: "POS 5.3", PAGU: 100, REALISASI: 50 },
-    { name: "POS 5.4", PAGU: 100, REALISASI: 50 },
+    { name: "POS 52", PAGU: 100, REALISASI: 50 },
+    { name: "POS 53", PAGU: 100, REALISASI: 50 },
+    { name: "POS 54", PAGU: 100, REALISASI: 50 },
   ];
 
   const anggaranOperasiSemester2: AnggaranOperasiData[] = [
-    { name: "POS 5.2", PAGU: 80, REALISASI: 65 },
-    { name: "POS 5.3", PAGU: 90, REALISASI: 70 },
-    { name: "POS 5.4", PAGU: 85, REALISASI: 60 },
+    { name: "POS 52", PAGU: 80, REALISASI: 65 },
+    { name: "POS 53", PAGU: 90, REALISASI: 70 },
+    { name: "POS 54", PAGU: 85, REALISASI: 60 },
   ];
 
   // Mock data for Investasi
