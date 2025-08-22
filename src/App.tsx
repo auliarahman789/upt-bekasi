@@ -16,6 +16,7 @@ import LevelHSSEPage from "./pages/Monitoring/HSSE/LevelHSSEPage";
 import PeralatanDanSaranaPage from "./pages/Monitoring/HSSE/PeralatanDanSaranaPage";
 import PersentasiAnomaliPage from "./pages/Performance/PersentasiAnomaliPage";
 import AdkonPage from "./pages/Monitoring/Konstruksi/AdkonPage";
+import AnggaranPage from "./pages/Monitoring/AnggaranPage";
 
 // Main App Content Component (needs to be inside Router to use hooks)
 function AppContent() {
@@ -130,7 +131,6 @@ function AppContent() {
           </>
         }
       />
-
       <Route
         path="/performance/rekapanomali"
         element={
@@ -149,7 +149,6 @@ function AppContent() {
           </>
         }
       />
-
       <Route
         path="/kinerja/upt"
         element={
@@ -198,16 +197,13 @@ function AppContent() {
           </>
         }
       />
+      // In your routing file
       <Route
         path="/monitoring/anggaran"
         element={
           <>
             <PageTitle title="UPT Bekasi - Anggaran" />
-            {/* <AnggaranPage /> */}
-            <div className="p-8">
-              <h1 className="text-2xl font-bold">Anggaran Page</h1>
-              <p>Current route: {currentRoute}</p>
-            </div>
+            <AnggaranPage />
           </>
         }
       />
