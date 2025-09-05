@@ -1,5 +1,4 @@
-// AnggaranPage.tsx
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -7,18 +6,29 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
-  TooltipProps,
+  Cell,
   LabelList,
 } from "recharts";
 import DefaultLayout from "../../layout/DefaultLayout";
 
-// Type definitions
-interface AnggaranOperasiData {
-  name: string;
-  PAGU: number;
-  REALISASI: number;
+interface RawData {
+  date: string; // format: YYYY-MM-DD
+  percentage: number;
+}
+
+interface CategoryData {
+  id: string;
+  title: string;
+  number: string;
+  skkoNumber: string;
+  rawData: RawData[];
+}
+
+interface MonthlyData {
+  month: string;
+  percentage: number;
+  color: string;
 }
 
 interface InvestasiData {
@@ -28,196 +38,143 @@ interface InvestasiData {
   "AKI TERBAYAR": number;
 }
 
-interface TabButtonProps {
-  id: string;
-  label: string;
-  isActive: boolean;
-  onClick: (id: string) => void;
-}
-
-interface ChartCardProps {
-  title: string;
-  children: React.ReactNode;
-  icon?: string;
-}
-
-interface CustomTooltipProps extends TooltipProps<number, string> {
-  active?: boolean;
-  payload?: Array<{
-    dataKey: string;
-    value: number;
-    color: string;
-  }>;
-  label?: string;
-}
-
 type TabType = "anggaran-operasi" | "investasi";
+
+const monthNames = [
+  "Januari",
+  "Februari",
+  "Maret",
+  "April",
+  "Mei",
+  "Juni",
+  "Juli",
+  "Agustus",
+  "September",
+  "Oktober",
+  "November",
+  "Desember",
+];
+
+const monthColors: Record<string, string> = {
+  Jan: "#EF4444",
+  Feb: "#F97316",
+  Mar: "#14B8A6",
+  Apr: "#22C55E",
+  Mei: "#EC4899",
+  Jun: "#0891B2",
+  Jul: "#EAB308",
+  Ags: "#374151",
+  Sep: "#9CA3AF",
+  Okt: "#16A34A",
+  Nov: "#84CC16",
+  Des: "#C084FC",
+};
+
+// mock raw data with random percentages
+const generateMockRawData = (): RawData[] => {
+  const data: RawData[] = [];
+  for (let m = 1; m <= 12; m++) {
+    const entries = Math.floor(Math.random() * 3) + 1; // 1-3 entries per month
+    for (let e = 0; e < entries; e++) {
+      const day = Math.floor(Math.random() * 28) + 1;
+      data.push({
+        date: `2025-${String(m).padStart(2, "0")}-${String(day).padStart(
+          2,
+          "0"
+        )}`,
+        percentage: Math.floor(Math.random() * 100),
+      });
+    }
+  }
+  return data;
+};
+
+const anggaranOperasiData: CategoryData[] = [
+  {
+    id: "kepegawaian",
+    title: "POS KEPEGAWAIAN",
+    number: "1",
+    skkoNumber: "00000000",
+    rawData: generateMockRawData(),
+  },
+  {
+    id: "pemeliharaan",
+    title: "POS PEMELIHARAAN",
+    number: "2",
+    skkoNumber: "00000000",
+    rawData: generateMockRawData(),
+  },
+  {
+    id: "administrasi",
+    title: "POS ADMINISTRASI UMUM",
+    number: "3",
+    skkoNumber: "00000000",
+    rawData: generateMockRawData(),
+  },
+];
+
+const investasiData: InvestasiData[] = monthNames.map((m) => ({
+  month: m,
+  "SKKI TERBIT": 100,
+  "AKI TERBAYAR": 50,
+  "AKI TERKONTRAK": 75,
+}));
 
 const AnggaranPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>("anggaran-operasi");
+  const [fromMonth, setFromMonth] = useState<string>("");
+  const [toMonth, setToMonth] = useState<string>("");
 
-  // Mock data for Anggaran Operasi
-  const anggaranOperasiSemester1: AnggaranOperasiData[] = [
-    { name: "POS 52", PAGU: 100, REALISASI: 50 },
-    { name: "POS 53", PAGU: 100, REALISASI: 50 },
-    { name: "POS 54", PAGU: 100, REALISASI: 50 },
-  ];
+  const filterByMonthRange = (data: RawData[]): RawData[] => {
+    if (!fromMonth || !toMonth) return data;
+    const startIndex = monthNames.indexOf(fromMonth);
+    const endIndex = monthNames.indexOf(toMonth);
+    if (startIndex === -1 || endIndex === -1 || startIndex > endIndex)
+      return data;
 
-  const anggaranOperasiSemester2: AnggaranOperasiData[] = [
-    { name: "POS 52", PAGU: 80, REALISASI: 65 },
-    { name: "POS 53", PAGU: 90, REALISASI: 70 },
-    { name: "POS 54", PAGU: 85, REALISASI: 60 },
-  ];
-
-  // Mock data for Investasi
-  const investasiData: InvestasiData[] = [
-    {
-      month: "JANUARI",
-      "SKKI TERBIT": 100,
-      "AKI TERKONTRAK": 75,
-      "AKI TERBAYAR": 50,
-    },
-    {
-      month: "FEBRUARI",
-      "SKKI TERBIT": 100,
-      "AKI TERBAYAR": 50,
-      "AKI TERKONTRAK": 75,
-    },
-    {
-      month: "MARET",
-      "SKKI TERBIT": 100,
-      "AKI TERBAYAR": 50,
-      "AKI TERKONTRAK": 75,
-    },
-    {
-      month: "APRIL",
-      "SKKI TERBIT": 100,
-      "AKI TERBAYAR": 50,
-      "AKI TERKONTRAK": 75,
-    },
-    {
-      month: "MEI",
-      "SKKI TERBIT": 100,
-      "AKI TERBAYAR": 50,
-      "AKI TERKONTRAK": 75,
-    },
-    {
-      month: "JUNI",
-      "SKKI TERBIT": 100,
-      "AKI TERBAYAR": 50,
-      "AKI TERKONTRAK": 75,
-    },
-    {
-      month: "JULI",
-      "SKKI TERBIT": 100,
-      "AKI TERBAYAR": 50,
-      "AKI TERKONTRAK": 75,
-    },
-    {
-      month: "AGUSTUS",
-      "SKKI TERBIT": 100,
-      "AKI TERBAYAR": 50,
-      "AKI TERKONTRAK": 75,
-    },
-    {
-      month: "SEPTEMBER",
-      "SKKI TERBIT": 100,
-      "AKI TERBAYAR": 50,
-      "AKI TERKONTRAK": 75,
-    },
-    {
-      month: "OKTOBER",
-      "SKKI TERBIT": 100,
-      "AKI TERBAYAR": 50,
-      "AKI TERKONTRAK": 75,
-    },
-    {
-      month: "NOVEMBER",
-      "SKKI TERBIT": 100,
-      "AKI TERBAYAR": 50,
-      "AKI TERKONTRAK": 75,
-    },
-    {
-      month: "DESEMBER",
-      "SKKI TERBIT": 100,
-      "AKI TERBAYAR": 50,
-      "AKI TERKONTRAK": 75,
-    },
-  ];
-
-  const TabButton: React.FC<TabButtonProps> = ({
-    id,
-    label,
-    isActive,
-    onClick,
-  }) => (
-    <button
-      onClick={() => onClick(id)}
-      className={`px-4 py-2 rounded-full font-medium text-sm transition-colors ${
-        isActive
-          ? "bg-[#145C72] text-white"
-          : "bg-white border-1 border-[#179FB7] text-[#179FB7] hover:bg-gray-200"
-      }`}
-    >
-      {label}
-    </button>
-  );
-
-  const ChartCard: React.FC<ChartCardProps> = ({ title, children }) => (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <h3 className="text-base font-semibold text-gray-800 uppercase tracking-wide flex gap-2">
-          <img src="/TowerAdkon.svg"></img> {title}
-        </h3>
-      </div>
-      <div className="h-96">{children}</div>
-    </div>
-  );
-
-  const CustomTooltip: React.FC<CustomTooltipProps> = ({
-    active,
-    payload,
-    label,
-  }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-medium text-gray-900 mb-1">{`${label}`}</p>
-          {payload.map((entry, index) => (
-            <p key={index} style={{ color: entry.color }} className="text-sm">
-              {`${entry.dataKey}: ${entry.value}%`}
-            </p>
-          ))}
-        </div>
-      );
-    }
-    return null;
+    return data.filter((d) => {
+      const monthIdx = parseInt(d.date.split("-")[1], 10) - 1;
+      return monthIdx >= startIndex && monthIdx <= endIndex;
+    });
   };
 
-  // Custom label component for bars
-  const renderCustomizedLabel = (props: any) => {
-    const { x, y, width, value } = props;
-    return (
-      <text
-        x={x + width / 2}
-        y={y - 5}
-        fill="#374151"
-        textAnchor="middle"
-        fontSize="12"
-        fontWeight="500"
-      >
-        {`${value}%`}
-      </text>
-    );
+  const aggregateMonthlyData = (raw: RawData[]): MonthlyData[] => {
+    const grouped: Record<string, number[]> = {};
+    raw.forEach((d) => {
+      const monthIdx = parseInt(d.date.split("-")[1], 10) - 1;
+      const shortMonth = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "Mei",
+        "Jun",
+        "Jul",
+        "Ags",
+        "Sep",
+        "Okt",
+        "Nov",
+        "Des",
+      ][monthIdx];
+      if (!grouped[shortMonth]) grouped[shortMonth] = [];
+      grouped[shortMonth].push(d.percentage);
+    });
+
+    return Object.entries(grouped).map(([month, arr]) => ({
+      month,
+      percentage: Math.round(arr.reduce((a, b) => a + b, 0) / arr.length),
+      color: monthColors[month],
+    }));
   };
 
-  const formatYAxisTick = (value: number): string => `${value}%`;
+  const filteredData = useMemo(() => {
+    return anggaranOperasiData.map((cat) => ({
+      ...cat,
+      data: aggregateMonthlyData(filterByMonthRange(cat.rawData)),
+    }));
+  }, [fromMonth, toMonth]);
 
-  const handleTabChange = (tabId: string): void => {
-    setActiveTab(tabId as TabType);
-  };
-  // Add this custom legend component before your main component
-  const CustomLegend = ({}: any) => {
+  const CustomLegend = () => {
     const orderedPayload = [
       { value: "SKKI TERBIT", color: "#B40404" },
       { value: "AKI TERBAYAR", color: "#E78700" },
@@ -226,7 +183,7 @@ const AnggaranPage: React.FC = () => {
 
     return (
       <div className="flex justify-start items-center gap-6 mt-5">
-        {orderedPayload.map((entry, index) => (
+        {orderedPayload.map((entry, index: number) => (
           <div key={index} className="flex items-center gap-2">
             <div className="w-3 h-3" style={{ backgroundColor: entry.color }} />
             <span className="text-sm text-gray-700">{entry.value}</span>
@@ -235,252 +192,233 @@ const AnggaranPage: React.FC = () => {
       </div>
     );
   };
+
   return (
     <DefaultLayout>
       <div className="p-8 bg-gray-50 min-h-screen">
-        <div className="mx-auto">
-          {/* Header */}
-
-          {/* Tab Navigation */}
-          <div className="flex gap-1 ">
-            <TabButton
-              id="anggaran-operasi"
-              label="ANGGARAN OPERASI"
-              isActive={activeTab === "anggaran-operasi"}
-              onClick={handleTabChange}
-            />
-            <TabButton
-              id="investasi"
-              label="INVESTASI"
-              isActive={activeTab === "investasi"}
-              onClick={handleTabChange}
-            />
+        <div className="mx-auto max-w-full">
+          <div className="flex gap-2 mb-8">
+            <button
+              onClick={() => setActiveTab("anggaran-operasi")}
+              className={`px-6 py-3 rounded-full font-medium text-sm transition-colors ${
+                activeTab === "anggaran-operasi"
+                  ? "bg-[#145C72] text-white"
+                  : "bg-white border border-[#179FB7] text-[#179FB7] hover:bg-gray-100"
+              }`}
+            >
+              ANGGARAN OPERASI
+            </button>
+            <button
+              onClick={() => setActiveTab("investasi")}
+              className={`px-6 py-3 rounded-full font-medium text-sm transition-colors ${
+                activeTab === "investasi"
+                  ? "bg-[#145C72] text-white"
+                  : "bg-white border border-[#179FB7] text-[#179FB7] hover:bg-gray-100"
+              }`}
+            >
+              INVESTASI
+            </button>
           </div>
+
           <div className="mb-8">
-            {activeTab === "anggaran-operasi" ? (
-              <h1 className="text-3xl font-bold text-[#155C72] mb-2 uppercase text-center">
-                ANGGARAN OPERASI
-              </h1>
-            ) : (
-              <h1 className="text-3xl font-bold text-[#155C72] mb-2 uppercase text-center">
-                INVESTASI
-              </h1>
-            )}
+            <h1 className="text-2xl font-bold text-[#145C72] text-center uppercase">
+              {activeTab === "anggaran-operasi"
+                ? "ANGGARAN OPERASI 2025"
+                : "INVESTASI"}
+            </h1>
           </div>
-          {/* Tab Content */}
+
           {activeTab === "anggaran-operasi" && (
-            <div className="grid grid-cols-1">
-              <ChartCard title="GRAFIK REALISASI ANGGARAN OPERASI" icon="1">
-                <div className="flex gap-8 h-full">
-                  {/* Semester 1 Chart */}
-                  <div className="flex flex-col w-[48%]">
-                    <h4 className="text-sm font-medium text-[#145C72] mb-4 text-center">
-                      SEMESTER 1 (Januari ~ Juni 2025)
-                    </h4>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart
-                        data={anggaranOperasiSemester1}
-                        margin={{ top: 30, right: 30, left: 20, bottom: 20 }}
-                        barCategoryGap="25%"
-                      >
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          stroke="#e5e7eb"
-                          vertical={false}
-                        />
-                        <XAxis
-                          dataKey="name"
-                          axisLine={false}
-                          tickLine={false}
-                          tick={{
-                            fontSize: 12,
-                            fill: "#6b7280",
-                            fontWeight: 500,
-                          }}
-                        />
-                        <YAxis
-                          domain={[0, 100]}
-                          ticks={[0, 20, 40, 60, 80, 100]}
-                          tickFormatter={formatYAxisTick}
-                          axisLine={false}
-                          tickLine={false}
-                          tick={{ fontSize: 12, fill: "#6b7280" }}
-                        />
-                        <Tooltip content={<CustomTooltip />} />
+            <div>
+              <div className="flex items-center justify-between mb-3 rounded-2xl shadow-2xl p-2 bg-white">
+                <div className="flex items-center gap-4 ">
+                  <span className="text-sm text-gray-600">Dari</span>
+                  <select
+                    value={fromMonth}
+                    onChange={(e) => setFromMonth(e.target.value)}
+                    className="px-4 py-2 border rounded-full text-sm"
+                  >
+                    <option value="">Pilih Bulan</option>
+                    {[
+                      "Jan",
+                      "Feb",
+                      "Mar",
+                      "Apr",
+                      "Mei",
+                      "Jun",
+                      "Jul",
+                      "Ags",
+                      "Sep",
+                      "Okt",
+                      "Nov",
+                      "Des",
+                    ].map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
 
-                        <Bar
-                          dataKey="PAGU"
-                          fill="#374151"
-                          radius={[0, 0, 0, 0]}
-                          barSize={30}
-                        >
-                          <LabelList
-                            dataKey="PAGU"
-                            content={renderCustomizedLabel}
-                          />
-                        </Bar>
-                        <Bar
-                          dataKey="REALISASI"
-                          fill="#0891b2"
-                          radius={[0, 0, 0, 0]}
-                          barSize={30}
-                        >
-                          <LabelList
-                            dataKey="REALISASI"
-                            content={renderCustomizedLabel}
-                          />
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="flex flex-col justify-center gap-2">
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 bg-[#145C72] rounded-xs"></div>
-                      <p>PAGU</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 bg-[#179FB7] rounded-xs"></div>
-                      <p>REALISASI</p>
-                    </div>
-                  </div>
-                  {/* Semester 2 Chart */}
-                  <div className="flex flex-col w-[48%]">
-                    <h4 className="text-sm font-medium text-[#145C72] mb-4 text-center">
-                      SEMESTER 2 (Januari ~ Desember)
-                    </h4>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart
-                        data={anggaranOperasiSemester2}
-                        margin={{ top: 30, right: 30, left: 20, bottom: 20 }}
-                        barCategoryGap="25%"
-                      >
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          stroke="#e5e7eb"
-                          vertical={false}
-                        />
-                        <XAxis
-                          dataKey="name"
-                          axisLine={false}
-                          tickLine={false}
-                          tick={{
-                            fontSize: 12,
-                            fill: "#6b7280",
-                            fontWeight: 500,
-                          }}
-                        />
-                        <YAxis
-                          domain={[0, 100]}
-                          ticks={[0, 20, 40, 60, 80, 100]}
-                          tickFormatter={formatYAxisTick}
-                          axisLine={false}
-                          tickLine={false}
-                          tick={{ fontSize: 12, fill: "#6b7280" }}
-                        />
-                        <Tooltip content={<CustomTooltip />} />
-
-                        <Bar
-                          dataKey="PAGU"
-                          fill="#374151"
-                          radius={[0, 0, 0, 0]}
-                          barSize={30}
-                        >
-                          <LabelList
-                            dataKey="PAGU"
-                            content={renderCustomizedLabel}
-                          />
-                        </Bar>
-                        <Bar
-                          dataKey="REALISASI"
-                          fill="#0891b2"
-                          radius={[0, 0, 0, 0]}
-                          barSize={30}
-                        >
-                          <LabelList
-                            dataKey="REALISASI"
-                            content={renderCustomizedLabel}
-                          />
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
+                  <span className="text-sm text-gray-600">Sampai</span>
+                  <select
+                    value={toMonth}
+                    onChange={(e) => setToMonth(e.target.value)}
+                    className="px-4 py-2 border rounded-full text-sm"
+                  >
+                    <option value="">Pilih Bulan</option>
+                    {[
+                      "Jan",
+                      "Feb",
+                      "Mar",
+                      "Apr",
+                      "Mei",
+                      "Jun",
+                      "Jul",
+                      "Ags",
+                      "Sep",
+                      "Okt",
+                      "Nov",
+                      "Des",
+                    ].map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => {
+                      setFromMonth("");
+                      setToMonth("");
+                    }}
+                    className="px-4 py-2 bg-[#145C72] text-white rounded-full hover:bg-[#134a5e] text-sm"
+                  >
+                    RESET FILTER
+                  </button>
                 </div>
-              </ChartCard>
+              </div>
+
+              <div className="grid grid-cols-3 gap-6">
+                {filteredData.map((cat) => (
+                  <div
+                    key={cat.id}
+                    className="bg-white rounded-2xl shadow-sm border p-4"
+                  >
+                    <h3 className="text-sm font-semibold text-[#145C72] uppercase mb-2">
+                      {cat.title}
+                    </h3>
+                    <p className="text-xs text-gray-500 mb-4">
+                      No. SKKO: {cat.skkoNumber}
+                    </p>
+                    <div className="h-96">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={cat.data}
+                          layout="vertical"
+                          margin={{ top: 5, right: 60, left: 30, bottom: 5 }}
+                        >
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            stroke="#e5e7eb"
+                          />
+                          <XAxis type="number" domain={[0, 100]} hide />
+                          <YAxis type="category" dataKey="month" width={30} />
+                          <Tooltip />
+                          <Bar dataKey="percentage">
+                            <LabelList
+                              dataKey="percentage"
+                              position="right"
+                              formatter={(label: any) => `${label}%`}
+                            />
+                            {cat.data.map((d, i) => (
+                              <Cell key={i} fill={d.color} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
           {activeTab === "investasi" && (
             <div className="grid grid-cols-1 gap-8">
-              <ChartCard title="GRAFIK INVESTASI" icon="3">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={investasiData}
-                    margin={{ top: 30, right: 30, left: 20, bottom: 20 }}
-                    barCategoryGap="5%"
-                  >
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="#e5e7eb"
-                      vertical={false}
-                    />
-                    <XAxis
-                      dataKey="month"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 10, fill: "#6b7280", fontWeight: 500 }}
-                      angle={0}
-                      textAnchor="middle"
-                      interval={0}
-                    />
-                    <YAxis
-                      domain={[0, 100]}
-                      ticks={[0, 20, 40, 60, 80, 100]}
-                      tickFormatter={formatYAxisTick}
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 12, fill: "#6b7280" }}
-                    />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend
-                      content={<CustomLegend />}
-                      wrapperStyle={{ paddingTop: "20px" }}
-                    />
-                    <Bar
-                      dataKey="SKKI TERBIT"
-                      fill="#B40404"
-                      radius={[0, 0, 0, 0]}
-                      barSize={20}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <h3 className="text-base font-semibold text-gray-800 uppercase tracking-wide flex gap-2">
+                    <img src="/TowerAdkon.svg" alt="tower" /> GRAFIK INVESTASI
+                  </h3>
+                </div>
+                <div className="h-96">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={investasiData}
+                      margin={{ top: 30, right: 30, left: 20, bottom: 20 }}
+                      barCategoryGap="5%"
                     >
-                      <LabelList
-                        dataKey="SKKI TERBIT"
-                        content={renderCustomizedLabel}
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="#e5e7eb"
+                        vertical={false}
                       />
-                    </Bar>
-                    <Bar
-                      dataKey="AKI TERBAYAR"
-                      fill="#E78700"
-                      radius={[0, 0, 0, 0]}
-                      barSize={20}
-                    >
-                      <LabelList
-                        dataKey="AKI TERBAYAR"
-                        content={renderCustomizedLabel}
+                      <XAxis
+                        dataKey="month"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{
+                          fontSize: 10,
+                          fill: "#6b7280",
+                          fontWeight: 500,
+                        }}
+                        interval={0}
                       />
-                    </Bar>
-                    <Bar
-                      dataKey="AKI TERKONTRAK"
-                      fill="#179FB7"
-                      radius={[0, 0, 0, 0]}
-                      barSize={20}
-                    >
-                      <LabelList
+                      <YAxis
+                        domain={[0, 100]}
+                        ticks={[0, 20, 40, 60, 80, 100]}
+                        tickFormatter={(value: number) => `${value}%`}
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 12, fill: "#6b7280" }}
+                      />
+                      <Tooltip
+                        content={({ active, payload, label }) => {
+                          if (active && payload && payload.length) {
+                            return (
+                              <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+                                <p className="font-medium text-gray-800 text-sm mb-2">
+                                  {label}
+                                </p>
+                                {payload.map((entry: any, index: number) => (
+                                  <p
+                                    key={index}
+                                    className="text-sm flex items-center justify-between"
+                                    style={{ color: entry.color }}
+                                  >
+                                    <span>{entry.dataKey}:</span>
+                                    <span className="ml-2 font-medium">
+                                      {entry.value}%
+                                    </span>
+                                  </p>
+                                ))}
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Bar dataKey="SKKI TERBIT" fill="#B40404" barSize={20} />
+                      <Bar dataKey="AKI TERBAYAR" fill="#E78700" barSize={20} />
+                      <Bar
                         dataKey="AKI TERKONTRAK"
-                        content={renderCustomizedLabel}
+                        fill="#179FB7"
+                        barSize={20}
                       />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartCard>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <CustomLegend />
+              </div>
             </div>
           )}
         </div>

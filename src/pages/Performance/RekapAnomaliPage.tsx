@@ -473,115 +473,123 @@ const RekapAnomaliPage = () => {
 
             {/* Main Content */}
             <div className="flex-1 bg-[#F4F4F4] p-4 rounded-lg">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-                {/* Pie Chart */}
-                <div className="bg-white rounded-lg p-6 shadow">
-                  <div className="grid grid-cols-3 items-center ">
-                    {/* Pie Chart */}
-                    <div className="w-full h-64 justify-center items-center col-span-2">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={pieData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={50}
-                            outerRadius={85}
-                            dataKey="value"
-                            startAngle={90}
-                            endAngle={450}
+              {selectedAnomaly == "ALL" && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                  {/* Pie Chart */}
+                  <div className="bg-white rounded-lg p-6 shadow">
+                    <div className="grid grid-cols-3 items-center ">
+                      {/* Pie Chart */}
+                      <div className="w-full h-64 justify-center items-center col-span-2">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={pieData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={50}
+                              outerRadius={85}
+                              dataKey="value"
+                              startAngle={90}
+                              endAngle={450}
+                            >
+                              {pieData.map((entry, index) => (
+                                <Cell
+                                  key={`cell-${index}`}
+                                  fill={entry.color}
+                                />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              formatter={(value, _, props) => [
+                                `${value}% (${props.payload.count} Anomali)`,
+                                props.payload.name,
+                              ]}
+                              labelStyle={{ color: "#145C72" }}
+                              contentStyle={{
+                                backgroundColor: "white",
+                                border: "1px solid #ccc",
+                                borderRadius: "4px",
+                              }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+
+                      {/* Legend with Percentages */}
+                      <div className="flex-1  space-y-2">
+                        {pieData.map((entry, index) => (
+                          <div
+                            style={{
+                              backgroundColor: entry.color,
+                            }}
+                            key={index}
+                            className="flex items-center w-full gap-3 rounded-full"
                           >
-                            {pieData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
+                            <div className="flex items-center gap-2  flex-1 p-1">
+                              <span
+                                className={`text-sm  text-[#145C72] min-w-[35px] text-center bg-white rounded-full`}
+                              >
+                                {entry.value}%
+                              </span>
+                              <span className="text-sm text-white truncate">
+                                {entry.name}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bar Chart */}
+                  <div className=" bg-white rounded-lg p-6 shadow">
+                    <div className="text-[#145C72] mb-4 flex justify-between items-center">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-[#145C72]"></div>
+                          <span className="text-xs">ULTG Bekasi</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-[#179FB7]"></div>
+                          <span className="text-xs">ULTG Cikarang</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={barChartData}>
+                          <XAxis
+                            dataKey="name"
+                            tick={{ fontSize: 10 }}
+                            angle={0}
+                            textAnchor="middle"
+                            height={60}
+                          />
+                          <YAxis tick={{ fontSize: 12 }} />
                           <Tooltip
-                            formatter={(value, _, props) => [
-                              `${value}% (${props.payload.count} Anomali)`,
-                              props.payload.name,
+                            formatter={(value, name) => [
+                              `${value} Anomali`,
+                              name,
                             ]}
-                            labelStyle={{ color: "#145C72" }}
+                            labelFormatter={(label) => `Anomaly Type: ${label}`}
+                            labelStyle={{
+                              color: "#145C72",
+                              fontWeight: "bold",
+                            }}
                             contentStyle={{
                               backgroundColor: "white",
                               border: "1px solid #ccc",
                               borderRadius: "4px",
                             }}
                           />
-                        </PieChart>
+                          <Bar dataKey="BEKASI" fill="#145C72" />
+                          <Bar dataKey="CIKARANG" fill="#179FB7" />
+                        </BarChart>
                       </ResponsiveContainer>
                     </div>
-
-                    {/* Legend with Percentages */}
-                    <div className="flex-1  space-y-2">
-                      {pieData.map((entry, index) => (
-                        <div
-                          style={{
-                            backgroundColor: entry.color,
-                          }}
-                          key={index}
-                          className="flex items-center w-full gap-3 rounded-full"
-                        >
-                          <div className="flex items-center gap-2  flex-1 p-1">
-                            <span
-                              className={`text-sm  text-[#145C72] min-w-[35px] text-center bg-white rounded-full`}
-                            >
-                              {entry.value}%
-                            </span>
-                            <span className="text-sm text-white truncate">
-                              {entry.name}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
                   </div>
                 </div>
-
-                {/* Bar Chart */}
-                <div className=" bg-white rounded-lg p-6 shadow">
-                  <div className="text-[#145C72] mb-4 flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-[#145C72]"></div>
-                        <span className="text-xs">ULTG Bekasi</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-[#179FB7]"></div>
-                        <span className="text-xs">ULTG Cikarang</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={barChartData}>
-                        <XAxis
-                          dataKey="name"
-                          tick={{ fontSize: 10 }}
-                          angle={0}
-                          textAnchor="middle"
-                          height={60}
-                        />
-                        <YAxis tick={{ fontSize: 12 }} />
-                        <Tooltip
-                          formatter={(value, name) => [
-                            `${value} Anomali`,
-                            name,
-                          ]}
-                          labelFormatter={(label) => `Anomaly Type: ${label}`}
-                          labelStyle={{ color: "#145C72", fontWeight: "bold" }}
-                          contentStyle={{
-                            backgroundColor: "white",
-                            border: "1px solid #ccc",
-                            borderRadius: "4px",
-                          }}
-                        />
-                        <Bar dataKey="BEKASI" fill="#145C72" />
-                        <Bar dataKey="CIKARANG" fill="#179FB7" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              </div>
+              )}
 
               {/* Status Bars Section */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
