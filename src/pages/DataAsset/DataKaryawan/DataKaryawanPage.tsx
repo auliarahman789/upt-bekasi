@@ -14,6 +14,7 @@ import {
   Cell,
   LineChart,
   Line,
+  LabelList,
 } from "recharts";
 
 // Types for the API response
@@ -680,8 +681,26 @@ const DataKaryawanPage: React.FC = () => {
                       <XAxis dataKey="unit" tick={{ fontSize: 12 }} />
                       <YAxis />
                       <Tooltip />
-                      <Bar dataKey="FTK" fill={COLORS.green} />
-                      <Bar dataKey="EKSISTING" fill={COLORS.pink} />
+                      <Bar dataKey="FTK" fill={COLORS.green}>
+                        {" "}
+                        <LabelList
+                          dataKey="FTK"
+                          position="insideTop"
+                          fill="#FFFFFF"
+                          formatter={(label: any) => `${label}`}
+                        />
+                        <Cell />
+                      </Bar>
+                      <Bar dataKey="EKSISTING" fill={COLORS.pink}>
+                        {" "}
+                        <LabelList
+                          dataKey="EKSISTING"
+                          position="insideTop"
+                          fill="#FFFFFF"
+                          formatter={(label: any) => `${label}`}
+                        />
+                        <Cell />
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                   <CustomLegend
@@ -719,6 +738,15 @@ const DataKaryawanPage: React.FC = () => {
                     <Bar dataKey="value" fill={COLORS.darkTeal}>
                       {personnelComparisonData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                      <LabelList
+                        dataKey="value"
+                        position="insideTop"
+                        fill="#FFFFFF"
+                        formatter={(label: any) => `${label}`}
+                      />
+                      {personnelComparisonData.map((d, i) => (
+                        <Cell key={i} fill={d.color} />
                       ))}
                     </Bar>
                   </BarChart>
