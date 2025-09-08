@@ -674,7 +674,7 @@ const DataKaryawanPage: React.FC = () => {
                 </div>
 
                 <div className="flex flex-1">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={compositionData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="unit" tick={{ fontSize: 12 }} />
@@ -707,7 +707,7 @@ const DataKaryawanPage: React.FC = () => {
                   </h3>
                 </div>
 
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height={300}>
                   <BarChart
                     data={personnelComparisonData}
                     margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
