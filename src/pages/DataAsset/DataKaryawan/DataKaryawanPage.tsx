@@ -591,7 +591,7 @@ const DataKaryawanPage: React.FC = () => {
             <div className="lg:col-span-5 flex flex-col h-full">
               <div className="bg-white rounded-xl shadow-lg p-6 flex-1 flex flex-col">
                 <div className="flex items-center mb-4">
-                  <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center mr-3">
+                  <div className="w-8 h-8 bg-[#D2F8FF] rounded-full flex items-center justify-center mr-3">
                     <span className="text-teal-600 font-bold">👥</span>
                   </div>
                   <h3 className="text-lg font-semibold text-gray-800">
@@ -666,7 +666,7 @@ const DataKaryawanPage: React.FC = () => {
               {/* Employee Composition - Takes remaining space */}
               <div className="bg-white rounded-xl shadow-lg p-6 mt-4 flex-1 flex flex-col">
                 <div className="flex items-center mb-4">
-                  <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center mr-3">
+                  <div className="w-8 h-8 bg-[#D2F8FF] rounded-full flex items-center justify-center mr-3">
                     <span className="text-teal-600 font-bold">📈</span>
                   </div>
                   <h3 className="text-lg font-semibold text-gray-800">
@@ -718,7 +718,7 @@ const DataKaryawanPage: React.FC = () => {
             <div className="lg:col-span-3 flex flex-col h-full">
               <div className="bg-white rounded-xl shadow-lg p-6 flex-1 flex flex-col">
                 <div className="flex items-center mb-4">
-                  <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center mr-3">
+                  <div className="w-8 h-8 bg-[#D2F8FF] rounded-full flex items-center justify-center mr-3">
                     <span className="text-teal-600 font-bold">📊</span>
                   </div>
                   <h3 className="text-lg font-semibold text-gray-800">
@@ -755,7 +755,7 @@ const DataKaryawanPage: React.FC = () => {
 
               <div className="bg-white rounded-xl shadow-lg p-6 mt-4 flex-1 flex flex-col">
                 <div className="flex items-center mb-4">
-                  <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center mr-3">
+                  <div className="w-8 h-8 bg-[#D2F8FF] rounded-full flex items-center justify-center mr-3">
                     <span className="text-teal-600 font-bold">⏰</span>
                   </div>
                   <h3 className="text-lg font-semibold text-gray-800">
@@ -814,7 +814,7 @@ const DataKaryawanPage: React.FC = () => {
               {/* Gender Distribution */}
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <div className="flex items-center mb-4">
-                  <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center mr-3">
+                  <div className="w-8 h-8 bg-[#D2F8FF] rounded-full flex items-center justify-center mr-3">
                     <span className="text-teal-600 font-bold">👫</span>
                   </div>
                   <h3 className="text-lg font-semibold text-gray-800">
@@ -962,7 +962,7 @@ const DataKaryawanPage: React.FC = () => {
                 {/* Grade Distribution */}
                 <div className="bg-white rounded-xl shadow-lg p-6">
                   <div className="flex items-center mb-4">
-                    <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center mr-3">
+                    <div className="w-8 h-8 bg-[#D2F8FF] rounded-full flex items-center justify-center mr-3">
                       <span className="text-teal-600 font-bold">🎯</span>
                     </div>
                     <h3 className="text-lg font-semibold text-gray-800">
@@ -1021,7 +1021,7 @@ const DataKaryawanPage: React.FC = () => {
                 <div className="bg-lime-100 p-6 rounded-xl shadow-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center mr-3">
+                      <div className="w-8 h-8 bg-[#D2F8FF] rounded-full flex items-center justify-center mr-3">
                         <span className="text-teal-600 font-bold">👴</span>
                       </div>
                       <h3 className="text-lg font-semibold text-gray-800">
