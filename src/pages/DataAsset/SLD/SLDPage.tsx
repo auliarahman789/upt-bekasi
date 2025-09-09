@@ -45,7 +45,6 @@ const SLDPage: React.FC = () => {
         withCredentials: true,
       });
 
-      console.log("Fetched SLD data:", res.data);
       setData(res.data.data || []);
     } catch (error: any) {
       console.log(error);

@@ -149,8 +149,6 @@ const AnggaranPage: React.FC = () => {
         withCredentials: true,
       });
 
-      console.log("Fetched Anggaran data:", res.data);
-
       const convertedData: CategoryData[] = [
         {
           id: "kepegawaian",
