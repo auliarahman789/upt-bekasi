@@ -295,8 +295,8 @@ const AnggaranPage: React.FC = () => {
 
           {activeTab === "anggaran-operasi" && (
             <div>
-              <div className="flex items-center justify-between mb-3 rounded-2xl shadow-2xl p-2 bg-white">
-                <div className="flex items-center gap-4 ">
+              <div className="flex items-center justify-between  mb-3 rounded-2xl shadow-2xl p-2 bg-white">
+                <div className="flex w-full flex-col md:flex-row  items-center justify-center gap-4 md:justify-normal">
                   <span className="text-sm text-gray-600">Dari</span>
                   <select
                     value={fromMonth}
