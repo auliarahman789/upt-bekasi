@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -11,6 +11,7 @@ import {
   LabelList,
 } from "recharts";
 import DefaultLayout from "../../layout/DefaultLayout";
+import axios from "axios";
 
 interface RawData {
   date: string; // format: YYYY-MM-DD
@@ -38,6 +39,21 @@ interface InvestasiData {
   "AKI TERBAYAR": number;
 }
 
+interface ApiResponseItem {
+  bulan: string;
+  sko_1_tahun: string;
+  realisasi_akumulasi: string;
+  presentase: string;
+}
+
+interface ApiResponse {
+  status: string;
+  message: string;
+  pos_kepegawaian: ApiResponseItem[];
+  pos_pemeliharaan: ApiResponseItem[];
+  pos_administrasi_umum: ApiResponseItem[];
+}
+
 type TabType = "anggaran-operasi" | "investasi";
 
 const monthNames = [
@@ -55,6 +71,22 @@ const monthNames = [
   "Desember",
 ];
 
+// Updated short month names to match filter dropdown
+const shortMonthNames = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "Mei",
+  "Jun",
+  "Jul",
+  "Ags",
+  "Sep",
+  "Okt",
+  "Nov",
+  "Des",
+];
+
 const monthColors: Record<string, string> = {
   Jan: "#EF4444",
   Feb: "#F97316",
@@ -70,48 +102,23 @@ const monthColors: Record<string, string> = {
   Des: "#C084FC",
 };
 
-// mock raw data with random percentages
-const generateMockRawData = (): RawData[] => {
-  const data: RawData[] = [];
-  for (let m = 1; m <= 12; m++) {
-    const entries = Math.floor(Math.random() * 3) + 1; // 1-3 entries per month
-    for (let e = 0; e < entries; e++) {
-      const day = Math.floor(Math.random() * 28) + 1;
-      data.push({
-        date: `2025-${String(m).padStart(2, "0")}-${String(day).padStart(
-          2,
-          "0"
-        )}`,
-        percentage: Math.floor(Math.random() * 100),
-      });
-    }
-  }
-  return data;
-};
+// Convert API data to RawData format
+const convertApiDataToRawData = (apiData: ApiResponseItem[]): RawData[] => {
+  return apiData.map((item, index) => {
+    // Parse percentage from string like "4,65%" to number
+    const percentageStr = item.presentase.replace("%", "").replace(",", ".");
+    const percentage = parseFloat(percentageStr) || 0;
 
-const anggaranOperasiData: CategoryData[] = [
-  {
-    id: "kepegawaian",
-    title: "POS KEPEGAWAIAN",
-    number: "1",
-    skkoNumber: "00000000",
-    rawData: generateMockRawData(),
-  },
-  {
-    id: "pemeliharaan",
-    title: "POS PEMELIHARAAN",
-    number: "2",
-    skkoNumber: "00000000",
-    rawData: generateMockRawData(),
-  },
-  {
-    id: "administrasi",
-    title: "POS ADMINISTRASI UMUM",
-    number: "3",
-    skkoNumber: "00000000",
-    rawData: generateMockRawData(),
-  },
-];
+    // Create a date for each month (using day 15 as default)
+    const monthIndex = index + 1;
+    const date = `2025-${String(monthIndex).padStart(2, "0")}-15`;
+
+    return {
+      date,
+      percentage,
+    };
+  });
+};
 
 const investasiData: InvestasiData[] = monthNames.map((m) => ({
   month: m,
@@ -124,13 +131,70 @@ const AnggaranPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>("anggaran-operasi");
   const [fromMonth, setFromMonth] = useState<string>("");
   const [toMonth, setToMonth] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [anggaranOperasiData, setAnggaranOperasiData] = useState<
+    CategoryData[]
+  >([]);
 
+  useEffect(() => {
+    fetchAnggaranData();
+  }, []);
+
+  const fetchAnggaranData = async () => {
+    setLoading(true);
+    const url = `${import.meta.env.VITE_API_LINK_BE}/api/monitoring/anggaran`;
+
+    try {
+      const res = await axios.get<ApiResponse>(url, {
+        withCredentials: true,
+      });
+
+      console.log("Fetched Anggaran data:", res.data);
+
+      const convertedData: CategoryData[] = [
+        {
+          id: "kepegawaian",
+          title: "POS KEPEGAWAIAN",
+          number: "1",
+          skkoNumber: "00000000",
+          rawData: convertApiDataToRawData(res.data.pos_kepegawaian),
+        },
+        {
+          id: "pemeliharaan",
+          title: "POS PEMELIHARAAN",
+          number: "2",
+          skkoNumber: "00000000",
+          rawData: convertApiDataToRawData(res.data.pos_pemeliharaan),
+        },
+        {
+          id: "administrasi",
+          title: "POS ADMINISTRASI UMUM",
+          number: "3",
+          skkoNumber: "00000000",
+          rawData: convertApiDataToRawData(res.data.pos_administrasi_umum),
+        },
+      ];
+
+      setAnggaranOperasiData(convertedData);
+    } catch (error: any) {
+      console.log(error);
+      setAnggaranOperasiData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fixed filter function
   const filterByMonthRange = (data: RawData[]): RawData[] => {
     if (!fromMonth || !toMonth) return data;
-    const startIndex = monthNames.indexOf(fromMonth);
-    const endIndex = monthNames.indexOf(toMonth);
-    if (startIndex === -1 || endIndex === -1 || startIndex > endIndex)
+
+    // Get indices from short month names array
+    const startIndex = shortMonthNames.indexOf(fromMonth);
+    const endIndex = shortMonthNames.indexOf(toMonth);
+
+    if (startIndex === -1 || endIndex === -1 || startIndex > endIndex) {
       return data;
+    }
 
     return data.filter((d) => {
       const monthIdx = parseInt(d.date.split("-")[1], 10) - 1;
@@ -140,22 +204,11 @@ const AnggaranPage: React.FC = () => {
 
   const aggregateMonthlyData = (raw: RawData[]): MonthlyData[] => {
     const grouped: Record<string, number[]> = {};
+
     raw.forEach((d) => {
       const monthIdx = parseInt(d.date.split("-")[1], 10) - 1;
-      const shortMonth = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "Mei",
-        "Jun",
-        "Jul",
-        "Ags",
-        "Sep",
-        "Okt",
-        "Nov",
-        "Des",
-      ][monthIdx];
+      const shortMonth = shortMonthNames[monthIdx];
+
       if (!grouped[shortMonth]) grouped[shortMonth] = [];
       grouped[shortMonth].push(d.percentage);
     });
@@ -172,7 +225,7 @@ const AnggaranPage: React.FC = () => {
       ...cat,
       data: aggregateMonthlyData(filterByMonthRange(cat.rawData)),
     }));
-  }, [fromMonth, toMonth]);
+  }, [fromMonth, toMonth, anggaranOperasiData]);
 
   const CustomLegend = () => {
     const orderedPayload = [
@@ -192,6 +245,20 @@ const AnggaranPage: React.FC = () => {
       </div>
     );
   };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <DefaultLayout>
+        <div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#145C72]"></div>
+            <p className="mt-4 text-[#145C72]">Loading data...</p>
+          </div>
+        </div>
+      </DefaultLayout>
+    );
+  }
 
   return (
     <DefaultLayout>
@@ -239,20 +306,7 @@ const AnggaranPage: React.FC = () => {
                     className="px-4 py-2 border rounded-full text-sm"
                   >
                     <option value="">Pilih Bulan</option>
-                    {[
-                      "Jan",
-                      "Feb",
-                      "Mar",
-                      "Apr",
-                      "Mei",
-                      "Jun",
-                      "Jul",
-                      "Ags",
-                      "Sep",
-                      "Okt",
-                      "Nov",
-                      "Des",
-                    ].map((m) => (
+                    {shortMonthNames.map((m) => (
                       <option key={m} value={m}>
                         {m}
                       </option>
@@ -266,20 +320,7 @@ const AnggaranPage: React.FC = () => {
                     className="px-4 py-2 border rounded-full text-sm"
                   >
                     <option value="">Pilih Bulan</option>
-                    {[
-                      "Jan",
-                      "Feb",
-                      "Mar",
-                      "Apr",
-                      "Mei",
-                      "Jun",
-                      "Jul",
-                      "Ags",
-                      "Sep",
-                      "Okt",
-                      "Nov",
-                      "Des",
-                    ].map((m) => (
+                    {shortMonthNames.map((m) => (
                       <option key={m} value={m}>
                         {m}
                       </option>
@@ -297,48 +338,55 @@ const AnggaranPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-6">
-                {filteredData.map((cat) => (
-                  <div
-                    key={cat.id}
-                    className="bg-white rounded-2xl shadow-sm border p-4"
-                  >
-                    <h3 className="text-sm font-semibold text-[#145C72] uppercase mb-2">
-                      {cat.title}
-                    </h3>
-                    <p className="text-xs text-gray-500 mb-4">
-                      No. SKKO: {cat.skkoNumber}
-                    </p>
-                    <div className="h-96">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart
-                          data={cat.data}
-                          layout="vertical"
-                          margin={{ top: 5, right: 60, left: 30, bottom: 5 }}
-                        >
-                          <CartesianGrid
-                            strokeDasharray="3 3"
-                            stroke="#e5e7eb"
-                          />
-                          <XAxis type="number" domain={[0, 100]} hide />
-                          <YAxis type="category" dataKey="month" width={30} />
-                          <Tooltip />
-                          <Bar dataKey="percentage">
-                            <LabelList
-                              dataKey="percentage"
-                              position="right"
-                              formatter={(label: any) => `${label}%`}
+              {anggaranOperasiData.length > 0 ? (
+                <div className="grid grid-cols-3 gap-6">
+                  {filteredData.map((cat) => (
+                    <div
+                      key={cat.id}
+                      className="bg-white rounded-2xl shadow-sm border p-4"
+                    >
+                      <h3 className="text-sm font-semibold text-[#145C72] uppercase mb-2">
+                        {cat.title}
+                      </h3>
+                      <p className="text-xs text-gray-500 mb-4">
+                        No. SKKO: {cat.skkoNumber}
+                      </p>
+
+                      <div className="h-96">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart
+                            data={cat.data}
+                            layout="vertical"
+                            margin={{ top: 5, right: 60, left: 30, bottom: 5 }}
+                          >
+                            <CartesianGrid
+                              strokeDasharray="3 3"
+                              stroke="#e5e7eb"
                             />
-                            {cat.data.map((d, i) => (
-                              <Cell key={i} fill={d.color} />
-                            ))}
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
+                            <XAxis type="number" domain={[0, 100]} hide />
+                            <YAxis type="category" dataKey="month" width={30} />
+                            <Tooltip />
+                            <Bar dataKey="percentage">
+                              <LabelList
+                                dataKey="percentage"
+                                position="right"
+                                formatter={(label: any) => `${label}%`}
+                              />
+                              {cat.data.map((d, i) => (
+                                <Cell key={i} fill={d.color} />
+                              ))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No data available</p>
+                </div>
+              )}
             </div>
           )}
 

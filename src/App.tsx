@@ -18,6 +18,7 @@ import PersentasiAnomaliPage from "./pages/Performance/PersentasiAnomaliPage";
 import AdkonPage from "./pages/Monitoring/Konstruksi/AdkonPage";
 import AnggaranPage from "./pages/Monitoring/AnggaranPage";
 import DataKaryawanPage from "./pages/DataAsset/DataKaryawan/DataKaryawanPage";
+import SLDPage from "./pages/DataAsset/SLD/SLDPage";
 
 // Main App Content Component (needs to be inside Router to use hooks)
 function AppContent() {
@@ -107,11 +108,7 @@ function AppContent() {
         element={
           <>
             <PageTitle title="UPT Bekasi - SLD" />
-            {/* <SLDPage /> */}
-            <div className="p-8">
-              <h1 className="text-2xl font-bold">SLD Page</h1>
-              <p>Current route: {currentRoute}</p>
-            </div>
+            <SLDPage />
           </>
         }
       />
