@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { X, Search } from "lucide-react";
+import { X, Menu } from "lucide-react";
 
 type TowerData = {
   id: string;
@@ -24,6 +24,11 @@ const PetaTower: React.FC = ({}) => {
   const [selectedTower, setSelectedTower] = useState<TowerData | null>(null);
   const [filteredTowers, setFilteredTowers] = useState<TowerData[]>([]);
 
+  // Mobile responsive states
+  const [isMobile, setIsMobile] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+
   const mapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -38,6 +43,24 @@ const PetaTower: React.FC = ({}) => {
   // Get API credentials from environment
   const apiKey = import.meta.env.VITE_API_LINK_KEY || "";
   const folderId = import.meta.env.VITE_API_LINK_ID || "";
+
+  // Check if mobile on mount and resize
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      // On desktop, always show sidebar
+      if (!mobile) {
+        setShowSidebar(true);
+      } else {
+        setShowSidebar(false);
+      }
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Initialize Leaflet map
   useEffect(() => {
@@ -420,11 +443,10 @@ const PetaTower: React.FC = ({}) => {
     }
   }, [apiKey, folderId]);
 
-  // Apply filters - FIXED VERSION
+  // Apply filters
   useEffect(() => {
     let filtered = [...towers];
 
-    // Search filter - case insensitive and trimmed
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       filtered = filtered.filter((tower) => {
@@ -444,7 +466,6 @@ const PetaTower: React.FC = ({}) => {
       });
     }
 
-    // Voltage filter - fixed logic
     if (voltageFilter.trim()) {
       filtered = filtered.filter((tower) => {
         const voltage = tower.voltage || 0;
@@ -463,7 +484,6 @@ const PetaTower: React.FC = ({}) => {
       });
     }
 
-    // Region filter - exact match with case insensitive
     if (regionFilter.trim()) {
       filtered = filtered.filter(
         (tower) =>
@@ -471,7 +491,6 @@ const PetaTower: React.FC = ({}) => {
       );
     }
 
-    // Status filter - exact match with case insensitive
     if (statusFilter.trim()) {
       filtered = filtered.filter(
         (tower) =>
@@ -504,20 +523,20 @@ const PetaTower: React.FC = ({}) => {
       if (filteredTowers.length === 0) return;
 
       const createTowerIcon = (voltage: number) => {
-        let color = "#22c55e"; // Green for <70kV
+        let color = "#22c55e";
         let size = 20;
-        let iconSvg = "/towerunder70kv.svg"; // Default icon
+        let iconSvg = "/towerunder70kv.svg";
 
         if (voltage >= 500) {
-          color = "#3b82f6"; // Blue for 500kV+
+          color = "#3b82f6";
           size = 24;
           iconSvg = "/tower500kv.svg";
         } else if (voltage >= 150) {
-          color = "#f59e0b"; // Orange for 150-499kV
+          color = "#f59e0b";
           size = 22;
           iconSvg = "/tower150kv.svg";
         } else if (voltage >= 70) {
-          color = "#ef4444"; // Red for 70-149kV
+          color = "#ef4444";
           size = 21;
           iconSvg = "/tower70kv.svg";
         } else {
@@ -558,6 +577,9 @@ const PetaTower: React.FC = ({}) => {
 
           marker.on("click", () => {
             setSelectedTower(tower);
+            if (isMobile) {
+              setShowSidebar(true);
+            }
           });
 
           marker.bindTooltip(
@@ -610,9 +632,8 @@ const PetaTower: React.FC = ({}) => {
     } catch (err) {
       console.error("Error updating markers:", err);
     }
-  }, [filteredTowers]);
+  }, [filteredTowers, isMobile]);
 
-  // Get unique values for filters - FIXED VERSION
   const getUniqueRegions = () => {
     const regions = towers
       .map((t) => t.region)
@@ -631,7 +652,6 @@ const PetaTower: React.FC = ({}) => {
     return statuses;
   };
 
-  // Get tower counts by voltage - FIXED VERSION
   const getTowerCounts = () => {
     const counts = {
       total: filteredTowers.length,
@@ -649,474 +669,564 @@ const PetaTower: React.FC = ({}) => {
 
   const counts = getTowerCounts();
 
-  return (
-    <div className="w-full  min-h-screen  p-4">
-      <div className=" rounded-lg w-full min-h-[550px]  flex flex-col">
-        {/* Main Content */}
-        <div className="flex flex-1 overflow-hidden space-x-2">
-          {/* Sidebar */}
-          <div className="w-80 border-1 border-neutral-200 flex flex-col p-1 rounded-2xl">
-            {selectedTower ? (
-              /* Tower Detail Panel */
-              <div className="p-4 h-full">
-                <div className="bg-white p-1 h-full flex flex-col">
-                  {/* Header with close button */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                      <h3 className="text-sm font-medium text-gray-900">
-                        {selectedTower.locationName}
-                      </h3>
-                    </div>
-                    <button
-                      onClick={() => setSelectedTower(null)}
-                      className="text-gray-400 hover:text-gray-600"
-                    >
-                      <X className="h-4 w-4 rounded-full bg-red-500 text-white font-bold" />
-                    </button>
-                  </div>
+  // Filter Component
+  const FilterComponent = ({ isInSidebar = false }) => (
+    <div className={`space-y-3 ${isInSidebar ? "" : "p-4"}`}>
+      {/* Search Input */}
+      <div>
+        <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+          Cari Tower
+        </label>
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Cari berdasarkan lokasi, unit, gardu..."
+            defaultValue={searchQuery}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                setSearchQuery((e.target as HTMLInputElement).value);
+              }
+            }}
+            className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-full text-sm focus:outline-none bg-[#CDE9ED] focus:ring-2 focus:ring-teal-500"
+          />
 
-                  {/* Tower ID
-                  <div className="mb-3">
-                    <span className="text-xs text-gray-500">
-                      #{selectedTower.id}
-                    </span>
-                  </div> */}
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      </div>
 
-                  {/* Detail Fields */}
-                  <div className="space-y-2 flex-1">
-                    {/* Level Tegangan */}
-                    <div>
-                      <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
-                        Level Tegangan
-                      </label>
-                      <div
-                        style={{
-                          background:
-                            "linear-gradient(to bottom, #15677B, #179FB7)",
-                        }}
-                        className=" text-white px-3 py-2 rounded-full text-sm font-medium"
-                      >
-                        {selectedTower.voltage}kV
-                      </div>
-                    </div>
+      {/* Voltage Filter */}
+      <div>
+        <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+          Level Voltase
+        </label>
+        <select
+          value={voltageFilter}
+          onChange={(e) => setVoltageFilter(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-full text-sm focus:outline-none bg-[#CDE9ED] focus:ring-2 focus:ring-teal-500"
+        >
+          <option value="">Semua Voltase</option>
+          <option value="500+">500kV+ (SUTET)</option>
+          <option value="150-499">150-499kV</option>
+          <option value="70-149">70-149kV</option>
+          <option value="<70">Under 70kV</option>
+        </select>
+      </div>
 
-                    {/* Jenis Tower */}
-                    <div>
-                      <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
-                        Jenis Tower
-                      </label>
-                      <div
-                        style={{
-                          background:
-                            "linear-gradient(to bottom, #15677B, #179FB7)",
-                        }}
-                        className=" text-white px-3 py-2 rounded-full text-sm font-medium"
-                      >
-                        {selectedTower.towerType}
-                      </div>
-                    </div>
+      {/* Region Filter */}
+      <div>
+        <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+          Wilayah
+        </label>
+        <select
+          value={regionFilter}
+          onChange={(e) => setRegionFilter(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-full text-sm focus:outline-none bg-[#CDE9ED] focus:ring-2 focus:ring-teal-500"
+        >
+          <option value="">Semua Wilayah</option>
+          {getUniqueRegions().map((region) => (
+            <option key={region} value={region}>
+              {region}
+            </option>
+          ))}
+        </select>
+      </div>
 
-                    {/* Status */}
-                    <div>
-                      <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
-                        Status
-                      </label>
-                      <div
-                        style={{
-                          background:
-                            "linear-gradient(to bottom, #15677B, #179FB7)",
-                        }}
-                        className=" text-white px-3 py-2 rounded-full text-sm font-medium"
-                      >
-                        {selectedTower.status}
-                      </div>
-                    </div>
+      {/* Status Filter */}
+      <div>
+        <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+          Status
+        </label>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-full text-sm focus:outline-none bg-[#CDE9ED] focus:ring-2 focus:ring-teal-500"
+        >
+          <option value="">Semua Status</option>
+          {getUniqueStatuses().map((status) => (
+            <option key={status} value={status}>
+              {status}
+            </option>
+          ))}
+        </select>
+      </div>
 
-                    {/* Unit */}
-                    <div>
-                      <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
-                        Unit
-                      </label>
-                      <div
-                        style={{
-                          background:
-                            "linear-gradient(to bottom, #15677B, #179FB7)",
-                        }}
-                        className=" text-white px-3 py-2 rounded-full text-sm font-medium"
-                      >
-                        {selectedTower.unitName}
-                      </div>
-                    </div>
-                    {/* Ruas Penghantar */}
-                    <div>
-                      <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
-                        Ruas Penghantar
-                      </label>
-                      <div
-                        style={{
-                          background:
-                            "linear-gradient(to bottom, #15677B, #179FB7)",
-                        }}
-                        className=" text-white px-3 py-2 rounded-full text-sm font-medium"
-                      >
-                        {selectedTower.penghantar}
-                      </div>
-                    </div>
-                    {/* Gardu */}
-                    <div>
-                      <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
-                        Gardu
-                      </label>
-                      <div
-                        style={{
-                          background:
-                            "linear-gradient(to bottom, #15677B, #179FB7)",
-                        }}
-                        className=" text-white px-3 py-2 rounded-full text-sm font-medium"
-                      >
-                        {selectedTower.substation}
-                      </div>
-                    </div>
+      {/* Clear Filters */}
+      <button
+        onClick={() => {
+          setSearchQuery("");
+          setVoltageFilter("");
+          setRegionFilter("");
+          setStatusFilter("");
+        }}
+        className="w-full mt-2 bg-white hover:bg-[#179FB7] hover:text-white text-[#179FB7] py-2 px-4 rounded-full border-2 border-[#179FB7] text-sm font-bold transition-colors"
+      >
+        HAPUS FILTER
+      </button>
+    </div>
+  );
 
-                    {/* Region */}
-                    <div>
-                      <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
-                        Wilayah
-                      </label>
-                      <div
-                        style={{
-                          background:
-                            "linear-gradient(to bottom, #15677B, #179FB7)",
-                        }}
-                        className=" text-white px-3 py-2 rounded-full text-sm font-medium"
-                      >
-                        {selectedTower.region}
-                      </div>
-                    </div>
+  // Sidebar content component
+  const SidebarContent = () => (
+    <>
+      {selectedTower ? (
+        /* Tower Detail Panel */
+        <div className="p-4 h-full z-9999">
+          <div className="bg-white p-1 h-full flex flex-col">
+            {/* Header with close button */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <h3 className="text-sm font-medium text-gray-900">
+                  {selectedTower.locationName}
+                </h3>
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedTower(null);
+                  if (isMobile) {
+                    setShowSidebar(false);
+                  }
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-4 w-4 rounded-full bg-red-500 text-white font-bold" />
+              </button>
+            </div>
 
-                    {/* Koordinat */}
-                    <div>
-                      <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
-                        Koordinat
-                      </label>
-                      <div
-                        style={{
-                          background:
-                            "linear-gradient(to bottom, #15677B, #179FB7)",
-                        }}
-                        className=" text-white px-3 py-2 rounded-full text-sm font-medium"
-                      >
-                        {selectedTower.latitude.toFixed(6)},{" "}
-                        {selectedTower.longitude.toFixed(6)}
-                      </div>
-                    </div>
-                    {/* No Serifikat */}
-                    <div>
-                      <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
-                        Nomor Sertifikat Tower
-                      </label>
-                      <div
-                        style={{
-                          background:
-                            "linear-gradient(to bottom, #15677B, #179FB7)",
-                        }}
-                        className=" text-white px-3 py-2 rounded-full text-sm font-medium"
-                      >
-                        0329847609348678093
-                      </div>
-                    </div>
-                    {/* Luas Tanah */}
-                    <div>
-                      <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
-                        Luas Tanah (M³)
-                      </label>
-
-                      <div
-                        style={{
-                          background:
-                            "linear-gradient(to bottom, #15677B, #179FB7)",
-                        }}
-                        className=" text-white px-3 py-2 rounded-full text-sm font-medium"
-                      >
-                        500000098
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Bottom Button */}
-                  <div className="mt-6">
-                    <button
-                      onClick={() => {
-                        const googleMapsUrl = `https://www.google.com/maps?q=${selectedTower.latitude},${selectedTower.longitude}`;
-                        window.open(googleMapsUrl, "_blank");
-                      }}
-                      style={{
-                        background:
-                          "linear-gradient(to bottom, #15677B, #179FB7)",
-                      }}
-                      className="  flex w-full hover:bg-teal-700 text-white py-2 px-4 rounded-full font-medium transition-colors"
-                    >
-                      BUKA DI GOOGLE MAPS
-                    </button>
-                  </div>
+            {/* Detail Fields */}
+            <div className="space-y-2 flex-1 overflow-y-auto">
+              {/* Level Tegangan */}
+              <div>
+                <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+                  Level Tegangan
+                </label>
+                <div
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                  className=" text-white px-3 py-2 rounded-full text-sm font-medium"
+                >
+                  {selectedTower.voltage}kV
                 </div>
               </div>
-            ) : (
-              /* Legend and Filter Panel */
-              <div className="p-2 space-y-3 flex flex-col h-full">
-                {/* Legend Section */}
-                <div className="space-y-2">
-                  <div
-                    style={{
-                      background:
-                        "linear-gradient(to bottom, #15677B, #179FB7)",
-                    }}
-                    className="bg-white rounded-full p-1 border items-center grid grid-cols-6 space-x-3"
-                  >
-                    <div>
-                      <img src="/jumlahTower.svg"></img>
-                    </div>
-                    <span className="text-[12px] font-semibold text-white col-span-4">
-                      Jumlah
-                    </span>
-                    <div className="bg-white rounded-full flex items-center justify-center py-1">
-                      <span className="text-sm text-[#145C72] font-medium">
-                        {counts.total}
-                      </span>
-                    </div>
-                  </div>
 
-                  <div
-                    style={{
-                      background:
-                        "linear-gradient(to bottom, #15677B, #179FB7)",
-                    }}
-                    className="bg-white rounded-full p-1 border items-center grid grid-cols-6 space-x-3"
-                  >
-                    <div>
-                      <img src="/tower500kv.svg"></img>
-                    </div>
-                    <span className="text-[12px] font-semibold text-white col-span-4">
-                      TOWER SUTET 500+ kV
-                    </span>
-                    <div className="bg-white rounded-full flex items-center justify-center py-1">
-                      <span className="text-sm text-[#145C72] font-medium">
-                        {counts["500+"]}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      background:
-                        "linear-gradient(to bottom, #15677B, #179FB7)",
-                    }}
-                    className="bg-white rounded-full p-1 border items-center grid grid-cols-6 space-x-3"
-                  >
-                    <div>
-                      <img src="/tower150kv.svg"></img>
-                    </div>
-                    <span className="text-[12px] font-semibold text-white col-span-4">
-                      TOWER SUTET 150-499 kV
-                    </span>
-                    <div className="bg-white rounded-full flex items-center justify-center py-1">
-                      <span className="text-sm text-[#145C72] font-medium">
-                        {counts["150-499"]}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      background:
-                        "linear-gradient(to bottom, #15677B, #179FB7)",
-                    }}
-                    className="bg-white rounded-full p-1 border items-center grid grid-cols-6 space-x-3"
-                  >
-                    <div>
-                      <img src="/tower70kv.svg"></img>
-                    </div>
-                    <span className="text-[12px] font-semibold text-white col-span-4">
-                      TOWER SUTET 70-149 kV
-                    </span>
-                    <div className="bg-white rounded-full flex items-center justify-center py-1">
-                      <span className="text-sm text-[#145C72] font-medium">
-                        {counts["70-149"]}
-                      </span>
-                    </div>
-                  </div>
-
-                  {counts["<70"] > 0 && (
-                    <div
-                      style={{
-                        background:
-                          "linear-gradient(to bottom, #15677B, #179FB7)",
-                      }}
-                      className="bg-white rounded-full p-1 border items-center grid grid-cols-6 space-x-3"
-                    >
-                      <div>
-                        <img src="/towerunder70kv.svg"></img>
-                      </div>
-                      <span className="text-[12px] font-semibold text-white col-span-4">
-                        TOWER &lt;70 kV
-                      </span>
-                      <div className="bg-white rounded-full flex items-center justify-center py-1">
-                        <span className="text-sm text-[#145C72] font-medium">
-                          {counts["<70"]}
-                        </span>
-                      </div>
-                    </div>
-                  )}
+              {/* Jenis Tower */}
+              <div>
+                <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+                  Jenis Tower
+                </label>
+                <div
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                  className=" text-white px-3 py-2 rounded-full text-sm font-medium"
+                >
+                  {selectedTower.towerType}
                 </div>
+              </div>
 
-                {/* Filter Section */}
-                <div className=" py-[28px] space-y-2">
-                  <div className="flex items-center space-x-2 mb-3 justify-center">
-                    <span className="text-sm font-bold text-[#145C72]">
-                      FILTER
-                    </span>
-                  </div>
-
-                  {/* Voltage Filter */}
-                  <div>
-                    <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
-                      Level Voltase
-                    </label>
-                    <select
-                      value={voltageFilter}
-                      onChange={(e) => setVoltageFilter(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-full text-sm focus:outline-none bg-[#CDE9ED] focus:ring-2 focus:ring-teal-500"
-                    >
-                      <option value="">Semua Voltase</option>
-                      <option value="500+">500kV+ (SUTET)</option>
-                      <option value="150-499">150-499kV</option>
-                      <option value="70-149">70-149kV</option>
-                      <option value="<70">Under 70kV</option>
-                    </select>
-                  </div>
-
-                  {/* Region Filter */}
-                  <div>
-                    <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
-                      Wilayah
-                    </label>
-                    <select
-                      value={regionFilter}
-                      onChange={(e) => setRegionFilter(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-full text-sm focus:outline-none bg-[#CDE9ED] focus:ring-2 focus:ring-teal-500"
-                    >
-                      <option value="">Semua Wilayah</option>
-                      {getUniqueRegions().map((region) => (
-                        <option key={region} value={region}>
-                          {region}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Status Filter */}
-                  <div>
-                    <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
-                      Status
-                    </label>
-                    <select
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-full text-sm focus:outline-none bg-[#CDE9ED] focus:ring-2 focus:ring-teal-500"
-                    >
-                      <option value="">Semua Status</option>
-                      {getUniqueStatuses().map((status) => (
-                        <option key={status} value={status}>
-                          {status}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Clear Filters */}
-                  <button
-                    onClick={() => {
-                      setSearchQuery("");
-                      setVoltageFilter("");
-                      setRegionFilter("");
-                      setStatusFilter("");
-                    }}
-                    className="w-full mt-2 bg-white hover:bg-[#179FB7] hover:text-white  text-[#179FB7] py-2 px-4 rounded-full border-2 border-[#179FB7] text-sm font-bold transition-colors"
-                  >
-                    HAPUS FILTER
-                  </button>
+              {/* Status */}
+              <div>
+                <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+                  Status
+                </label>
+                <div
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                  className=" text-white px-3 py-2 rounded-full text-sm font-medium"
+                >
+                  {selectedTower.status}
                 </div>
+              </div>
 
-                {/* Loading/Error States */}
-                {isLoading && (
-                  <div className="bg-blue-50 rounded-lg p-3 text-center">
-                    <div className="text-sm text-blue-600 font-medium">
-                      {loadingProgress || "Loading..."}
-                    </div>
-                  </div>
-                )}
+              {/* Unit */}
+              <div>
+                <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+                  Unit
+                </label>
+                <div
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                  className=" text-white px-3 py-2 rounded-full text-sm font-medium"
+                >
+                  {selectedTower.unitName}
+                </div>
+              </div>
 
-                {error && (
-                  <div className="bg-red-50 rounded-lg p-3">
-                    <div className="text-sm text-red-600">{error}</div>
-                    <button
-                      onClick={fetchGoogleDriveFiles}
-                      className="mt-2 text-sm bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded transition-colors"
-                    >
-                      Coba Lagi
-                    </button>
-                  </div>
-                )}
+              {/* Ruas Penghantar */}
+              <div>
+                <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+                  Ruas Penghantar
+                </label>
+                <div
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                  className=" text-white px-3 py-2 rounded-full text-sm font-medium"
+                >
+                  {selectedTower.penghantar}
+                </div>
+              </div>
 
-                {!isLoading && !error && towers.length === 0 && (
-                  <div className="bg-yellow-50 rounded-lg p-3 text-center">
-                    <div className="text-sm text-yellow-600">
-                      Tidak ada data tower. Pastikan API key dan folder ID sudah
-                      dikonfigurasi.
-                    </div>
-                    <button
-                      onClick={fetchGoogleDriveFiles}
-                      className="mt-2 text-sm bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-3 py-1 rounded transition-colors"
-                    >
-                      Muat Data
-                    </button>
-                  </div>
-                )}
+              {/* Gardu */}
+              <div>
+                <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+                  Gardu
+                </label>
+                <div
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                  className=" text-white px-3 py-2 rounded-full text-sm font-medium"
+                >
+                  {selectedTower.substation}
+                </div>
+              </div>
+
+              {/* Region */}
+              <div>
+                <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+                  Wilayah
+                </label>
+                <div
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                  className=" text-white px-3 py-2 rounded-full text-sm font-medium"
+                >
+                  {selectedTower.region}
+                </div>
+              </div>
+
+              {/* Koordinat */}
+              <div>
+                <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+                  Koordinat
+                </label>
+                <div
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                  className=" text-white px-3 py-2 rounded-full text-sm font-medium"
+                >
+                  {selectedTower.latitude.toFixed(6)},{" "}
+                  {selectedTower.longitude.toFixed(6)}
+                </div>
+              </div>
+
+              {/* No Sertifikat */}
+              <div>
+                <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+                  Nomor Sertifikat Tower
+                </label>
+                <div
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                  className=" text-white px-3 py-2 rounded-full text-sm font-medium"
+                >
+                  0329847609348678093
+                </div>
+              </div>
+
+              {/* Luas Tanah */}
+              <div>
+                <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+                  Luas Tanah (M³)
+                </label>
+                <div
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                  className=" text-white px-3 py-2 rounded-full text-sm font-medium"
+                >
+                  500000098
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Button */}
+            <div className="mt-6">
+              <button
+                onClick={() => {
+                  const googleMapsUrl = `https://www.google.com/maps?q=${selectedTower.latitude},${selectedTower.longitude}`;
+                  window.open(googleMapsUrl, "_blank");
+                }}
+                style={{
+                  background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                }}
+                className="flex w-full hover:bg-teal-700 text-white py-2 px-4 rounded-full font-medium transition-colors"
+              >
+                BUKA DI GOOGLE MAPS
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Legend and Filter Panel */
+        <div className="p-2 space-y-3 flex flex-col h-full">
+          {/* Legend Section */}
+          <div className="space-y-2">
+            <div
+              style={{
+                background: "linear-gradient(to bottom, #15677B, #179FB7)",
+              }}
+              className="bg-white rounded-full p-1 border items-center grid grid-cols-6 space-x-3"
+            >
+              <div>
+                <img src="/jumlahTower.svg"></img>
+              </div>
+              <span className="text-[12px] font-semibold text-white col-span-4">
+                Jumlah
+              </span>
+              <div className="bg-white rounded-full flex items-center justify-center py-1">
+                <span className="text-sm text-[#145C72] font-medium">
+                  {counts.total}
+                </span>
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: "linear-gradient(to bottom, #15677B, #179FB7)",
+              }}
+              className="bg-white rounded-full p-1 border items-center grid grid-cols-6 space-x-3"
+            >
+              <div>
+                <img src="/tower500kv.svg"></img>
+              </div>
+              <span className="text-[12px] font-semibold text-white col-span-4">
+                TOWER SUTET 500+ kV
+              </span>
+              <div className="bg-white rounded-full flex items-center justify-center py-1">
+                <span className="text-sm text-[#145C72] font-medium">
+                  {counts["500+"]}
+                </span>
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: "linear-gradient(to bottom, #15677B, #179FB7)",
+              }}
+              className="bg-white rounded-full p-1 border items-center grid grid-cols-6 space-x-3"
+            >
+              <div>
+                <img src="/tower150kv.svg"></img>
+              </div>
+              <span className="text-[12px] font-semibold text-white col-span-4">
+                TOWER SUTET 150-499 kV
+              </span>
+              <div className="bg-white rounded-full flex items-center justify-center py-1">
+                <span className="text-sm text-[#145C72] font-medium">
+                  {counts["150-499"]}
+                </span>
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: "linear-gradient(to bottom, #15677B, #179FB7)",
+              }}
+              className="bg-white rounded-full p-1 border items-center grid grid-cols-6 space-x-3"
+            >
+              <div>
+                <img src="/tower70kv.svg"></img>
+              </div>
+              <span className="text-[12px] font-semibold text-white col-span-4">
+                TOWER SUTET 70-149 kV
+              </span>
+              <div className="bg-white rounded-full flex items-center justify-center py-1">
+                <span className="text-sm text-[#145C72] font-medium">
+                  {counts["70-149"]}
+                </span>
+              </div>
+            </div>
+
+            {counts["<70"] > 0 && (
+              <div
+                style={{
+                  background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                }}
+                className="bg-white rounded-full p-1 border items-center grid grid-cols-6 space-x-3"
+              >
+                <div>
+                  <img src="/towerunder70kv.svg"></img>
+                </div>
+                <span className="text-[12px] font-semibold text-white col-span-4">
+                  TOWER &lt;70 kV
+                </span>
+                <div className="bg-white rounded-full flex items-center justify-center py-1">
+                  <span className="text-sm text-[#145C72] font-medium">
+                    {counts["<70"]}
+                  </span>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Map Container with Search */}
-          <div className="flex-1 relative rounded-2xl overflow-hidden">
-            {/* Map */}
-            <div
-              ref={mapContainerRef}
-              className="w-full h-full bg-gray-100"
-              style={{ minHeight: "550px", maxHeight: "550px" }}
-            />
+          {/* Filter Section in Sidebar */}
+          <div className="py-[28px] space-y-2">
+            <div className="flex items-center space-x-2 mb-3 justify-center">
+              <span className="text-sm font-bold text-[#145C72]">FILTER</span>
+            </div>
+            <FilterComponent isInSidebar={true} />
+          </div>
 
-            {/* Search Bar - positioned on top right of map */}
-            <div className="absolute top-4 right-4 z-[50]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <input
-                  type="text"
-                  placeholder="Cari Tower..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white shadow-lg w-64"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
+          {/* Loading/Error States */}
+          {isLoading && (
+            <div className="bg-blue-50 rounded-lg p-3 text-center">
+              <div className="text-sm text-blue-600 font-medium">
+                {loadingProgress || "Loading..."}
               </div>
             </div>
+          )}
+
+          {error && (
+            <div className="bg-red-50 rounded-lg p-3">
+              <div className="text-sm text-red-600">{error}</div>
+              <button
+                onClick={fetchGoogleDriveFiles}
+                className="mt-2 text-sm bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded transition-colors"
+              >
+                Coba Lagi
+              </button>
+            </div>
+          )}
+
+          {!isLoading && !error && towers.length === 0 && (
+            <div className="bg-yellow-50 rounded-lg p-3 text-center">
+              <div className="text-sm text-yellow-600">
+                Tidak ada data tower. Pastikan API key dan folder ID sudah
+                dikonfigurasi.
+              </div>
+              <button
+                onClick={fetchGoogleDriveFiles}
+                className="mt-2 text-sm bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-3 py-1 rounded transition-colors"
+              >
+                Muat Data
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  );
+
+  return (
+    <div className="w-full min-h-screen p-4">
+      <div className="rounded-lg w-full min-h-[550px] flex flex-col">
+        {/* Mobile Filter Bar - Top of map on mobile */}
+        {isMobile && (
+          <div className="mb-2">
+            <div
+              className={`bg-white rounded-lg shadow-md border border-gray-200 transition-all duration-300 ${
+                showFilters ? "mb-2" : ""
+              }`}
+            >
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="w-full p-3 flex items-center justify-between text-left"
+              >
+                <span className="text-sm font-bold text-[#145C72]">
+                  FILTER & PENCARIAN
+                </span>
+                <div
+                  className={`transform transition-transform ${
+                    showFilters ? "rotate-180" : ""
+                  }`}
+                >
+                  <svg
+                    className="w-5 h-5 text-[#145C72]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </div>
+              </button>
+
+              {showFilters && (
+                <div className="border-t border-gray-200">
+                  <FilterComponent />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Main Content */}
+        <div
+          className={`flex flex-1 overflow-hidden ${
+            isMobile ? "flex-col" : "flex-row space-x-2"
+          }`}
+        >
+          {/* Desktop Sidebar - Always visible on desktop */}
+          {!isMobile && (
+            <div className="w-80 border-1 border-neutral-200 flex flex-col p-1 rounded-2xl">
+              <SidebarContent />
+            </div>
+          )}
+
+          {/* Mobile Sidebar - Overlay */}
+          {isMobile && showSidebar && (
+            <div className="fixed inset-0 z-[60] bg-black bg-opacity-50 flex">
+              <div className="bg-white w-80 h-full overflow-y-auto border-r border-neutral-200 rounded-r-2xl">
+                <SidebarContent />
+              </div>
+              <div className="flex-1" onClick={() => setShowSidebar(false)} />
+            </div>
+          )}
+
+          {/* Map Container */}
+          <div
+            className={`${
+              isMobile ? "flex-1" : "flex-1"
+            } relative rounded-2xl overflow-hidden`}
+          >
+            {/* Map */}
+
+            <div
+              ref={mapContainerRef}
+              className={
+                isMobile
+                  ? selectedTower
+                    ? "hidden"
+                    : "w-full h-full bg-gray-100"
+                  : "w-full h-full bg-gray-100"
+              }
+              style={{
+                minHeight: "550px",
+                maxHeight: isMobile ? "calc(100vh - 200px)" : "550px",
+              }}
+            />
+
+            {/* Mobile Menu Button - Only menu button on mobile now */}
+            {isMobile && (
+              <div className="absolute top-4 left-4 z-[50]">
+                <button
+                  onClick={() => setShowSidebar(true)}
+                  className="bg-white hover:bg-gray-50 text-gray-700 p-3 rounded-full shadow-lg border border-gray-200"
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import DefaultLayout from "../../../layout/DefaultLayout";
 
@@ -237,7 +237,49 @@ const JadwalK3: React.FC = () => {
       </DefaultLayout>
     );
   }
+  const CustomDateInput: React.FC<{
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    placeholder?: string;
+  }> = ({ label, value, onChange, placeholder = "dd/mm/yyyy" }) => {
+    const inputRef = useRef<HTMLInputElement>(null);
 
+    const handleClick = () => {
+      if (inputRef.current) {
+        inputRef.current.showPicker?.();
+      }
+    };
+
+    return (
+      <div className="flex flex-col justify-between">
+        <label className="block text-xs md:text-sm font-semibold text-[#145C72] mb-2">
+          {label}
+        </label>
+        <div className="relative">
+          <input
+            ref={inputRef}
+            type="date"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onClick={handleClick}
+            className="w-full px-3 py-2 md:px-4 md:py-3 border-2 border-[#179FB7]/30 rounded-xl text-xs md:text-sm bg-white shadow-sm transition-all duration-200 cursor-pointer
+            focus:outline-none focus:border-[#145C72] focus:ring-2 focus:ring-[#145C72]/20
+            hover:border-[#179FB7]/50
+            date-input"
+            placeholder={placeholder}
+          />
+          {/* Custom calendar icon for better visibility */}
+          <div
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400"
+            onClick={handleClick}
+          >
+            📅
+          </div>
+        </div>
+      </div>
+    );
+  };
   return (
     <DefaultLayout>
       <div className="min-h-screen bg-gray-50 p-2 md:p-6">
@@ -265,31 +307,19 @@ const JadwalK3: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                   {/* Date Start Filter */}
                   <div className="flex flex-col justify-between">
-                    <label className="block text-xs md:text-sm font-semibold text-[#145C72] mb-2">
-                      📅 Tanggal Mulai
-                    </label>
-                    <input
-                      type="date"
+                    <CustomDateInput
+                      label="📅 Tanggal Mulai"
                       value={dateStartFilter}
-                      onChange={(e) => setDateStartFilter(e.target.value)}
-                      className="w-full px-3 py-2 md:px-4 md:py-3 border-2 border-[#179FB7]/30 rounded-xl text-xs md:text-sm bg-white shadow-sm transition-all duration-200 cursor-pointer
-                        focus:outline-none focus:border-[#145C72] focus:ring-2 focus:ring-[#145C72]/20
-                        hover:border-[#179FB7]/50"
+                      onChange={setDateStartFilter}
                     />
                   </div>
 
                   {/* Date End Filter */}
                   <div className="flex flex-col justify-between">
-                    <label className="block text-xs md:text-sm font-semibold text-[#145C72] mb-2">
-                      📅 Tanggal Selesai
-                    </label>
-                    <input
-                      type="date"
+                    <CustomDateInput
+                      label="📅 Tanggal Selesai"
                       value={dateEndFilter}
-                      onChange={(e) => setDateEndFilter(e.target.value)}
-                      className="w-full px-3 py-2 md:px-4 md:py-3 border-2 border-[#179FB7]/30 rounded-xl text-xs md:text-sm bg-white shadow-sm transition-all duration-200 cursor-pointer
-                        focus:outline-none focus:border-[#145C72] focus:ring-2 focus:ring-[#145C72]/20
-                        hover:border-[#179FB7]/50"
+                      onChange={setDateEndFilter}
                     />
                   </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { X, Search } from "lucide-react";
+import { X, Menu } from "lucide-react";
 
 type SubstationData = {
   id: string;
@@ -36,6 +36,11 @@ const PetaGI: React.FC = ({}) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const leafletLoadedRef = useRef(false);
 
+  // Mobile responsive states
+  const [isMobile, setIsMobile] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+
   // Filter states
   const [teganganFilter, setTeganganFilter] = useState<string>("");
   const [uptFilter, setUptFilter] = useState<string>("");
@@ -45,6 +50,17 @@ const PetaGI: React.FC = ({}) => {
   // Fixed sheet ID and GID
   const SHEET_ID = import.meta.env.VITE_API_LINK_SHEEID_PETA_GI || "";
   const GID = import.meta.env.VITE_API_LINK_SHEEGID_PETA_GI || "";
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Initialize Leaflet map
   useEffect(() => {
@@ -238,65 +254,59 @@ const PetaGI: React.FC = ({}) => {
 
     return 0;
   };
+
   const processSubstationData = (rawData: any[]): SubstationData[] => {
-    // Debug: see what columns we have
+    return rawData
+      .filter((row) => {
+        const lat = row["Latitude"] || row["LATITUDE"] || row["Lat"] || "";
+        const lng = row["Longitude"] || row["LONGITUDE"] || row["Long"] || "";
+        const namaGI = row["Nama GI/GIS"] || "";
 
-    return (
-      rawData
-        .filter((row) => {
-          // Try to find the exact column names from your spreadsheet
-          const lat = row["Latitude"] || row["LATITUDE"] || row["Lat"] || "";
-          const lng = row["Longitude"] || row["LONGITUDE"] || row["Long"] || "";
-          const namaGI = row["Nama GI/GIS"] || "";
+        return lat && lng && namaGI;
+      })
+      .map((row, index) => {
+        const latStr = row["Latitude"] || row["LATITUDE"] || row["Lat"] || "";
+        const lngStr =
+          row["Longitude"] || row["LONGITUDE"] || row["Long"] || "";
 
-          return lat && lng && namaGI;
-        })
-        .map((row, index) => {
-          // Use direct column access instead of findColumnValue
-          const latStr = row["Latitude"] || row["LATITUDE"] || row["Lat"] || "";
-          const lngStr =
-            row["Longitude"] || row["LONGITUDE"] || row["Long"] || "";
+        const latitude = parseCoordinate(latStr);
+        const longitude = parseCoordinate(lngStr);
 
-          const latitude = parseCoordinate(latStr);
-          const longitude = parseCoordinate(lngStr);
+        return {
+          id: row["No"] || `substation-${index}`,
+          namaGI: row["Nama GI/GIS"] || "Unknown GI",
+          upt: row["UPT"] || "",
+          jenis: row["Jenis"] || "",
+          tegangan: row["Tegangan"] || "",
+          photo: row["Photo"] || "",
+          sld: row["SLD"] || "",
+          linkSLD: row["Link SLD"] || "",
+          rilisSLD: row["Rilis SLD"] || "",
+          namaTLJargi: row["Nama TL Jargi"] || "",
+          kontak: row["Kontak"] || "",
+          kontakLink: row["Kontak Link"] || "",
+          latitude,
+          longitude,
+          content: row["Content"] || "",
+          pinColor: row["Pin Color"] || "#22c55e",
+        };
+      })
+      .filter((substation) => {
+        const isValidLat =
+          substation.latitude >= -12 && substation.latitude <= 8;
+        const isValidLng =
+          substation.longitude >= 95 && substation.longitude <= 141;
 
-          return {
-            id: row["No"] || `substation-${index}`,
-            namaGI: row["Nama GI/GIS"] || "Unknown GI",
-            upt: row["UPT"] || "",
-            jenis: row["Jenis"] || "",
-            tegangan: row["Tegangan"] || "",
-            photo: row["Photo"] || "",
-            sld: row["SLD"] || "",
-            linkSLD: row["Link SLD"] || "",
-            rilisSLD: row["Rilis SLD"] || "",
-            namaTLJargi: row["Nama TL Jargi"] || "",
-            kontak: row["Kontak"] || "",
-            kontakLink: row["Kontak Link"] || "",
-            latitude,
-            longitude,
-            content: row["Content"] || "",
-            pinColor: row["Pin Color"] || "#22c55e",
-          };
-        })
-        // ... rest of your filtering code
-        .filter((substation) => {
-          const isValidLat =
-            substation.latitude >= -12 && substation.latitude <= 8;
-          const isValidLng =
-            substation.longitude >= 95 && substation.longitude <= 141;
+        const isValid =
+          !isNaN(substation.latitude) &&
+          !isNaN(substation.longitude) &&
+          isValidLat &&
+          isValidLng &&
+          substation.latitude !== 0 &&
+          substation.longitude !== 0;
 
-          const isValid =
-            !isNaN(substation.latitude) &&
-            !isNaN(substation.longitude) &&
-            isValidLat &&
-            isValidLng &&
-            substation.latitude !== 0 &&
-            substation.longitude !== 0;
-
-          return isValid;
-        })
-    );
+        return isValid;
+      });
   };
 
   const fetchGoogleSheetsData = async () => {
@@ -472,6 +482,9 @@ const PetaGI: React.FC = ({}) => {
 
           marker.on("click", () => {
             setSelectedSubstation(substation);
+            if (isMobile) {
+              setShowSidebar(true);
+            }
           });
 
           marker.bindTooltip(
@@ -524,7 +537,7 @@ const PetaGI: React.FC = ({}) => {
     } catch (err) {
       console.error("Error updating markers:", err);
     }
-  }, [filteredSubstations]);
+  }, [filteredSubstations, isMobile]);
 
   // Get unique values for filters
   const getUniqueUPTs = () => {
@@ -588,214 +601,335 @@ const PetaGI: React.FC = ({}) => {
   const counts = getSubstationCounts();
   const uniqueTegangan = getUniqueTegangan();
 
-  return (
-    <div className="w-full min-h-screen p-4">
-      <div className="rounded-lg w-full min-h-[550px] flex flex-col">
-        {/* Main Content */}
-        <div className="flex flex-1 overflow-hidden space-x-2">
-          {/* Sidebar */}
-          <div className="w-80 border-1 border-neutral-200 flex flex-col p-1 rounded-2xl">
-            {selectedSubstation ? (
-              /* Substation Detail Panel */
-              <div className="p-4 h-full">
-                <div className="bg-white p-1 h-full flex flex-col">
-                  {/* Header with close button */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: selectedSubstation.pinColor }}
-                      ></div>
-                      <h3 className="text-sm font-medium text-gray-900">
-                        {selectedSubstation.namaGI}
-                      </h3>
-                    </div>
-                    <button
-                      onClick={() => setSelectedSubstation(null)}
-                      className="text-gray-400 hover:text-gray-600"
-                    >
-                      <X className="h-4 w-4 rounded-full bg-red-500 text-white font-bold" />
-                    </button>
-                  </div>
+  // Filter Component
+  const FilterComponent = ({ isInSidebar = false }) => (
+    <div className={`space-y-3 ${isInSidebar ? "" : "p-4"}`}>
+      {/* Search Input */}
+      <div>
+        <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+          Cari GI/GIS
+        </label>
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Cari berdasarkan lokasi, unit, gardu..."
+            defaultValue={searchQuery}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                setSearchQuery((e.target as HTMLInputElement).value);
+              }
+            }}
+            className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-full text-sm focus:outline-none bg-[#CDE9ED] focus:ring-2 focus:ring-teal-500"
+          />
 
-                  {/* Detail Fields */}
-                  <div className="space-y-2 flex-1 overflow-y-auto">
-                    {/* UPT */}
-                    <div>
-                      <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
-                        UPT
-                      </label>
-                      <div
-                        style={{
-                          background:
-                            "linear-gradient(to bottom, #15677B, #179FB7)",
-                        }}
-                        className="text-white px-3 py-2 rounded-full text-sm font-medium"
-                      >
-                        {selectedSubstation.upt || "N/A"}
-                      </div>
-                    </div>
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      </div>
 
-                    {/* Jenis */}
-                    <div>
-                      <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
-                        Jenis
-                      </label>
-                      <div
-                        style={{
-                          background:
-                            "linear-gradient(to bottom, #15677B, #179FB7)",
-                        }}
-                        className="text-white px-3 py-2 rounded-full text-sm font-medium"
-                      >
-                        {selectedSubstation.jenis || "N/A"}
-                      </div>
-                    </div>
+      {/* Tegangan Filter */}
+      <div>
+        <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+          Tegangan
+        </label>
+        <select
+          value={teganganFilter}
+          onChange={(e) => setTeganganFilter(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-full text-sm focus:outline-none bg-[#CDE9ED] focus:ring-2 focus:ring-teal-500"
+        >
+          <option value="">Semua Tegangan</option>
+          {getUniqueTegangan().map((tegangan) => (
+            <option key={tegangan} value={tegangan}>
+              {tegangan}
+            </option>
+          ))}
+        </select>
+      </div>
 
-                    {/* Tegangan */}
-                    <div>
-                      <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
-                        Tegangan
-                      </label>
-                      <div
-                        style={{
-                          background:
-                            "linear-gradient(to bottom, #15677B, #179FB7)",
-                        }}
-                        className="text-white px-3 py-2 rounded-full text-sm font-medium"
-                      >
-                        {selectedSubstation.tegangan || "N/A"}
-                      </div>
-                    </div>
+      {/* UPT Filter */}
+      <div>
+        <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+          UPT
+        </label>
+        <select
+          value={uptFilter}
+          onChange={(e) => setUptFilter(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-full text-sm focus:outline-none bg-[#CDE9ED] focus:ring-2 focus:ring-teal-500"
+        >
+          <option value="">Semua UPT</option>
+          {getUniqueUPTs().map((upt) => (
+            <option key={upt} value={upt}>
+              {upt}
+            </option>
+          ))}
+        </select>
+      </div>
 
-                    {/* Nama TL Jargi */}
-                    <div>
-                      <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
-                        Nama TL Jargi
-                      </label>
-                      <div
-                        style={{
-                          background:
-                            "linear-gradient(to bottom, #15677B, #179FB7)",
-                        }}
-                        className="text-white px-3 py-2 rounded-full text-sm font-medium"
-                      >
-                        {selectedSubstation.namaTLJargi || "N/A"}
-                      </div>
-                    </div>
+      {/* Jenis Filter */}
+      <div>
+        <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+          Jenis
+        </label>
+        <select
+          value={jenisFilter}
+          onChange={(e) => setJenisFilter(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-full text-sm focus:outline-none bg-[#CDE9ED] focus:ring-2 focus:ring-teal-500"
+        >
+          <option value="">Semua Jenis</option>
+          {getUniqueJenis().map((jenis) => (
+            <option key={jenis} value={jenis}>
+              {jenis}
+            </option>
+          ))}
+        </select>
+      </div>
 
-                    {/* Kontak */}
-                    {selectedSubstation.kontak && (
-                      <div>
-                        <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
-                          Kontak
-                        </label>
-                        <div
-                          style={{
-                            background:
-                              "linear-gradient(to bottom, #15677B, #179FB7)",
-                          }}
-                          className="text-white px-3 py-2 rounded-full text-sm font-medium"
-                        >
-                          {selectedSubstation.kontak}
-                        </div>
-                      </div>
-                    )}
+      {/* Clear Filters */}
+      <button
+        onClick={() => {
+          setSearchQuery("");
+          setTeganganFilter("");
+          setUptFilter("");
+          setJenisFilter("");
+        }}
+        className="w-full mt-2 bg-white hover:bg-[#179FB7] hover:text-white text-[#179FB7] py-2 px-4 rounded-full border-2 border-[#179FB7] text-sm font-bold transition-colors"
+      >
+        HAPUS FILTER
+      </button>
+    </div>
+  );
 
-                    {/* Koordinat */}
-                    <div>
-                      <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
-                        Koordinat
-                      </label>
-                      <div
-                        style={{
-                          background:
-                            "linear-gradient(to bottom, #15677B, #179FB7)",
-                        }}
-                        className="text-white px-3 py-2 rounded-full text-sm font-medium"
-                      >
-                        {selectedSubstation.latitude.toFixed(6)},{" "}
-                        {selectedSubstation.longitude.toFixed(6)}
-                      </div>
-                    </div>
+  // Sidebar content component
+  const SidebarContent = () => (
+    <>
+      {selectedSubstation ? (
+        /* Substation Detail Panel */
+        <div className="p-4 h-full">
+          <div className="bg-white p-1 h-full flex flex-col">
+            {/* Header with close button */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-2">
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: selectedSubstation.pinColor }}
+                ></div>
+                <h3 className="text-sm font-medium text-gray-900">
+                  {selectedSubstation.namaGI}
+                </h3>
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedSubstation(null);
+                  if (isMobile) {
+                    setShowSidebar(false);
+                  }
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-4 w-4 rounded-full bg-red-500 text-white font-bold" />
+              </button>
+            </div>
 
-                    {/* Content */}
-                    {selectedSubstation.content && (
-                      <div>
-                        <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
-                          Content
-                        </label>
-                        <div
-                          style={{
-                            background:
-                              "linear-gradient(to bottom, #15677B, #179FB7)",
-                          }}
-                          className="text-white px-3 py-2 rounded-full text-sm font-medium"
-                        >
-                          {selectedSubstation.content}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Bottom Buttons */}
-                  <div className="mt-6 space-y-2">
-                    {/* Google Maps Button */}
-                    <button
-                      onClick={() => {
-                        const googleMapsUrl = `https://www.google.com/maps?q=${selectedSubstation.latitude},${selectedSubstation.longitude}`;
-                        window.open(googleMapsUrl, "_blank");
-                      }}
-                      style={{
-                        background:
-                          "linear-gradient(to bottom, #15677B, #179FB7)",
-                      }}
-                      className="flex w-full hover:bg-teal-700 text-white py-2 px-4 rounded-full font-medium transition-colors"
-                    >
-                      BUKA DI GOOGLE MAPS
-                    </button>
-
-                    {/* SLD Link Button */}
-                    {selectedSubstation.linkSLD && (
-                      <button
-                        onClick={() => {
-                          window.open(selectedSubstation.linkSLD, "_blank");
-                        }}
-                        style={{
-                          background:
-                            "linear-gradient(to bottom, #15677B, #179FB7)",
-                        }}
-                        className="flex w-full hover:bg-teal-700 text-white py-2 px-4 rounded-full font-medium transition-colors"
-                      >
-                        LIHAT SLD
-                      </button>
-                    )}
-
-                    {/* Kontak Link Button */}
-                    {selectedSubstation.kontakLink && (
-                      <button
-                        onClick={() => {
-                          window.open(selectedSubstation.kontakLink, "_blank");
-                        }}
-                        style={{
-                          background:
-                            "linear-gradient(to bottom, #15677B, #179FB7)",
-                        }}
-                        className="flex w-full hover:bg-teal-700 text-white py-2 px-4 rounded-full font-medium transition-colors"
-                      >
-                        HUBUNGI
-                      </button>
-                    )}
-                  </div>
+            {/* Detail Fields */}
+            <div className="space-y-2 flex-1 overflow-y-auto">
+              {/* UPT */}
+              <div>
+                <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+                  UPT
+                </label>
+                <div
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                  className="text-white px-3 py-2 rounded-full text-sm font-medium"
+                >
+                  {selectedSubstation.upt || "N/A"}
                 </div>
               </div>
-            ) : (
-              /* Legend and Filter Panel */
-              <div className="p-2 space-y-3 flex flex-col h-full">
-                {/* Legend Section */}
-                <div className="space-y-2">
-                  {/* Total Count */}
+
+              {/* Jenis */}
+              <div>
+                <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+                  Jenis
+                </label>
+                <div
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                  className="text-white px-3 py-2 rounded-full text-sm font-medium"
+                >
+                  {selectedSubstation.jenis || "N/A"}
+                </div>
+              </div>
+
+              {/* Tegangan */}
+              <div>
+                <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+                  Tegangan
+                </label>
+                <div
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                  className="text-white px-3 py-2 rounded-full text-sm font-medium"
+                >
+                  {selectedSubstation.tegangan || "N/A"}
+                </div>
+              </div>
+
+              {/* Nama TL Jargi */}
+              <div>
+                <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+                  Nama TL Jargi
+                </label>
+                <div
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                  className="text-white px-3 py-2 rounded-full text-sm font-medium"
+                >
+                  {selectedSubstation.namaTLJargi || "N/A"}
+                </div>
+              </div>
+
+              {/* Kontak */}
+              {selectedSubstation.kontak && (
+                <div>
+                  <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+                    Kontak
+                  </label>
                   <div
+                    style={{
+                      background:
+                        "linear-gradient(to bottom, #15677B, #179FB7)",
+                    }}
+                    className="text-white px-3 py-2 rounded-full text-sm font-medium"
+                  >
+                    {selectedSubstation.kontak}
+                  </div>
+                </div>
+              )}
+
+              {/* Koordinat */}
+              <div>
+                <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+                  Koordinat
+                </label>
+                <div
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                  className="text-white px-3 py-2 rounded-full text-sm font-medium"
+                >
+                  {selectedSubstation.latitude.toFixed(6)},{" "}
+                  {selectedSubstation.longitude.toFixed(6)}
+                </div>
+              </div>
+
+              {/* Content */}
+              {selectedSubstation.content && (
+                <div>
+                  <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
+                    Content
+                  </label>
+                  <div
+                    style={{
+                      background:
+                        "linear-gradient(to bottom, #15677B, #179FB7)",
+                    }}
+                    className="text-white px-3 py-2 rounded-full text-sm font-medium"
+                  >
+                    {selectedSubstation.content}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Bottom Buttons */}
+            <div className="mt-6 space-y-2">
+              {/* Google Maps Button */}
+              <button
+                onClick={() => {
+                  const googleMapsUrl = `https://www.google.com/maps?q=${selectedSubstation.latitude},${selectedSubstation.longitude}`;
+                  window.open(googleMapsUrl, "_blank");
+                }}
+                style={{
+                  background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                }}
+                className="flex w-full hover:bg-teal-700 text-white py-2 px-4 rounded-full font-medium transition-colors"
+              >
+                BUKA DI GOOGLE MAPS
+              </button>
+
+              {/* SLD Link Button */}
+              {selectedSubstation.linkSLD && (
+                <button
+                  onClick={() => {
+                    window.open(selectedSubstation.linkSLD, "_blank");
+                  }}
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                  className="flex w-full hover:bg-teal-700 text-white py-2 px-4 rounded-full font-medium transition-colors"
+                >
+                  LIHAT SLD
+                </button>
+              )}
+
+              {/* Kontak Link Button */}
+              {selectedSubstation.kontakLink && (
+                <button
+                  onClick={() => {
+                    window.open(selectedSubstation.kontakLink, "_blank");
+                  }}
+                  style={{
+                    background: "linear-gradient(to bottom, #15677B, #179FB7)",
+                  }}
+                  className="flex w-full hover:bg-teal-700 text-white py-2 px-4 rounded-full font-medium transition-colors"
+                >
+                  HUBUNGI
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Legend and Filter Panel */
+        <div className="p-2 space-y-3 flex flex-col h-full">
+          {/* Legend Section */}
+          <div className="space-y-2">
+            {/* Total Count */}
+            <div
+              style={{
+                background: "linear-gradient(to bottom, #15677B, #179FB7)",
+              }}
+              className="bg-white rounded-full p-1 border items-center grid grid-cols-6 space-x-3"
+            >
+              <div>
+                <img src="/jumlahTower.svg" alt="Total" />
+              </div>
+              <span className="text-[12px] font-semibold text-white col-span-4">
+                Total GI/GIS
+              </span>
+              <div className="bg-white rounded-full flex items-center justify-center py-1">
+                <span className="text-sm text-[#145C72] font-medium">
+                  {counts.total}
+                </span>
+              </div>
+            </div>
+
+            {/* Dynamic count for each unique tegangan */}
+            {uniqueTegangan.map(
+              (tegangan) =>
+                counts[tegangan] > 0 && (
+                  <div
+                    key={tegangan}
                     style={{
                       background:
                         "linear-gradient(to bottom, #15677B, #179FB7)",
@@ -803,197 +937,176 @@ const PetaGI: React.FC = ({}) => {
                     className="bg-white rounded-full p-1 border items-center grid grid-cols-6 space-x-3"
                   >
                     <div>
-                      <img src="/jumlahTower.svg" alt="Total" />
+                      <img
+                        src={getCountIcon(tegangan)}
+                        alt={tegangan}
+                        style={{ width: "24px", height: "24px" }}
+                      />
                     </div>
                     <span className="text-[12px] font-semibold text-white col-span-4">
-                      Total GI/GIS
+                      GI/GIS {tegangan}
                     </span>
                     <div className="bg-white rounded-full flex items-center justify-center py-1">
                       <span className="text-sm text-[#145C72] font-medium">
-                        {counts.total}
+                        {counts[tegangan]}
                       </span>
                     </div>
                   </div>
-
-                  {/* Dynamic count for each unique tegangan */}
-                  {uniqueTegangan.map(
-                    (tegangan) =>
-                      counts[tegangan] > 0 && (
-                        <div
-                          key={tegangan}
-                          style={{
-                            background:
-                              "linear-gradient(to bottom, #15677B, #179FB7)",
-                          }}
-                          className="bg-white rounded-full p-1 border items-center grid grid-cols-6 space-x-3"
-                        >
-                          <div>
-                            <img
-                              src={getCountIcon(tegangan)}
-                              alt={tegangan}
-                              style={{ width: "24px", height: "24px" }}
-                            />
-                          </div>
-                          <span className="text-[12px] font-semibold text-white col-span-4">
-                            GI/GIS {tegangan}
-                          </span>
-                          <div className="bg-white rounded-full flex items-center justify-center py-1">
-                            <span className="text-sm text-[#145C72] font-medium">
-                              {counts[tegangan]}
-                            </span>
-                          </div>
-                        </div>
-                      )
-                  )}
-                </div>
-
-                {/* Filter Section */}
-                <div className="py-[28px] space-y-2">
-                  <div className="flex items-center space-x-2 mb-3 justify-center">
-                    <span className="text-sm font-bold text-[#145C72]">
-                      FILTER
-                    </span>
-                  </div>
-
-                  {/* Tegangan Filter */}
-                  <div>
-                    <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
-                      Tegangan
-                    </label>
-                    <select
-                      value={teganganFilter}
-                      onChange={(e) => setTeganganFilter(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-full text-sm focus:outline-none bg-[#CDE9ED] focus:ring-2 focus:ring-teal-500"
-                    >
-                      <option value="">Semua Tegangan</option>
-                      {getUniqueTegangan().map((tegangan) => (
-                        <option key={tegangan} value={tegangan}>
-                          {tegangan}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* UPT Filter */}
-                  <div>
-                    <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
-                      UPT
-                    </label>
-                    <select
-                      value={uptFilter}
-                      onChange={(e) => setUptFilter(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-full text-sm focus:outline-none bg-[#CDE9ED] focus:ring-2 focus:ring-teal-500"
-                    >
-                      <option value="">Semua UPT</option>
-                      {getUniqueUPTs().map((upt) => (
-                        <option key={upt} value={upt}>
-                          {upt}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Jenis Filter */}
-                  <div>
-                    <label className="block text-xs pl-3 font-medium text-gray-700 mb-1">
-                      Jenis
-                    </label>
-                    <select
-                      value={jenisFilter}
-                      onChange={(e) => setJenisFilter(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-full text-sm focus:outline-none bg-[#CDE9ED] focus:ring-2  focus:ring-teal-500"
-                    >
-                      <option value="">Semua Jenis</option>
-                      {getUniqueJenis().map((jenis) => (
-                        <option key={jenis} value={jenis}>
-                          {jenis}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Clear Filters */}
-                  <button
-                    onClick={() => {
-                      setSearchQuery("");
-                      setTeganganFilter("");
-                      setUptFilter("");
-                      setJenisFilter("");
-                    }}
-                    className="w-full mt-2 bg-white hover:bg-[#179FB7] hover:text-white text-[#179FB7] py-2 px-4 rounded-full border-2 border-[#179FB7] text-sm font-bold transition-colors"
-                  >
-                    HAPUS FILTER
-                  </button>
-                </div>
-
-                {/* Loading/Error States */}
-                {isLoading && (
-                  <div className="bg-blue-50 rounded-lg p-3 text-center">
-                    <div className="text-sm text-blue-600 font-medium">
-                      {loadingProgress || "Loading..."}
-                    </div>
-                  </div>
-                )}
-
-                {error && (
-                  <div className="bg-red-50 rounded-lg p-3">
-                    <div className="text-sm text-red-600">{error}</div>
-                    <button
-                      onClick={fetchGoogleSheetsData}
-                      className="mt-2 text-sm bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded transition-colors"
-                    >
-                      Coba Lagi
-                    </button>
-                  </div>
-                )}
-
-                {!isLoading && !error && substations.length === 0 && (
-                  <div className="bg-yellow-50 rounded-lg p-3 text-center">
-                    <div className="text-sm text-yellow-600">
-                      Tidak ada data GI/GIS ditemukan.
-                    </div>
-                    <button
-                      onClick={fetchGoogleSheetsData}
-                      className="mt-2 text-sm bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-3 py-1 rounded transition-colors"
-                    >
-                      Muat Data
-                    </button>
-                  </div>
-                )}
-              </div>
+                )
             )}
           </div>
 
-          {/* Map Container with Search */}
-          <div className="flex-1 relative rounded-2xl overflow-hidden">
+          {/* Filter Section in Sidebar */}
+          <div className="py-[28px] space-y-2">
+            <div className="flex items-center space-x-2 mb-3 justify-center">
+              <span className="text-sm font-bold text-[#145C72]">FILTER</span>
+            </div>
+            <FilterComponent isInSidebar={true} />
+          </div>
+
+          {/* Loading/Error States */}
+          {isLoading && (
+            <div className="bg-blue-50 rounded-lg p-3 text-center">
+              <div className="text-sm text-blue-600 font-medium">
+                {loadingProgress || "Loading..."}
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-red-50 rounded-lg p-3">
+              <div className="text-sm text-red-600">{error}</div>
+              <button
+                onClick={fetchGoogleSheetsData}
+                className="mt-2 text-sm bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded transition-colors"
+              >
+                Coba Lagi
+              </button>
+            </div>
+          )}
+
+          {!isLoading && !error && substations.length === 0 && (
+            <div className="bg-yellow-50 rounded-lg p-3 text-center">
+              <div className="text-sm text-yellow-600">
+                Tidak ada data GI/GIS ditemukan.
+              </div>
+              <button
+                onClick={fetchGoogleSheetsData}
+                className="mt-2 text-sm bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-3 py-1 rounded transition-colors"
+              >
+                Muat Data
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  );
+
+  return (
+    <div className="w-full min-h-screen p-4">
+      <div className="rounded-lg w-full min-h-[550px] flex flex-col">
+        {/* Mobile Filter Bar - Top of map on mobile */}
+        {isMobile && (
+          <div className="mb-2">
+            <div
+              className={`bg-white rounded-lg shadow-md border border-gray-200 transition-all duration-300 ${
+                showFilters ? "mb-2" : ""
+              }`}
+            >
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="w-full p-3 flex items-center justify-between text-left"
+              >
+                <span className="text-sm font-bold text-[#145C72]">
+                  FILTER & PENCARIAN
+                </span>
+                <div
+                  className={`transform transition-transform ${
+                    showFilters ? "rotate-180" : ""
+                  }`}
+                >
+                  <svg
+                    className="w-5 h-5 text-[#145C72]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </div>
+              </button>
+
+              {showFilters && (
+                <div className="border-t border-gray-200">
+                  <FilterComponent />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Main Content */}
+        <div
+          className={`flex flex-1 overflow-hidden ${
+            isMobile ? "flex-col" : "flex-row space-x-2"
+          }`}
+        >
+          {/* Desktop Sidebar - Always visible on desktop */}
+          {!isMobile && (
+            <div className="w-80 border-1 border-neutral-200 flex flex-col p-1 rounded-2xl">
+              <SidebarContent />
+            </div>
+          )}
+
+          {/* Mobile Sidebar - Overlay */}
+          {isMobile && showSidebar && (
+            <div className="fixed inset-0 z-[60] bg-black bg-opacity-50 flex">
+              <div className="bg-white w-80 h-full overflow-y-auto border-r border-neutral-200 rounded-r-2xl">
+                <SidebarContent />
+              </div>
+              <div className="flex-1" onClick={() => setShowSidebar(false)} />
+            </div>
+          )}
+
+          {/* Map Container */}
+          <div
+            className={`${
+              isMobile ? "flex-1" : "flex-1"
+            } relative rounded-2xl overflow-hidden`}
+          >
             {/* Map */}
             <div
               ref={mapContainerRef}
-              className="w-full h-full bg-gray-100"
-              style={{ minHeight: "550px", maxHeight: "550px" }}
+              className={
+                isMobile
+                  ? selectedSubstation
+                    ? "hidden"
+                    : "w-full h-full bg-gray-100"
+                  : "w-full h-full bg-gray-100"
+              }
+              style={{
+                minHeight: "550px",
+                maxHeight: isMobile ? "calc(100vh - 200px)" : "550px",
+              }}
             />
 
-            {/* Search Bar - positioned on top right of map */}
-            <div className="absolute top-4 right-4 z-[50]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <input
-                  type="text"
-                  placeholder="Cari GI/GIS..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white shadow-lg w-64"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
+            {/* Mobile Menu Button - Only menu button on mobile now */}
+            {isMobile && (
+              <div className="absolute top-4 left-4 z-[50]">
+                <button
+                  onClick={() => setShowSidebar(true)}
+                  className="bg-white hover:bg-gray-50 text-gray-700 p-3 rounded-full shadow-lg border border-gray-200"
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
