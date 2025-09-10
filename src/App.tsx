@@ -19,6 +19,7 @@ import AdkonPage from "./pages/Monitoring/Konstruksi/AdkonPage";
 import AnggaranPage from "./pages/Monitoring/AnggaranPage";
 import DataKaryawanPage from "./pages/DataAsset/DataKaryawan/DataKaryawanPage";
 import SLDPage from "./pages/DataAsset/SLD/SLDPage";
+import JadwalK3 from "./pages/Monitoring/HSSE/JadwalK3";
 
 // Main App Content Component (needs to be inside Router to use hooks)
 function AppContent() {
@@ -191,7 +192,6 @@ function AppContent() {
           </>
         }
       />
-      // In your routing file
       <Route
         path="/monitoring/anggaran"
         element={
@@ -228,11 +228,7 @@ function AppContent() {
         element={
           <>
             <PageTitle title="UPT Bekasi - Jadwal Pekerjaan K3" />
-            {/* <AnggaranPage /> */}
-            <div className="p-8">
-              <h1 className="text-2xl font-bold">Anggaran Page</h1>
-              <p>Current route: {currentRoute}</p>
-            </div>
+            <JadwalK3 />
           </>
         }
       />
