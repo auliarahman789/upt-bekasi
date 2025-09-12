@@ -19,6 +19,9 @@ const colors = {
   secondary: "#189FB7",
   tertiary: "#65CFE2",
   dark: "#1f2937",
+  lb: "#28A8E0",
+  orange: "#E78700",
+  red: "#FF0000",
 };
 
 // Function to transform API data to component format
@@ -65,9 +68,9 @@ const transformApiData = (apiData: any) => {
 
     // Create donut data from status_usia
     const donutData = statusUsia.map((item: any) => {
-      let color = colors.dark;
-      if (item.status_usia === "TUA") color = colors.primary;
-      else if (item.status_usia === "SANGAT TUA") color = colors.secondary;
+      let color = colors.lb;
+      if (item.status_usia === "TUA") color = colors.orange;
+      else if (item.status_usia === "SANGAT TUA") color = colors.red;
 
       return {
         name:
@@ -224,9 +227,9 @@ const MonitorCard = ({
 
         {/* Legend */}
         <div className="flex flex-col rounded-2xl bg-white p-3 min-h-[200px]">
-          <div className="bg-[#145C72] text-white rounded-full items-center grid grid-cols-6 px-1 py-1 mb-6">
+          <div className="bg-[#E78700] text-white rounded-full items-center grid grid-cols-6 px-1 py-1 mb-6">
             <span className="text-sm font-medium col-span-4 pl-2">Total</span>
-            <div className="bg-white text-gray-800 rounded-full px-3 py-1 font-bold text-sm min-w-[40px] text-center col-span-2">
+            <div className="bg-white text-[#E78700] rounded-full px-3 py-1 font-bold text-sm min-w-[40px] text-center col-span-2">
               {total}
             </div>
           </div>
@@ -276,9 +279,9 @@ const MonitorCard = ({
         </div>
 
         <div className="flex flex-col rounded-2xl bg-white p-3">
-          <div className="bg-[#145C72] text-white rounded-full items-center grid grid-cols-6 px-1 py-1 mb-6">
+          <div className="bg-[#E78700] text-white rounded-full items-center grid grid-cols-6 px-1 py-1 mb-6">
             <span className="text-sm font-medium col-span-4 pl-2">Total</span>
-            <div className="bg-white text-gray-800 rounded-full px-3 py-1 font-bold text-sm min-w-[40px] text-center col-span-2">
+            <div className="bg-white text-[#E78700] rounded-full px-3 py-1 font-bold text-sm min-w-[40px] text-center col-span-2">
               {total}
             </div>
           </div>
