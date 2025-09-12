@@ -101,20 +101,6 @@ const SLOPage: React.FC = () => {
     }
   };
 
-  // Helper function to get color based on justifikasi
-  const getColorByJustification = (justifikasi: string) => {
-    switch (justifikasi.toLowerCase()) {
-      case "slo baru":
-        return "#20B2AA";
-      case "re-slo":
-        return "#FF8C00";
-      case "habis masa berlaku tahun depan":
-        return "#FF6B6B";
-      default:
-        return "#20B2AA";
-    }
-  };
-
   // Custom label component for values on top of bars
   const CustomLabel = (props: any) => {
     const { x, y, width, value } = props;
@@ -122,7 +108,7 @@ const SLOPage: React.FC = () => {
     // Place label inside the bar if it's near the top to avoid cropping
     const shouldPlaceInside = y < 25;
     const labelY = shouldPlaceInside ? y + 20 : y - 8;
-    const textColor = shouldPlaceInside ? "#fff" : "#000";
+    const textColor = shouldPlaceInside ? "#fff" : "#145C72";
 
     return (
       <text
@@ -158,9 +144,9 @@ const SLOPage: React.FC = () => {
     }));
   };
 
-  // Process Monitoring SLO Gardu Induk data
+  // Update the processing functions to group by ULTG instead of justifikasi
   const processMonitoringGIData = () => {
-    if (!apiData?.slo_gi) return { bekasi: [], cikarang: [] };
+    if (!apiData?.slo_gi) return [];
 
     const bekasiData = apiData.slo_gi.find((item) => item.ultg === "BEKASI");
     const cikarangData = apiData.slo_gi.find(
@@ -185,43 +171,24 @@ const SLOPage: React.FC = () => {
       });
     }
 
-    // Convert to chart format
-    const bekasi = Object.entries(bekasiGrouped).map(
-      ([justifikasi, jumlah]) => ({
-        name:
-          justifikasi === "SLO BARU"
-            ? "BARU"
-            : justifikasi === "RE-SLO"
-            ? "TARGET RE-SLO"
-            : justifikasi === "Habis Masa Berlaku Tahun Depan"
-            ? "EXPIRED"
-            : justifikasi,
-        value: jumlah,
-        fill: getColorByJustification(justifikasi),
-      })
-    );
-
-    const cikarang = Object.entries(cikarangGrouped).map(
-      ([justifikasi, jumlah]) => ({
-        name:
-          justifikasi === "SLO BARU"
-            ? "BARU"
-            : justifikasi === "RE-SLO"
-            ? "TARGET RE-SLO"
-            : justifikasi === "Habis Masa Berlaku Tahun Depan"
-            ? "EXPIRED"
-            : justifikasi,
-        value: jumlah,
-        fill: getColorByJustification(justifikasi),
-      })
-    );
-
-    return { bekasi, cikarang };
+    return [
+      {
+        name: "ULTG BEKASI",
+        BARU: bekasiGrouped["SLO BARU"] || 0,
+        "TARGET RE-SLO": bekasiGrouped["RE-SLO"] || 0,
+        EXPIRED: bekasiGrouped["Habis Masa Berlaku Tahun Depan"] || 0,
+      },
+      {
+        name: "ULTG CIKARANG",
+        BARU: cikarangGrouped["SLO BARU"] || 0,
+        "TARGET RE-SLO": cikarangGrouped["RE-SLO"] || 0,
+        EXPIRED: cikarangGrouped["Habis Masa Berlaku Tahun Depan"] || 0,
+      },
+    ];
   };
 
-  // Process Monitoring SLO Jaringan data
   const processMonitoringJaringanData = () => {
-    if (!apiData?.slo_jaringan) return { bekasi: [], cikarang: [] };
+    if (!apiData?.slo_jaringan) return [];
 
     const bekasiData = apiData.slo_jaringan.find(
       (item) => item.ultg === "BEKASI"
@@ -248,40 +215,21 @@ const SLOPage: React.FC = () => {
       });
     }
 
-    // Convert to chart format
-    const bekasi = Object.entries(bekasiGrouped).map(
-      ([justifikasi, jumlah]) => ({
-        name:
-          justifikasi === "SLO BARU"
-            ? "BARU"
-            : justifikasi === "RE-SLO"
-            ? "TARGET RE-SLO"
-            : justifikasi === "Habis Masa Berlaku Tahun Depan"
-            ? "EXPIRED"
-            : justifikasi,
-        value: jumlah,
-        fill: getColorByJustification(justifikasi),
-      })
-    );
-
-    const cikarang = Object.entries(cikarangGrouped).map(
-      ([justifikasi, jumlah]) => ({
-        name:
-          justifikasi === "SLO BARU"
-            ? "BARU"
-            : justifikasi === "RE-SLO"
-            ? "TARGET RE-SLO"
-            : justifikasi === "Habis Masa Berlaku Tahun Depan"
-            ? "EXPIRED"
-            : justifikasi,
-        value: jumlah,
-        fill: getColorByJustification(justifikasi),
-      })
-    );
-
-    return { bekasi, cikarang };
+    return [
+      {
+        name: "ULTG BEKASI",
+        BARU: bekasiGrouped["SLO BARU"] || 0,
+        "TARGET RE-SLO": bekasiGrouped["RE-SLO"] || 0,
+        EXPIRED: bekasiGrouped["Habis Masa Berlaku Tahun Depan"] || 0,
+      },
+      {
+        name: "ULTG CIKARANG",
+        BARU: cikarangGrouped["SLO BARU"] || 0,
+        "TARGET RE-SLO": cikarangGrouped["RE-SLO"] || 0,
+        EXPIRED: cikarangGrouped["Habis Masa Berlaku Tahun Depan"] || 0,
+      },
+    ];
   };
-
   const processTargetSLOData = () => {
     if (!apiData?.kelengkapan_data_slo) return [];
 
@@ -406,68 +354,30 @@ const SLOPage: React.FC = () => {
             <h2 className="text-sm md:text-lg font-bold text-[#145C72] mb-3 md:mb-4">
               MONITORING SLO GARDU INDUK
             </h2>
-            <div className="grid grid-cols-2 gap-2 md:gap-4">
-              <div>
-                <h3 className="text-xs md:text-sm font-medium mb-2 text-center">
-                  ULTG BEKASI
-                </h3>
-                <ResponsiveContainer
-                  width="100%"
-                  height={180}
-                  className="md:!h-[230px]"
-                >
-                  <BarChart
-                    data={monitoringGIData.bekasi}
-                    margin={{ top: 25, right: 10, left: 10, bottom: 5 }}
-                  >
-                    <XAxis
-                      dataKey="name"
-                      angle={-45}
-                      fontSize={8}
-                      className="md:text-xs"
-                    />
-                    <YAxis fontSize={8} className="md:text-xs" />
-                    <Tooltip />
-                    <Bar dataKey="value">
-                      <LabelList content={CustomLabel} />
-                      {monitoringGIData.bekasi.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              <div>
-                <h3 className="text-xs md:text-sm font-medium mb-2 text-center">
-                  ULTG CIKARANG
-                </h3>
-                <ResponsiveContainer
-                  width="100%"
-                  height={180}
-                  className="md:!h-[230px]"
-                >
-                  <BarChart
-                    data={monitoringGIData.cikarang}
-                    margin={{ top: 25, right: 10, left: 10, bottom: 5 }}
-                  >
-                    <XAxis
-                      dataKey="name"
-                      angle={-45}
-                      fontSize={8}
-                      className="md:text-xs"
-                    />
-                    <YAxis fontSize={8} className="md:text-xs" />
-                    <Tooltip />
-                    <Bar dataKey="value">
-                      <LabelList content={CustomLabel} />
-                      {monitoringGIData.cikarang.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+            <ResponsiveContainer
+              width="100%"
+              height={280}
+              className="md:!h-[330px]"
+            >
+              <BarChart
+                data={monitoringGIData}
+                margin={{ top: 30, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" fontSize={10} className="md:text-xs" />
+                <YAxis fontSize={10} className="md:text-xs" />
+                <Tooltip />
+                <Bar dataKey="BARU" fill="#20B2AA">
+                  <LabelList content={CustomLabel} />
+                </Bar>
+                <Bar dataKey="TARGET RE-SLO" fill="#FF8C00">
+                  <LabelList content={CustomLabel} />
+                </Bar>
+                <Bar dataKey="EXPIRED" fill="#FF6B6B">
+                  <LabelList content={CustomLabel} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
             {/* Legend */}
             <div className="flex justify-center mt-2 md:mt-4 space-x-2 md:space-x-4 flex-wrap">
               <div className="flex items-center mb-1">
@@ -490,68 +400,30 @@ const SLOPage: React.FC = () => {
             <h2 className="text-sm md:text-lg font-bold text-[#145C72] mb-3 md:mb-4">
               MONITORING SLO JARINGAN
             </h2>
-            <div className="grid grid-cols-2 gap-2 md:gap-4">
-              <div>
-                <h3 className="text-xs md:text-sm font-medium mb-2 text-center">
-                  ULTG BEKASI
-                </h3>
-                <ResponsiveContainer
-                  width="100%"
-                  height={180}
-                  className="md:!h-[230px]"
-                >
-                  <BarChart
-                    data={monitoringJaringanData.bekasi}
-                    margin={{ top: 25, right: 10, left: 10, bottom: 5 }}
-                  >
-                    <XAxis
-                      dataKey="name"
-                      angle={-45}
-                      fontSize={8}
-                      className="md:text-xs"
-                    />
-                    <YAxis fontSize={8} className="md:text-xs" />
-                    <Tooltip />
-                    <Bar dataKey="value">
-                      <LabelList content={CustomLabel} />
-                      {monitoringJaringanData.bekasi.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              <div>
-                <h3 className="text-xs md:text-sm font-medium mb-2 text-center">
-                  ULTG CIKARANG
-                </h3>
-                <ResponsiveContainer
-                  width="100%"
-                  height={180}
-                  className="md:!h-[230px]"
-                >
-                  <BarChart
-                    data={monitoringJaringanData.cikarang}
-                    margin={{ top: 25, right: 10, left: 10, bottom: 5 }}
-                  >
-                    <XAxis
-                      dataKey="name"
-                      angle={-45}
-                      fontSize={8}
-                      className="md:text-xs"
-                    />
-                    <YAxis fontSize={8} className="md:text-xs" />
-                    <Tooltip />
-                    <Bar dataKey="value">
-                      <LabelList content={CustomLabel} />
-                      {monitoringJaringanData.cikarang.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+            <ResponsiveContainer
+              width="100%"
+              height={280}
+              className="md:!h-[330px]"
+            >
+              <BarChart
+                data={monitoringJaringanData}
+                margin={{ top: 30, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" fontSize={10} className="md:text-xs" />
+                <YAxis fontSize={10} className="md:text-xs" />
+                <Tooltip />
+                <Bar dataKey="BARU" fill="#20B2AA">
+                  <LabelList content={CustomLabel} />
+                </Bar>
+                <Bar dataKey="TARGET RE-SLO" fill="#FF8C00">
+                  <LabelList content={CustomLabel} />
+                </Bar>
+                <Bar dataKey="EXPIRED" fill="#FF6B6B">
+                  <LabelList content={CustomLabel} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
             {/* Legend */}
             <div className="flex justify-center mt-2 md:mt-4 space-x-2 md:space-x-4 flex-wrap">
               <div className="flex items-center mb-1">
