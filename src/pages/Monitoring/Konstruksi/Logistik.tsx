@@ -96,8 +96,8 @@ const mockMonthlyInventory = {
     barData: [
       { category: "TATA KELOLA\nGUDANG", value: 105, color: "#e91e63" },
       { category: "MANAJEMEN\nTENAGA KERJA", value: 105, color: "#1f5f5f" },
-      { category: "SARANA DAN\nPRASARANA", value: 105, color: "#26a69a" },
-      { category: "KEAMANAN DAN\nKESELAMATAN", value: 105, color: "#ff9500" },
+      { category: "SARANA DAN\nPRASARANA", value: 105, color: "#ADD8E6" },
+      { category: "KEAMANAN DAN\nKESELAMATAN", value: 105, color: "#2368CF" },
       {
         category: "TEKNOLOGI DAN\nSISTEM INFORMASI",
         value: 105,
@@ -117,8 +117,8 @@ const mockMonthlyInventory = {
     barData: [
       { category: "TATA KELOLA\nGUDANG", value: 98, color: "#e91e63" },
       { category: "MANAJEMEN\nTENAGA KERJA", value: 102, color: "#1f5f5f" },
-      { category: "SARANA DAN\nPRASARANA", value: 108, color: "#26a69a" },
-      { category: "KEAMANAN DAN\nKESELAMATAN", value: 95, color: "#ff9500" },
+      { category: "SARANA DAN\nPRASARANA", value: 108, color: "#ADD8E6" },
+      { category: "KEAMANAN DAN\nKESELAMATAN", value: 95, color: "#2368CF" },
       {
         category: "TEKNOLOGI DAN\nSISTEM INFORMASI",
         value: 110,
@@ -138,8 +138,8 @@ const mockMonthlyInventory = {
     barData: [
       { category: "TATA KELOLA\nGUDANG", value: 112, color: "#e91e63" },
       { category: "MANAJEMEN\nTENAGA KERJA", value: 98, color: "#1f5f5f" },
-      { category: "SARANA DAN\nPRASARANA", value: 105, color: "#26a69a" },
-      { category: "KEAMANAN DAN\nKESELAMATAN", value: 101, color: "#ff9500" },
+      { category: "SARANA DAN\nPRASARANA", value: 105, color: "#ADD8E6" },
+      { category: "KEAMANAN DAN\nKESELAMATAN", value: 101, color: "#2368CF" },
       {
         category: "TEKNOLOGI DAN\nSISTEM INFORMASI",
         value: 107,
@@ -159,8 +159,8 @@ const mockMonthlyInventory = {
     barData: [
       { category: "TATA KELOLA\nGUDANG", value: 110, color: "#e91e63" },
       { category: "MANAJEMEN\nTENAGA KERJA", value: 100, color: "#1f5f5f" },
-      { category: "SARANA DAN\nPRASARANA", value: 115, color: "#26a69a" },
-      { category: "KEAMANAN DAN\nKESELAMATAN", value: 97, color: "#ff9500" },
+      { category: "SARANA DAN\nPRASARANA", value: 115, color: "#ADD8E6" },
+      { category: "KEAMANAN DAN\nKESELAMATAN", value: 97, color: "#2368CF" },
       {
         category: "TEKNOLOGI DAN\nSISTEM INFORMASI",
         value: 108,
@@ -180,8 +180,8 @@ const mockMonthlyInventory = {
     barData: [
       { category: "TATA KELOLA\nGUDANG", value: 120, color: "#e91e63" },
       { category: "MANAJEMEN\nTENAGA KERJA", value: 95, color: "#1f5f5f" },
-      { category: "SARANA DAN\nPRASARANA", value: 100, color: "#26a69a" },
-      { category: "KEAMANAN DAN\nKESELAMATAN", value: 105, color: "#ff9500" },
+      { category: "SARANA DAN\nPRASARANA", value: 100, color: "#ADD8E6" },
+      { category: "KEAMANAN DAN\nKESELAMATAN", value: 105, color: "#2368CF" },
       {
         category: "TEKNOLOGI DAN\nSISTEM INFORMASI",
         value: 112,
@@ -201,8 +201,8 @@ const mockMonthlyInventory = {
     barData: [
       { category: "TATA KELOLA\nGUDANG", value: 115, color: "#e91e63" },
       { category: "MANAJEMEN\nTENAGA KERJA", value: 108, color: "#1f5f5f" },
-      { category: "SARANA DAN\nPRASARANA", value: 102, color: "#26a69a" },
-      { category: "KEAMANAN DAN\nKESELAMATAN", value: 99, color: "#ff9500" },
+      { category: "SARANA DAN\nPRASARANA", value: 102, color: "#ADD8E6" },
+      { category: "KEAMANAN DAN\nKESELAMATAN", value: 99, color: "#2368CF" },
       {
         category: "TEKNOLOGI DAN\nSISTEM INFORMASI",
         value: 111,
@@ -222,8 +222,8 @@ const mockMonthlyInventory = {
     barData: [
       { category: "TATA KELOLA\nGUDANG", value: 118, color: "#e91e63" },
       { category: "MANAJEMEN\nTENAGA KERJA", value: 103, color: "#1f5f5f" },
-      { category: "SARANA DAN\nPRASARANA", value: 109, color: "#26a69a" },
-      { category: "KEAMANAN DAN\nKESELAMATAN", value: 100, color: "#ff9500" },
+      { category: "SARANA DAN\nPRASARANA", value: 109, color: "#ADD8E6" },
+      { category: "KEAMANAN DAN\nKESELAMATAN", value: 100, color: "#2368CF" },
       {
         category: "TEKNOLOGI DAN\nSISTEM INFORMASI",
         value: 115,
@@ -243,8 +243,8 @@ const mockMonthlyInventory = {
     barData: [
       { category: "TATA KELOLA\nGUDANG", value: 105, color: "#e91e63" },
       { category: "MANAJEMEN\nTENAGA KERJA", value: 107, color: "#1f5f5f" },
-      { category: "SARANA DAN\nPRASARANA", value: 110, color: "#26a69a" },
-      { category: "KEAMANAN DAN\nKESELAMATAN", value: 102, color: "#ff9500" },
+      { category: "SARANA DAN\nPRASARANA", value: 110, color: "#ADD8E6" },
+      { category: "KEAMANAN DAN\nKESELAMATAN", value: 102, color: "#2368CF" },
       {
         category: "TEKNOLOGI DAN\nSISTEM INFORMASI",
         value: 114,
@@ -264,8 +264,8 @@ const mockMonthlyInventory = {
     barData: [
       { category: "TATA KELOLA\nGUDANG", value: 113, color: "#e91e63" },
       { category: "MANAJEMEN\nTENAGA KERJA", value: 99, color: "#1f5f5f" },
-      { category: "SARANA DAN\nPRASARANA", value: 106, color: "#26a69a" },
-      { category: "KEAMANAN DAN\nKESELAMATAN", value: 104, color: "#ff9500" },
+      { category: "SARANA DAN\nPRASARANA", value: 106, color: "#ADD8E6" },
+      { category: "KEAMANAN DAN\nKESELAMATAN", value: 104, color: "#2368CF" },
       {
         category: "TEKNOLOGI DAN\nSISTEM INFORMASI",
         value: 109,
@@ -285,8 +285,8 @@ const mockMonthlyInventory = {
     barData: [
       { category: "TATA KELOLA\nGUDANG", value: 111, color: "#e91e63" },
       { category: "MANAJEMEN\nTENAGA KERJA", value: 105, color: "#1f5f5f" },
-      { category: "SARANA DAN\nPRASARANA", value: 103, color: "#26a69a" },
-      { category: "KEAMANAN DAN\nKESELAMATAN", value: 106, color: "#ff9500" },
+      { category: "SARANA DAN\nPRASARANA", value: 103, color: "#ADD8E6" },
+      { category: "KEAMANAN DAN\nKESELAMATAN", value: 106, color: "#2368CF" },
       {
         category: "TEKNOLOGI DAN\nSISTEM INFORMASI",
         value: 116,
@@ -306,8 +306,8 @@ const mockMonthlyInventory = {
     barData: [
       { category: "TATA KELOLA\nGUDANG", value: 109, color: "#e91e63" },
       { category: "MANAJEMEN\nTENAGA KERJA", value: 110, color: "#1f5f5f" },
-      { category: "SARANA DAN\nPRASARANA", value: 107, color: "#26a69a" },
-      { category: "KEAMANAN DAN\nKESELAMATAN", value: 103, color: "#ff9500" },
+      { category: "SARANA DAN\nPRASARANA", value: 107, color: "#ADD8E6" },
+      { category: "KEAMANAN DAN\nKESELAMATAN", value: 103, color: "#2368CF" },
       {
         category: "TEKNOLOGI DAN\nSISTEM INFORMASI",
         value: 112,
@@ -327,8 +327,8 @@ const mockMonthlyInventory = {
     barData: [
       { category: "TATA KELOLA\nGUDANG", value: 114, color: "#e91e63" },
       { category: "MANAJEMEN\nTENAGA KERJA", value: 101, color: "#1f5f5f" },
-      { category: "SARANA DAN\nPRASARANA", value: 104, color: "#26a69a" },
-      { category: "KEAMANAN DAN\nKESELAMATAN", value: 107, color: "#ff9500" },
+      { category: "SARANA DAN\nPRASARANA", value: 104, color: "#ADD8E6" },
+      { category: "KEAMANAN DAN\nKESELAMATAN", value: 107, color: "#2368CF" },
       {
         category: "TEKNOLOGI DAN\nSISTEM INFORMASI",
         value: 118,
@@ -428,8 +428,8 @@ const Logistik: React.FC = () => {
     colors: [
       "#e91e63", // Magenta for TATA KELOLA GUDANG
       "#1f5f5f", // Dark teal for MANAJEMEN TENAGA KERJA
-      "#26a69a", // Teal for SARANA DAN PRASARANA
-      "#ff9500", // Orange for KEAMANAN DAN KESELAMATAN
+      "#ADD8E6", // Teal for SARANA DAN PRASARANA
+      "#2368CF", // Orange for KEAMANAN DAN KESELAMATAN
       "#b19cd9", // Light purple for TEKNOLOGI DAN SISTEM INFORMASI
     ],
     pieSliceTextStyle: {
@@ -455,8 +455,8 @@ const Logistik: React.FC = () => {
     colors: [
       "#e91e63", // Magenta for TATA KELOLA GUDANG
       "#1f5f5f", // Dark teal for MANAJEMEN TENAGA KERJA
-      "#26a69a", // Teal for SARANA DAN PRASARANA
-      "#ff9500", // Orange for KEAMANAN DAN KESELAMATAN
+      "#ADD8E6", // Teal for SARANA DAN PRASARANA
+      "#2368CF", // Orange for KEAMANAN DAN KESELAMATAN
       "#b19cd9", // Light purple for TEKNOLOGI DAN SISTEM INFORMASI
     ],
     legend: {
