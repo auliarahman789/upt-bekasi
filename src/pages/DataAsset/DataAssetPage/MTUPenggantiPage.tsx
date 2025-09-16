@@ -14,17 +14,19 @@ import { ChevronDown } from "lucide-react";
 import DefaultLayout from "../../../layout/DefaultLayout";
 import axios from "axios";
 
-// TypeScript Interfaces (keep all existing interfaces as they are)
+// Updated TypeScript Interfaces
 interface MTUDataItem {
   bay: string;
   fase: string;
+  gi: string; // Updated from 'ultg'
   mtu: string;
   no: string;
   onsite_mtu: string;
   realisasi_pasang: string;
   rencana_pasang: string;
   ultg: string;
-  usulan_relokasi: string;
+  usulan_relokasi_bay: string; // Updated from 'usulan_relokasi'
+  usulan_relokasi_gi: string; // New field
 }
 
 interface LocationData {
@@ -58,13 +60,15 @@ interface TransformedTableItem {
   id: number;
   location: string;
   ultg: string;
+  gi: string; // New field
   bay: string;
   mtu: string;
   fase: string;
   onsite_mtu: string;
   rencana_pasang: string;
   realisasi_pasang: string;
-  usulan_relokasi: string;
+  usulan_relokasi_bay: string; // Updated field name
+  usulan_relokasi_gi: string; // New field
 }
 
 interface ChartDataItem {
@@ -222,18 +226,21 @@ const MTUPenggantiPage = () => {
     });
   }, [apiDashboardData, activeLocation]);
 
+  // Updated transformedTableData to include new fields
   const transformedTableData = useMemo((): TransformedTableItem[] => {
     return apiData?.map((item, index) => ({
       id: index + 1,
       location: item.ultg,
       ultg: item.ultg,
+      gi: item.gi, // New field
       bay: item.bay,
       mtu: item.mtu,
       fase: item.fase,
       onsite_mtu: item.onsite_mtu,
       rencana_pasang: item.rencana_pasang,
       realisasi_pasang: item.realisasi_pasang,
-      usulan_relokasi: item.usulan_relokasi,
+      usulan_relokasi_bay: item.usulan_relokasi_bay, // Updated field
+      usulan_relokasi_gi: item.usulan_relokasi_gi, // New field
     }));
   }, [apiData]);
 
@@ -674,7 +681,7 @@ const MTUPenggantiPage = () => {
             </div>
           </div>
 
-          {/* Data Table - Mobile Responsive */}
+          {/* Data Table - Mobile Responsive with Updated Columns */}
           <div className="bg-white rounded-lg shadow-lg overflow-hidden p-2 md:p-3 transition-all duration-300">
             <div className="text-[#145C72] p-2 md:p-4 flex gap-2 md:gap-3">
               <div className="w-[18px] h-[18px] md:w-[22px] md:h-[22px] bg-[#145C72]"></div>
@@ -684,7 +691,9 @@ const MTUPenggantiPage = () => {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[800px]">
+              <table className="w-full min-w-[1000px]">
+                {" "}
+                {/* Increased min-width for additional columns */}
                 <thead className="text-[#145C72]">
                   <tr>
                     <th className="px-2 md:px-4 py-2 md:py-3 text-left text-xs font-bold uppercase tracking-wider">
@@ -692,6 +701,9 @@ const MTUPenggantiPage = () => {
                     </th>
                     <th className="px-2 md:px-4 py-2 md:py-3 text-left text-xs font-bold uppercase tracking-wider">
                       ULTG
+                    </th>
+                    <th className="px-2 md:px-4 py-2 md:py-3 text-left text-xs font-bold uppercase tracking-wider">
+                      GI
                     </th>
                     <th className="px-2 md:px-4 py-2 md:py-3 text-left text-xs font-bold uppercase tracking-wider">
                       BAY
@@ -712,7 +724,10 @@ const MTUPenggantiPage = () => {
                       Realisasi Pasang
                     </th>
                     <th className="px-2 md:px-4 py-2 md:py-3 text-left text-xs font-bold uppercase tracking-wider">
-                      Usulan Relokasi
+                      Usulan Relokasi Bay
+                    </th>
+                    <th className="px-2 md:px-4 py-2 md:py-3 text-left text-xs font-bold uppercase tracking-wider">
+                      Usulan Relokasi GI
                     </th>
                   </tr>
                 </thead>
@@ -729,6 +744,9 @@ const MTUPenggantiPage = () => {
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-xs">
                         {item.ultg}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-xs">
+                        {item.gi}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-xs">
                         {item.bay}
@@ -749,7 +767,10 @@ const MTUPenggantiPage = () => {
                         {item.realisasi_pasang}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-xs">
-                        {item.usulan_relokasi}
+                        {item.usulan_relokasi_bay}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-xs">
+                        {item.usulan_relokasi_gi}
                       </td>
                     </tr>
                   ))}
