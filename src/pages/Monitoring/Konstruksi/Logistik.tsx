@@ -1412,7 +1412,7 @@ const Logistik: React.FC = () => {
                       }}
                       formatter={(value: React.ReactNode) =>
                         typeof value === "number"
-                          ? `${(value / 1000000).toFixed(0)}M`
+                          ? `${(value / 1000000).toFixed(0)}JT`
                           : ""
                       }
                     />

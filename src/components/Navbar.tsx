@@ -224,6 +224,12 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
               icon: "",
               route: "/monitoring/hsse/levelhsse",
             },
+            {
+              id: "hsse-4",
+              label: "MATURING LEVEL SUSTAINABILITY",
+              icon: "",
+              route: "/monitoring/hsse/sustainability",
+            },
           ],
         },
       ],

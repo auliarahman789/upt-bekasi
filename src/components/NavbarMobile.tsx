@@ -208,6 +208,12 @@ const NavbarMobile: React.FC<NavbarMobileProps> = ({
               icon: "",
               route: "/monitoring/hsse/levelhsse",
             },
+            {
+              id: "hsse-4",
+              label: "MATURING LEVEL SUSTAINABILITY",
+              icon: "",
+              route: "/monitoring/hsse/sustainability",
+            },
           ],
         },
       ],

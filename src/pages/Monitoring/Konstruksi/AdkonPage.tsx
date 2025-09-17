@@ -1,5 +1,5 @@
 // AdkonPage.tsx
-import React from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   PieChart,
   Pie,
@@ -12,61 +12,230 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import DefaultLayout from "../../../layout/DefaultLayout";
+import axios from "axios";
 
-// Mock data
-const contractPreviewData = [
-  { name: "KONSTRUKSI", value: 45, color: "#0891b2" },
-  { name: "MASA PEMELIHARAAN", value: 35, color: "#64748b" },
-  { name: "SELESAI", value: 20, color: "#22c55e" },
-];
+// Interfaces
+interface Contract {
+  no_kontrak: string;
+  nama_kontrak: string;
+  nilai_terkontrak: number;
+  sudah_bayar: number;
+  tgl_kontrak: string;
+  tgl_efektif_kontrak: string;
+  akhir_kontrak: string;
+  fisik: string;
+  bayar: string;
+  status: string;
+}
 
-const physicalProgressData = [
-  { year: "2021", kontrak: 105, progress: 47, bayar: 69 },
-  { year: "2022", kontrak: 105, progress: 47, bayar: 69 },
-  { year: "2023", kontrak: 105, progress: 47, bayar: 69 },
-];
+interface ProgressData {
+  tahun: number;
+  total_kontrak: number;
+  progress_fisik: number;
+  progress_bayar: number;
+  data: any[];
+}
 
-const investmentData = [
-  { name: "SKKI TERBIT", value: 75, color: "#145C72" },
-  { name: "AKI TERBAYAR", value: 25, color: "#189FB7" },
-];
-
-const contractListData = [
-  {
-    id: 1,
-    noKontrak: "001",
-    namaKontrak: "CONZ-001",
-    tanggalKontrak: "DD/MM/YYYY",
-    akhirKontrak: "DD/MM/YYYY",
-    fisik: 80,
-    bayar: 80,
-    status: "KONSTRUKSI",
-  },
-  {
-    id: 2,
-    noKontrak: "002",
-    namaKontrak: "CONZ-001",
-    tanggalKontrak: "DD/MM/YYYY",
-    akhirKontrak: "DD/MM/YYYY",
-    fisik: 80,
-    bayar: 80,
-    status: "MASA PEMELIHARAAN",
-  },
-  {
-    id: 3,
-    noKontrak: "003",
-    namaKontrak: "CONZ-001",
-    tanggalKontrak: "DD/MM/YYYY",
-    akhirKontrak: "DD/MM/YYYY",
-    fisik: 80,
-    bayar: 80,
-    status: "SELESAI",
-  },
-];
+interface ApiResponse {
+  status: string;
+  message: string;
+  data_kontrak: Contract[];
+  anggaran_investasi: {
+    aki_terbayar: number;
+    skki_terbit: number;
+  };
+  grafik_progres_fisik: ProgressData[];
+  pratinjau_kontrak: Array<{
+    status: string;
+    total: number;
+  }>;
+}
 
 const AdkonPage: React.FC = () => {
+  const [loading, setLoading] = useState(true);
+  const [apiData, setApiData] = useState<ApiResponse | null>(null);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [yearFilter, setYearFilter] = useState("ALL");
+
+  // Fetch API data
+  useEffect(() => {
+    fetchAdkonData();
+  }, []);
+
+  const fetchAdkonData = async () => {
+    setLoading(true);
+    const url = `${
+      import.meta.env.VITE_API_LINK_BE
+    }/api/monitoring/konstruksi/adkonDalkon`;
+
+    try {
+      const res = await axios.get<ApiResponse>(url, {
+        withCredentials: true,
+      });
+      console.log("Adkon", res.data);
+      setApiData(res.data);
+    } catch (error: any) {
+      console.log(error);
+      setApiData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Process contract preview data from API
+  const contractPreviewData = useMemo(() => {
+    if (!apiData?.data_kontrak) return [];
+
+    const statusCount = apiData.data_kontrak.reduce((acc, contract) => {
+      const status = contract.status === "-" ? "KONSTRUKSI" : contract.status;
+      acc[status] = (acc[status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return Object.entries(statusCount).map(([status, count], index) => ({
+      name: status,
+      value: count,
+      color: index === 0 ? "#E78700" : index === 1 ? "#46C65C" : "#145C72",
+    }));
+  }, [apiData?.data_kontrak]);
+
+  // Process physical progress data from API
+  const physicalProgressData = useMemo(() => {
+    if (!apiData?.grafik_progres_fisik) return [];
+
+    return apiData.grafik_progres_fisik.map((item) => ({
+      year: item.tahun.toString(),
+      kontrak: item.total_kontrak,
+      progress: item.progress_fisik,
+      bayar: item.progress_bayar,
+    }));
+  }, [apiData?.grafik_progres_fisik]);
+
+  // Process investment data from API
+  const investmentData = useMemo(() => {
+    if (!apiData?.anggaran_investasi) return [];
+
+    const { aki_terbayar, skki_terbit } = apiData.anggaran_investasi;
+    const total = aki_terbayar + skki_terbit;
+
+    return [
+      {
+        name: "SKKI TERBIT",
+        value: Math.round((skki_terbit / total) * 100),
+        color: "#FF7C50",
+        amount: skki_terbit,
+      },
+      {
+        name: "AKI TERBAYAR",
+        value: Math.round((aki_terbayar / total) * 100),
+        color: "#90DFDF",
+        amount: aki_terbayar,
+      },
+    ];
+  }, [apiData?.anggaran_investasi]);
+
+  // Filter and search contracts
+  const filteredContracts = useMemo(() => {
+    if (!apiData?.data_kontrak) return [];
+
+    let filtered = apiData.data_kontrak;
+
+    // Search filter
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (contract) =>
+          contract.no_kontrak
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          contract.nama_kontrak.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Status filter
+    if (statusFilter !== "ALL") {
+      filtered = filtered.filter((contract) => {
+        const status = contract.status === "-" ? "KONSTRUKSI" : contract.status;
+        return status === statusFilter;
+      });
+    }
+
+    // Year filter
+    if (yearFilter !== "ALL") {
+      filtered = filtered.filter((contract) => {
+        const year = contract.tgl_kontrak
+          ? new Date(contract.tgl_kontrak).getFullYear().toString()
+          : "N/A";
+        return year === yearFilter;
+      });
+    }
+
+    return filtered;
+  }, [apiData?.data_kontrak, searchTerm, statusFilter, yearFilter]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredContracts.length / rowsPerPage);
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const endIndex = startIndex + rowsPerPage;
+  const currentContracts = filteredContracts.slice(startIndex, endIndex);
+
+  // Get unique years for filter
+  const availableYears = useMemo(() => {
+    if (!apiData?.data_kontrak) return [];
+
+    const years = apiData.data_kontrak
+      .map((contract) => {
+        if (!contract.tgl_kontrak || contract.tgl_kontrak === "-") return "N/A";
+        return new Date(contract.tgl_kontrak).getFullYear().toString();
+      })
+      .filter((year, index, self) => self.indexOf(year) === index)
+      .sort();
+
+    return years;
+  }, [apiData?.data_kontrak]);
+
+  // Get unique statuses for filter
+  const availableStatuses = useMemo(() => {
+    if (!apiData?.data_kontrak) return [];
+
+    const statuses = apiData.data_kontrak
+      .map((contract) =>
+        contract.status === "-" ? "KONSTRUKSI" : contract.status
+      )
+      .filter((status, index, self) => self.indexOf(status) === index);
+
+    return statuses;
+  }, [apiData?.data_kontrak]);
+
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleRowsPerPageChange = (rows: number) => {
+    setRowsPerPage(rows);
+    setCurrentPage(1);
+  };
+
+  // Format date
+  const formatDate = (dateString: string) => {
+    if (!dateString || dateString === "-") return "N/A";
+    try {
+      return new Date(dateString).toLocaleDateString("id-ID");
+    } catch {
+      return dateString;
+    }
+  };
+
   const getStatusColor = (status: string) => {
-    switch (status) {
+    const normalizedStatus = status === "-" ? "KONSTRUKSI" : status;
+    switch (normalizedStatus) {
       case "KONSTRUKSI":
         return "bg-cyan-500 text-white";
       case "MASA PEMELIHARAAN":
@@ -79,20 +248,33 @@ const AdkonPage: React.FC = () => {
   };
 
   const ProgressBar = ({ value }: { value: number }) => (
-    <div className="w-full bg-red-400 rounded-full h-3">
+    <div className="w-16 sm:w-20 bg-red-400 rounded-full h-3 flex-shrink-0">
       <div
-        className="bg-green-400 h-3 rounded-full"
-        style={{ width: `${value}%` }}
+        className="bg-green-400 h-3 rounded-full transition-all duration-300"
+        style={{ width: `${Math.min(Math.max(value, 0), 100)}%` }}
       />
     </div>
   );
+
+  if (loading) {
+    return (
+      <DefaultLayout>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#145C72]"></div>
+            <p className="mt-4 text-gray-600">Loading...</p>
+          </div>
+        </div>
+      </DefaultLayout>
+    );
+  }
 
   return (
     <DefaultLayout>
       <div className="min-h-screen bg-gray-50 p-3 sm:p-6">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">
+          <h1 className="text-2xl md:text-[32px] text-center font-bold text-[#155C72] mb-6">
             ADMINISTRASI KONTRAK
           </h1>
         </div>
@@ -134,13 +316,18 @@ const AdkonPage: React.FC = () => {
             </div>
             <div className="mt-4 space-y-2">
               {contractPreviewData.map((item, index) => (
-                <div key={index} className="flex items-center">
-                  <div
-                    className="w-3 h-3 rounded-full mr-2"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <span className="text-xs sm:text-sm text-gray-600">
-                    {item.name}
+                <div key={index} className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div
+                      className="w-3 h-3 rounded-full mr-2"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className="text-xs sm:text-sm text-gray-600">
+                      {item.name}
+                    </span>
+                  </div>
+                  <span className="text-xs sm:text-sm font-medium text-gray-800">
+                    {item.value}
                   </span>
                 </div>
               ))}
@@ -169,14 +356,14 @@ const AdkonPage: React.FC = () => {
                 <div className="mb-4">
                   <div className="flex flex-col sm:flex-row sm:justify-between text-xs sm:text-sm text-gray-600 mb-2 space-y-1 sm:space-y-0">
                     <span>
-                      <span className="text-[#145C72]">■</span> KONTRAK UPT
+                      <span className="text-[#6EF585]">■</span> KONTRAK UPT
                       BEKASI
                     </span>
                     <span>
-                      <span className="text-[#179FB7]">■</span> PROGRESS %
+                      <span className="text-[#189FB7]">■</span> PROGRESS %
                     </span>
                     <span>
-                      <span className="text-[#28A8E0]">■</span> PROGRESS BAYAR %
+                      <span className="text-[#FF5050]">■</span> PROGRESS BAYAR %
                     </span>
                   </div>
                 </div>
@@ -193,15 +380,14 @@ const AdkonPage: React.FC = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="year" tick={{ fontSize: 12 }} />
                     <YAxis tick={{ fontSize: 12 }} />
-                    <Bar dataKey="kontrak" fill="#145C72" />
-                    <Bar dataKey="progress" fill="#179FB7" />
-                    <Bar dataKey="bayar" fill="#28A8E0" />
+                    <Bar dataKey="kontrak" fill="#6EF585" />
+                    <Bar dataKey="progress" fill="#189FB7" />
+                    <Bar dataKey="bayar" fill="#FF5050" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
 
-              {/* Anggaran Investasi - Mobile Responsive */}
-              {/* Anggaran Investasi - Keeping Original Layout */}
+              {/* Anggaran Investasi */}
               <div className="">
                 <div className="flex items-center mb-4">
                   <div className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center mr-3">
@@ -216,7 +402,7 @@ const AdkonPage: React.FC = () => {
                   </h2>
                 </div>
 
-                {/* Chart and Values Side by Side - Original Layout Preserved */}
+                {/* Chart and Values Side by Side */}
                 <div className="flex items-center justify-between mb-4">
                   {/* Pie Chart */}
                   <div className="w-32 h-24 sm:w-44 sm:h-32">
@@ -238,48 +424,44 @@ const AdkonPage: React.FC = () => {
                     </ResponsiveContainer>
                   </div>
 
-                  {/* Values - Original Layout */}
+                  {/* Values */}
                   <div className="ml-2 sm:ml-4 space-y-2 sm:space-y-4">
-                    <div>
-                      <div className="text-xs sm:text-sm text-cyan-500 font-medium mb-1">
-                        SKKI TERBIT (M)
+                    {investmentData.map((item, index) => (
+                      <div key={index}>
+                        <div className="text-xs sm:text-sm text-cyan-500 font-medium mb-1">
+                          {item.name} (M)
+                        </div>
+                        <div
+                          className={`text-white px-2 py-1 sm:px-3 sm:py-2 rounded font-bold text-sm sm:text-lg`}
+                          style={{ backgroundColor: item.color }}
+                        >
+                          {(item.amount / 1000000000).toFixed(1)}
+                        </div>
                       </div>
-                      <div className="bg-[#145C72] text-white px-2 py-1 sm:px-3 sm:py-2 rounded font-bold text-sm sm:text-lg">
-                        813.4
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs sm:text-sm text-cyan-500 font-medium mb-1">
-                        AKI TERBAYAR (M)
-                      </div>
-                      <div className="bg-[#189FB7] text-white px-2 py-1 sm:px-3 sm:py-2 rounded font-bold text-sm sm:text-lg">
-                        333.3
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
 
-                {/* Legend - Original Layout */}
+                {/* Legend */}
                 <div className="flex flex-col">
-                  <div className="flex items-center">
-                    <div className="w-3 h-3 bg-[#145C72] rounded-xs mr-2" />
-                    <span className="text-xs sm:text-sm text-gray-600">
-                      SKKI TERBIT
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-3 h-3 bg-[#189FB7] rounded-xs mr-2" />
-                    <span className="text-xs sm:text-sm text-gray-600">
-                      AKI TERBAYAR
-                    </span>
-                  </div>
+                  {investmentData.map((item, index) => (
+                    <div key={index} className="flex items-center">
+                      <div
+                        className="w-3 h-3 rounded-xs mr-2"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <span className="text-xs sm:text-sm text-gray-600">
+                        {item.name}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Contract List Table - Mobile Responsive */}
+        {/* Contract List Table with Search and Filter */}
         <div className="bg-white rounded-lg shadow-md">
           <div className="flex items-center p-4 sm:p-6 border-b">
             <div className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center mr-3">
@@ -290,21 +472,90 @@ const AdkonPage: React.FC = () => {
             </h2>
           </div>
 
+          {/* Search and Filter Section */}
+          <div className="p-4 sm:p-6 border-b bg-gray-50">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Search Input */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Search Contract
+                </label>
+                <input
+                  type="text"
+                  placeholder="Search by contract number or name..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#145C72] focus:border-transparent"
+                />
+              </div>
+
+              {/* Status Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Filter by Status
+                </label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#145C72] focus:border-transparent"
+                >
+                  <option value="ALL">All Status</option>
+                  {availableStatuses.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Year Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Filter by Year
+                </label>
+                <select
+                  value={yearFilter}
+                  onChange={(e) => setYearFilter(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#145C72] focus:border-transparent"
+                >
+                  <option value="ALL">All Years</option>
+                  {availableYears.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Results Summary */}
+            <div className="mt-4 text-sm text-gray-600">
+              Showing {currentContracts.length} of {filteredContracts.length}{" "}
+              contracts
+              {searchTerm && ` (filtered by "${searchTerm}")`}
+              {statusFilter !== "ALL" && ` (status: ${statusFilter})`}
+              {yearFilter !== "ALL" && ` (year: ${yearFilter})`}
+            </div>
+          </div>
+
           {/* Mobile Card View */}
           <div className="block sm:hidden">
-            {contractListData.map((contract) => (
-              <div key={contract.id} className="p-4 border-b border-gray-200">
+            {currentContracts.map((contract, index) => (
+              <div
+                key={contract.no_kontrak}
+                className="p-4 border-b border-gray-200"
+              >
                 <div className="space-y-3">
                   <div className="flex justify-between items-start">
                     <div>
                       <div className="text-xs text-gray-500">
-                        No. {contract.id}
+                        No. {startIndex + index + 1}
                       </div>
                       <div className="text-sm font-medium text-[#145C72]">
-                        {contract.noKontrak}
+                        {contract.no_kontrak}
                       </div>
                       <div className="text-sm text-[#145C72]">
-                        {contract.namaKontrak}
+                        {contract.nama_kontrak}
                       </div>
                     </div>
                     <span
@@ -312,7 +563,7 @@ const AdkonPage: React.FC = () => {
                         contract.status
                       )}`}
                     >
-                      {contract.status}
+                      {contract.status === "-" ? "KONSTRUKSI" : contract.status}
                     </span>
                   </div>
 
@@ -320,13 +571,13 @@ const AdkonPage: React.FC = () => {
                     <div>
                       <span className="text-gray-500">Tgl Kontrak:</span>
                       <div className="text-[#145C72]">
-                        {contract.tanggalKontrak}
+                        {formatDate(contract.tgl_kontrak)}
                       </div>
                     </div>
                     <div>
                       <span className="text-gray-500">Akhir Kontrak:</span>
                       <div className="text-[#145C72]">
-                        {contract.akhirKontrak}
+                        {formatDate(contract.akhir_kontrak)}
                       </div>
                     </div>
                   </div>
@@ -335,20 +586,20 @@ const AdkonPage: React.FC = () => {
                     <div>
                       <div className="flex justify-between text-xs mb-1">
                         <span className="text-gray-500">% Fisik</span>
-                        <span className="text-[#145C72]">
-                          {contract.fisik}%
-                        </span>
+                        <span className="text-[#145C72]">{contract.fisik}</span>
                       </div>
-                      <ProgressBar value={contract.fisik} />
+                      <ProgressBar
+                        value={parseInt(contract.fisik.replace("%", "")) || 0}
+                      />
                     </div>
                     <div>
                       <div className="flex justify-between text-xs mb-1">
                         <span className="text-gray-500">% Bayar</span>
-                        <span className="text-[#145C72]">
-                          {contract.bayar}%
-                        </span>
+                        <span className="text-[#145C72]">{contract.bayar}</span>
                       </div>
-                      <ProgressBar value={contract.bayar} />
+                      <ProgressBar
+                        value={parseInt(contract.bayar.replace("%", "")) || 0}
+                      />
                     </div>
                   </div>
                 </div>
@@ -388,36 +639,43 @@ const AdkonPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {contractListData.map((contract) => (
-                  <tr key={contract.id} className="hover:bg-gray-50">
+                {currentContracts.map((contract, index) => (
+                  <tr key={contract.no_kontrak} className="hover:bg-gray-50">
                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-[13px] text-[#145C72]">
-                      {contract.id}
+                      {startIndex + index + 1}
                     </td>
                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-[13px] text-[#145C72]">
-                      {contract.noKontrak}
+                      {contract.no_kontrak}
+                    </td>
+                    <td className="px-3 sm:px-6 py-4 text-xs sm:text-[13px] text-[#145C72] max-w-xs">
+                      <div className="truncate" title={contract.nama_kontrak}>
+                        {contract.nama_kontrak}
+                      </div>
                     </td>
                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-[13px] text-[#145C72]">
-                      {contract.namaKontrak}
+                      {formatDate(contract.tgl_kontrak)}
                     </td>
                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-[13px] text-[#145C72]">
-                      {contract.tanggalKontrak}
+                      {formatDate(contract.akhir_kontrak)}
                     </td>
+
                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-[13px] text-[#145C72]">
-                      {contract.akhirKontrak}
-                    </td>
-                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-[13px] text-[#145C72]">
-                      <div className="flex items-center space-x-2">
-                        <ProgressBar value={contract.fisik} />
-                        <span className="text-xs sm:text-sm">
-                          {contract.fisik}%
+                      <div className="flex items-center space-x-3">
+                        <ProgressBar
+                          value={parseInt(contract.fisik.replace("%", "")) || 0}
+                        />
+                        <span className="text-xs sm:text-sm min-w-[3rem]">
+                          {contract.fisik}
                         </span>
                       </div>
                     </td>
                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-[13px] text-[#145C72]">
-                      <div className="flex items-center space-x-2">
-                        <ProgressBar value={contract.bayar} />
-                        <span className="text-xs sm:text-sm">
-                          {contract.bayar}%
+                      <div className="flex items-center space-x-3">
+                        <ProgressBar
+                          value={parseInt(contract.bayar.replace("%", "")) || 0}
+                        />
+                        <span className="text-xs sm:text-sm min-w-[3rem]">
+                          {contract.bayar}
                         </span>
                       </div>
                     </td>
@@ -427,7 +685,9 @@ const AdkonPage: React.FC = () => {
                           contract.status
                         )}`}
                       >
-                        {contract.status}
+                        {contract.status === "-"
+                          ? "KONSTRUKSI"
+                          : contract.status}
                       </span>
                     </td>
                   </tr>
@@ -435,6 +695,156 @@ const AdkonPage: React.FC = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {filteredContracts.length > 0 && (
+            <div className="bg-gray-50 px-2 sm:px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+              {/* Rows per page */}
+              <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                <span className="text-sm text-gray-700 whitespace-nowrap">
+                  Rows per page:
+                </span>
+                <div className="flex space-x-1">
+                  {[10, 25, 50, 100].map((rows) => (
+                    <button
+                      key={rows}
+                      onClick={() => handleRowsPerPageChange(rows)}
+                      className={`px-2 sm:px-3 py-1 rounded text-sm transition-colors duration-150 ${
+                        rowsPerPage === rows
+                          ? "bg-[#145C72] text-[#FFF11E]"
+                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      }`}
+                    >
+                      {rows}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Page navigation */}
+              <div className="flex items-center space-x-1 sm:space-x-2 overflow-x-auto">
+                {/* Previous Button */}
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`px-2 sm:px-3 py-1 rounded transition-colors duration-150 shrink-0 ${
+                    currentPage === 1
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-white text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  Prev
+                </button>
+
+                {/* Page Numbers */}
+                {(() => {
+                  const pages = [];
+                  const maxVisiblePages = 5;
+                  let startPage = Math.max(
+                    1,
+                    currentPage - Math.floor(maxVisiblePages / 2)
+                  );
+                  let endPage = Math.min(
+                    totalPages,
+                    startPage + maxVisiblePages - 1
+                  );
+
+                  if (endPage - startPage < maxVisiblePages - 1) {
+                    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                  }
+
+                  if (startPage > 1) {
+                    pages.push(
+                      <button
+                        key={1}
+                        onClick={() => handlePageChange(1)}
+                        className="px-2 sm:px-3 py-1 rounded bg-white text-gray-700 hover:bg-gray-100 transition-colors duration-150 shrink-0"
+                      >
+                        1
+                      </button>
+                    );
+                    if (startPage > 2) {
+                      pages.push(
+                        <span
+                          key="start-ellipsis"
+                          className="px-2 text-gray-500 shrink-0"
+                        >
+                          ...
+                        </span>
+                      );
+                    }
+                  }
+
+                  for (let i = startPage; i <= endPage; i++) {
+                    pages.push(
+                      <button
+                        key={i}
+                        onClick={() => handlePageChange(i)}
+                        className={`px-2 sm:px-3 py-1 rounded transition-colors duration-150 shrink-0 ${
+                          currentPage === i
+                            ? "bg-[#145C72] text-white"
+                            : "bg-white text-gray-700 hover:bg-gray-100"
+                        }`}
+                      >
+                        {i}
+                      </button>
+                    );
+                  }
+
+                  if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) {
+                      pages.push(
+                        <span
+                          key="end-ellipsis"
+                          className="px-2 text-gray-500 shrink-0"
+                        >
+                          ...
+                        </span>
+                      );
+                    }
+                    pages.push(
+                      <button
+                        key={totalPages}
+                        onClick={() => handlePageChange(totalPages)}
+                        className="px-2 sm:px-3 py-1 rounded bg-white text-gray-700 hover:bg-gray-100 transition-colors duration-150 shrink-0"
+                      >
+                        {totalPages}
+                      </button>
+                    );
+                  }
+
+                  return pages;
+                })()}
+
+                {/* Next Button */}
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={`px-2 sm:px-3 py-1 rounded transition-colors duration-150 shrink-0 ${
+                    currentPage === totalPages
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-white text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* No Data Message */}
+          {filteredContracts.length === 0 && !loading && (
+            <div className="p-8 text-center">
+              <div className="text-gray-500 text-lg mb-2">
+                No contracts found
+              </div>
+              <div className="text-gray-400 text-sm">
+                {searchTerm || statusFilter !== "ALL" || yearFilter !== "ALL"
+                  ? "Try adjusting your search or filter criteria"
+                  : "No contract data available"}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </DefaultLayout>

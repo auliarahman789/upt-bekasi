@@ -23,6 +23,7 @@ import JadwalK3 from "./pages/Monitoring/HSSE/JadwalK3";
 import SLOPage from "./pages/DataAsset/SLO/SLOPage";
 import Logistik from "./pages/Monitoring/Konstruksi/Logistik";
 import TowerKritisPage from "./pages/DataAsset/Tower/TowerKritisPage";
+import SustainabilityPage from "./pages/Monitoring/HSSE/Sustainability";
 
 // Main App Content Component (needs to be inside Router to use hooks)
 function AppContent() {
@@ -238,6 +239,15 @@ function AppContent() {
           <>
             <PageTitle title="UPT Bekasi - Maturing Level HSSE" />
             <LevelHSSEPage />
+          </>
+        }
+      />
+      <Route
+        path="/monitoring/hsse/sustainability"
+        element={
+          <>
+            <PageTitle title="UPT Bekasi - Maturing Level Sustainability" />
+            <SustainabilityPage />
           </>
         }
       />
