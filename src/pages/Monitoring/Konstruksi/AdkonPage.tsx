@@ -10,6 +10,7 @@ import {
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
+  LabelList,
 } from "recharts";
 import DefaultLayout from "../../../layout/DefaultLayout";
 import axios from "axios";
@@ -94,7 +95,7 @@ const AdkonPage: React.FC = () => {
     if (!apiData?.data_kontrak) return [];
 
     const statusCount = apiData.data_kontrak.reduce((acc, contract) => {
-      const status = contract.status === "-" ? "KONSTRUKSI" : contract.status;
+      const status = contract.status === "-" ? "OTHER" : contract.status;
       acc[status] = (acc[status] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -161,7 +162,7 @@ const AdkonPage: React.FC = () => {
     // Status filter
     if (statusFilter !== "ALL") {
       filtered = filtered.filter((contract) => {
-        const status = contract.status === "-" ? "KONSTRUKSI" : contract.status;
+        const status = contract.status === "-" ? "OTHER" : contract.status;
         return status === statusFilter;
       });
     }
@@ -205,9 +206,7 @@ const AdkonPage: React.FC = () => {
     if (!apiData?.data_kontrak) return [];
 
     const statuses = apiData.data_kontrak
-      .map((contract) =>
-        contract.status === "-" ? "KONSTRUKSI" : contract.status
-      )
+      .map((contract) => (contract.status === "-" ? "OTHER" : contract.status))
       .filter((status, index, self) => self.indexOf(status) === index);
 
     return statuses;
@@ -234,7 +233,7 @@ const AdkonPage: React.FC = () => {
   };
 
   const getStatusColor = (status: string) => {
-    const normalizedStatus = status === "-" ? "KONSTRUKSI" : status;
+    const normalizedStatus = status === "-" ? "OTHER" : status;
     switch (normalizedStatus) {
       case "KONSTRUKSI":
         return "bg-cyan-500 text-white";
@@ -380,9 +379,26 @@ const AdkonPage: React.FC = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="year" tick={{ fontSize: 12 }} />
                     <YAxis tick={{ fontSize: 12 }} />
-                    <Bar dataKey="kontrak" fill="#6EF585" />
-                    <Bar dataKey="progress" fill="#189FB7" />
-                    <Bar dataKey="bayar" fill="#FF5050" />
+
+                    <Bar dataKey="kontrak" fill="#6EF585">
+                      {" "}
+                      <LabelList
+                        dataKey="kontrak"
+                        position="top"
+                        fontSize={10}
+                      />
+                    </Bar>
+                    <Bar dataKey="progress" fill="#189FB7">
+                      {" "}
+                      <LabelList
+                        dataKey="progress"
+                        position="top"
+                        fontSize={10}
+                      />
+                    </Bar>
+                    <Bar dataKey="bayar" fill="#FF5050">
+                      <LabelList dataKey="bayar" position="top" fontSize={10} />
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -685,9 +701,7 @@ const AdkonPage: React.FC = () => {
                           contract.status
                         )}`}
                       >
-                        {contract.status === "-"
-                          ? "KONSTRUKSI"
-                          : contract.status}
+                        {contract.status === "-" ? "OTHER" : contract.status}
                       </span>
                     </td>
                   </tr>
