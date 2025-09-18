@@ -1,236 +1,47 @@
 import { useState, useRef, useEffect } from "react";
-
-interface MenuItem {
-  id: string;
-  label: string;
-  icon: string;
-  route?: string;
-  hasChildren?: boolean;
-  children?: MenuItem[];
-}
+import { useNavigate } from "react-router-dom";
+import { menuItems, MenuItem } from "../config/menuItems";
+import { useAuth } from "../context/AuthContext";
 
 interface NavbarMobileProps {
   currentRoute: string;
   onRouteChange: (route: string) => void;
-  navigate: (route: string) => void; // Pass navigate function from parent
 }
 
 const NavbarMobile: React.FC<NavbarMobileProps> = ({
   currentRoute,
   onRouteChange,
-  navigate,
 }) => {
+  const navigate = useNavigate(); // Use the hook directly
+  const { user, isAuthenticated, logout, login } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const [loginData, setLoginData] = useState({ email: "", password: "" });
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const menuItems: MenuItem[] = [
-    {
-      id: "home",
-      label: "HOME",
-      icon: "/Home.svg",
-      route: "/",
-    },
-    {
-      id: "data-asset",
-      label: "DATA ASSET",
-      icon: "/dataAsset.svg",
-      hasChildren: true,
-      children: [
-        {
-          id: "data-karyawan",
-          label: "DATA KARYAWAN",
-          icon: "",
-          route: "/data-asset/datakaryawan",
-        },
-        {
-          id: "data-asset-main",
-          label: "DATA ASSET",
-          icon: "",
-          route: "/data-asset/dataasset",
-        },
-        {
-          id: "mtu",
-          label: "MTU",
-          icon: "",
-          hasChildren: true,
-          children: [
-            {
-              id: "mtu-1",
-              label: "MONITORING KONDISI",
-              icon: "",
-              route: "/data-asset/mtu/monitoringkondisi",
-            },
-            {
-              id: "mtu-2",
-              label: "PENGGANTIAN",
-              icon: "",
-              route: "/data-asset/mtu/penggantian",
-            },
-          ],
-        },
-        {
-          id: "tower",
-          label: "TOWER",
-          icon: "",
-          hasChildren: true,
-          children: [
-            {
-              id: "tower-1",
-              label: "KRITIS",
-              icon: "",
-              route: "/data-asset/tower/kritis",
-            },
-            {
-              id: "tower-2",
-              label: "ROW KRITIS",
-              icon: "",
-              route: "/data-asset/tower/rowkritis",
-            },
-          ],
-        },
-        {
-          id: "sld",
-          label: "SLD",
-          icon: "",
-          route: "/data-asset/sld",
-        },
-        {
-          id: "slo",
-          label: "SLO",
-          icon: "",
-          route: "/data-asset/slo",
-        },
-      ],
-    },
-    {
-      id: "performance",
-      label: "PERFORMANCE",
-      icon: "/kinerja.svg",
-      route: "/performance",
-      hasChildren: true,
-      children: [
-        {
-          id: "performance-1",
-          label: "REKAP ANOMALI",
-          icon: "",
-          route: "/performance/rekapanomali",
-        },
-        {
-          id: "performance-2",
-          label: "PERSENTASI ANOMALI UPT",
-          icon: "",
-          route: "/performance/persentasianimali",
-        },
-      ],
-    },
-    {
-      id: "kinerja",
-      label: "KINERJA",
-      icon: "/Time_progress_fill.svg",
-      route: "/kinerja",
-      hasChildren: true,
-      children: [
-        {
-          id: "kinerja-1",
-          label: "UPT",
-          icon: "",
-          route: "/kinerja/upt",
-        },
-        {
-          id: "kinerja-2",
-          label: "ULTG",
-          icon: "",
-          route: "/kinerja/ultg",
-        },
-      ],
-    },
-    {
-      id: "monitoring",
-      label: "MONITORING",
-      icon: "/monitoring.svg",
-      route: "/monitoring",
-      hasChildren: true,
-      children: [
-        {
-          id: "monitoring-1",
-          label: "LEAD MEASURE",
-          icon: "",
-          route: "/monitoring/lead-measure",
-        },
-        {
-          id: "monitoring-2",
-          label: "ANGGARAN",
-          icon: "",
-          route: "/monitoring/anggaran",
-        },
-        {
-          id: "monitoring-3",
-          label: "KONSTRUKSI",
-          icon: "",
-          hasChildren: true,
-          children: [
-            {
-              id: "konstruksi-1",
-              label: "ADKON DALKON",
-              icon: "",
-              route: "/monitoring/konstruksi/adkondalkon",
-            },
-            {
-              id: "konstruksi-2",
-              label: "LOGISTIK",
-              icon: "",
-              route: "/monitoring/konstruksi/logistik",
-            },
-          ],
-        },
-        {
-          id: "monitoring-4",
-          label: "HSSE PERFORMANCE",
-          icon: "",
-          hasChildren: true,
-          children: [
-            {
-              id: "hsse-1",
-              label: "JADWAL PEKERJAAN K3",
-              icon: "",
-              route: "/monitoring/hsse/jadwalk3",
-            },
-            {
-              id: "hsse-2",
-              label: "PERALATAN DAN SARANA",
-              icon: "",
-              route: "/monitoring/hsse/perandsar",
-            },
-            {
-              id: "hsse-3",
-              label: "MATURING LEVEL HSSE",
-              icon: "",
-              route: "/monitoring/hsse/levelhsse",
-            },
-            {
-              id: "hsse-4",
-              label: "MATURING LEVEL SUSTAINABILITY",
-              icon: "",
-              route: "/monitoring/hsse/sustainability",
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: "akun",
-      label: "ACCOUNT",
-      icon: "/account.svg",
-    },
-  ];
+  // Get visible menu items based on auth state
+  const getVisibleMenuItems = () => {
+    if (!isAuthenticated) {
+      return menuItems.filter((item) => item.id === "home");
+    }
+    return [
+      ...menuItems,
+      {
+        id: "profile",
+        label: "PROFILE",
+        icon: "/account.svg",
+        hasChildren: true,
+      },
+    ];
+  };
 
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
       if (menuRef.current && !menuRef.current.contains(target)) {
-        // Make sure we're not clicking on the burger button itself
         const burgerButton = document.querySelector(
           '[aria-label="Toggle menu"]'
         );
@@ -251,18 +62,51 @@ const NavbarMobile: React.FC<NavbarMobileProps> = ({
 
   const handleMenuToggle = () => {
     setIsMenuOpen(!isMenuOpen);
+    // Clear login error when opening/closing menu
+    setLoginError(null);
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginLoading(true);
+    setLoginError(null);
+
+    try {
+      await login(loginData.email, loginData.password);
+      setLoginData({ email: "", password: "" });
+      setIsMenuOpen(false); // Close menu on successful login
+    } catch (error: any) {
+      console.error("Login error:", error);
+      setLoginError(error?.message || "Login failed");
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setIsMenuOpen(false);
+      navigate("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   const handleItemClick = (item: MenuItem) => {
-    if (item.hasChildren) {
-      // Toggle expanded state for items with children
+    if (item.id === "profile") {
+      setExpandedItems((prev) =>
+        prev.includes(item.id)
+          ? prev.filter((id) => id !== item.id)
+          : [...prev, item.id]
+      );
+    } else if (item.hasChildren) {
       setExpandedItems((prev) =>
         prev.includes(item.id)
           ? prev.filter((id) => id !== item.id)
           : [...prev, item.id]
       );
     } else if (item.route) {
-      // Navigate to route and close menu
       navigate(item.route);
       onRouteChange(item.route);
       setIsMenuOpen(false);
@@ -276,6 +120,81 @@ const NavbarMobile: React.FC<NavbarMobileProps> = ({
     const isActive = currentRoute === item.route;
     const hasChildren = item.hasChildren && item.children;
     const isExpanded = isItemExpanded(item.id);
+
+    // Special handling for profile menu
+    if (item.id === "profile") {
+      return (
+        <div key={item.id} className={`${level > 0 ? "ml-4" : ""}`}>
+          <div
+            className={`flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-[#1a6b82] transition-colors duration-200`}
+            onClick={() => handleItemClick(item)}
+          >
+            <div className="flex items-center space-x-3">
+              <img src={item.icon} alt={item.label} className="w-6 h-6" />
+              <div>
+                <div className="text-white font-medium text-sm">
+                  {item.label}
+                </div>
+                <div className="text-xs text-gray-300">{user?.nama}</div>
+              </div>
+            </div>
+            <div
+              className={`transform transition-transform duration-200 ${
+                isExpanded ? "rotate-90" : ""
+              }`}
+            >
+              <svg
+                className="w-4 h-4 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </div>
+          </div>
+
+          {isExpanded && (
+            <div className="bg-[#0f4a5a]">
+              {user?.role === "super admin" && (
+                <div
+                  className="flex items-center px-8 py-3 cursor-pointer hover:bg-[#1a6b82] transition-colors duration-200"
+                  onClick={() => {
+                    navigate("/admin");
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  <span className="text-white font-medium text-sm">
+                    Admin Panel
+                  </span>
+                </div>
+              )}
+              <div
+                className="flex items-center px-8 py-3 cursor-pointer hover:bg-[#1a6b82] transition-colors duration-200"
+                onClick={() => {
+                  navigate("/profile");
+                  setIsMenuOpen(false);
+                }}
+              >
+                <span className="text-white font-medium text-sm">Profile</span>
+              </div>
+              <div
+                className="flex items-center px-8 py-3 cursor-pointer hover:bg-red-600 transition-colors duration-200"
+                onClick={handleLogout}
+              >
+                <span className="text-red-400 font-medium text-sm">LOGOUT</span>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
 
     return (
       <div key={item.id} className={`${level > 0 ? "ml-4" : ""}`}>
@@ -324,6 +243,8 @@ const NavbarMobile: React.FC<NavbarMobileProps> = ({
     );
   };
 
+  const visibleMenuItems = getVisibleMenuItems();
+
   return (
     <>
       {/* Fixed Navbar */}
@@ -359,9 +280,9 @@ const NavbarMobile: React.FC<NavbarMobileProps> = ({
             </div>
           </button>
 
-          {/* Logo/Brand - if you have one */}
+          {/* Logo or empty space for mobile */}
           <div className="flex items-center">
-            {/* Add your logo here if needed */}
+            {/* You can add a logo here if needed */}
           </div>
         </div>
       </nav>
@@ -369,7 +290,7 @@ const NavbarMobile: React.FC<NavbarMobileProps> = ({
       {/* Overlay */}
       {isMenuOpen && (
         <div
-          className="fixed inset-0  z-[45] transition-opacity duration-300"
+          className="fixed inset-0 z-[45] transition-opacity duration-300"
           style={{ top: "67px" }}
           onClick={() => setIsMenuOpen(false)}
         ></div>
@@ -382,9 +303,52 @@ const NavbarMobile: React.FC<NavbarMobileProps> = ({
           isMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
+        {/* Login Form for Mobile - Inside Sidebar */}
+        {!isAuthenticated && (
+          <div className="p-4 border-b border-gray-600 bg-[#134E63]">
+            <h3 className="text-white font-semibold mb-3 text-center">LOGIN</h3>
+            <form onSubmit={handleLogin} className="space-y-3">
+              <input
+                type="email"
+                placeholder="Insert Email"
+                value={loginData.email}
+                onChange={(e) =>
+                  setLoginData({ ...loginData, email: e.target.value })
+                }
+                className="w-full px-3 py-2 rounded bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                required
+                disabled={loginLoading}
+              />
+              <input
+                type="password"
+                placeholder="Insert Password"
+                value={loginData.password}
+                onChange={(e) =>
+                  setLoginData({ ...loginData, password: e.target.value })
+                }
+                className="w-full px-3 py-2 rounded bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                required
+                disabled={loginLoading}
+              />
+              <button
+                type="submit"
+                disabled={loginLoading}
+                className="w-full py-2 bg-yellow-400 text-black font-bold rounded hover:bg-yellow-300 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loginLoading ? "LOGGING IN..." : "LOGIN"}
+              </button>
+              {loginError && (
+                <div className="text-red-400 text-sm text-center bg-red-900/20 p-2 rounded">
+                  {loginError}
+                </div>
+              )}
+            </form>
+          </div>
+        )}
+
         {/* Menu Items */}
-        <div className="overflow-y-auto h-full">
-          {menuItems.map((item) => renderMenuItem(item))}
+        <div className="overflow-y-auto flex-1">
+          {visibleMenuItems.map((item) => renderMenuItem(item))}
         </div>
       </div>
     </>

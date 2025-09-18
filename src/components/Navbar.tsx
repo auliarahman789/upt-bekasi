@@ -1,15 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
-// Navbar Component
-interface MenuItem {
-  id: string;
-  label: string;
-  icon: string;
-  route?: string;
-  hasChildren?: boolean;
-  children?: MenuItem[];
-}
+import { menuItems, MenuItem } from "../config/menuItems";
+import { useAuth } from "../context/AuthContext";
 
 interface NavbarProps {
   currentRoute: string;
@@ -18,6 +10,7 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
   const navigate = useNavigate();
+  const { user, isAuthenticated, logout, login } = useAuth(); // Move useAuth to top level
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [openSubDropdown, setOpenSubDropdown] = useState<string | null>(null);
   const [openSubSubDropdown, setOpenSubSubDropdown] = useState<string | null>(
@@ -25,221 +18,19 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
   );
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showLoginForm, setShowLoginForm] = useState(false);
+  const [loginData, setLoginData] = useState({ email: "", password: "" });
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
-  const menuItems: MenuItem[] = [
-    {
-      id: "home",
-      label: "HOME",
-      icon: "/Home.svg",
-      route: "/",
-    },
-    {
-      id: "data-asset",
-      label: "DATA ASSET",
-      icon: "/dataAsset.svg",
-      hasChildren: true,
-      children: [
-        {
-          id: "data-karyawan",
-          label: "DATA KARYAWAN",
-          icon: "",
-          route: "/data-asset/datakaryawan",
-        },
-        {
-          id: "data-asset-main",
-          label: "DATA ASSET",
-          icon: "",
-          route: "/data-asset/dataasset",
-        },
-        {
-          id: "mtu",
-          label: "MTU",
-          icon: "",
-          hasChildren: true,
-          children: [
-            {
-              id: "mtu-1",
-              label: "MONITORING KONDISI",
-              icon: "",
-              route: "/data-asset/mtu/monitoringkondisi",
-            },
-            {
-              id: "mtu-2",
-              label: "PENGGANTIAN",
-              icon: "",
-              route: "/data-asset/mtu/penggantian",
-            },
-          ],
-        },
-        {
-          id: "tower",
-          label: "TOWER",
-          icon: "",
-          hasChildren: true,
-          children: [
-            {
-              id: "tower-1",
-              label: "KRITIS",
-              icon: "",
-              route: "/data-asset/tower/kritis",
-            },
-            {
-              id: "tower-2",
-              label: "ROW KRITIS",
-              icon: "",
-              route: "/data-asset/tower/rowkritis",
-            },
-          ],
-        },
-        {
-          id: "sld",
-          label: "SLD",
-          icon: "",
-          route: "/data-asset/sld",
-        },
-        {
-          id: "slo",
-          label: "SLO",
-          icon: "",
-          route: "/data-asset/slo",
-        },
-      ],
-    },
-    {
-      id: "performance",
-      label: "PERFORMANCE",
-      icon: "/kinerja.svg",
-      route: "/performance",
-      hasChildren: true,
-      children: [
-        {
-          id: "performance-1",
-          label: "REKAP ANOMALI",
-          icon: "",
-          route: "/performance/rekapanomali",
-        },
-        {
-          id: "performance-2",
-          label: "PERSENTASI ANOMALI UPT",
-          icon: "",
-          route: "/performance/persentasianimali",
-        },
-      ],
-    },
-    {
-      id: "kinerja",
-      label: "KINERJA",
-      icon: "/Time_progress_fill.svg",
-      route: "/kinerja",
-      hasChildren: true,
-      children: [
-        {
-          id: "kinerja-1",
-          label: "UPT",
-          icon: "",
-          route: "/kinerja/upt",
-        },
-        {
-          id: "kinerja-2",
-          label: "ULTG",
-          icon: "",
-          route: "/kinerja/ultg",
-        },
-      ],
-    },
-    {
-      id: "monitoring",
-      label: "MONITORING",
-      icon: "/monitoring.svg",
-      route: "/monitoring",
-      hasChildren: true,
-      children: [
-        {
-          id: "monitoring-1",
-          label: "LEAD MEASURE",
-          icon: "",
-          route: "/monitoring/lead-measure",
-        },
-        {
-          id: "monitoring-2",
-          label: "ANGGARAN",
-          icon: "",
-          route: "/monitoring/anggaran",
-        },
-        {
-          id: "monitoring-3",
-          label: "KONSTRUKSI",
-          icon: "",
-          hasChildren: true,
-          children: [
-            {
-              id: "konstruksi-1",
-              label: "ADKON DALKON",
-              icon: "",
-              route: "/monitoring/konstruksi/adkondalkon",
-            },
-            {
-              id: "konstruksi-2",
-              label: "LOGISTIK",
-              icon: "",
-              hasChildren: true,
-              children: [
-                {
-                  id: "konstruksi-2-1",
-                  label: "MONITORING GUDANG",
-                  icon: "",
-                  route: "/monitoring/konstruksi/logistik/monitoringgudang",
-                },
-                {
-                  id: "konstruksi-2-2",
-                  label: "SIGESIT",
-                  icon: "",
-                  route: "/monitoring/konstruksi/logistik/sigesit",
-                },
-              ],
-            },
-          ],
-        },
-        {
-          id: "monitoring-4",
-          label: "HSSE PERFORMANCE",
-          icon: "",
-          hasChildren: true,
-          children: [
-            {
-              id: "hsse-1",
-              label: "JADWAL PEKERJAAN K3",
-              icon: "",
-              route: "/monitoring/hsse/jadwalk3",
-            },
-            {
-              id: "hsse-2",
-              label: "PERALATAN DAN SARANA",
-              icon: "",
-              route: "/monitoring/hsse/perandsar",
-            },
-            {
-              id: "hsse-3",
-              label: "MATURING LEVEL HSSE",
-              icon: "",
-              route: "/monitoring/hsse/levelhsse",
-            },
-            {
-              id: "hsse-4",
-              label: "MATURING LEVEL SUSTAINABILITY",
-              icon: "",
-              route: "/monitoring/hsse/sustainability",
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: "akun",
-      label: "ACCOUNT",
-      icon: "/account.svg",
-    },
-  ];
+  // Get visible menu items based on auth state
+  const getVisibleMenuItems = () => {
+    if (!isAuthenticated) {
+      return menuItems.filter((item) => item.id === "home");
+    }
+    return menuItems;
+  };
 
   // Handle scroll behavior
   useEffect(() => {
@@ -253,6 +44,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
         setOpenDropdown(null);
         setOpenSubDropdown(null);
         setOpenSubSubDropdown(null);
+        setShowProfileDropdown(false);
       }
 
       setLastScrollY(currentScrollY);
@@ -276,6 +68,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
     setOpenDropdown((prev) => (prev === menuId ? null : menuId));
     setOpenSubDropdown(null);
     setOpenSubSubDropdown(null);
+    setShowProfileDropdown(false);
   };
 
   const toggleSubDropdown = (subMenuId: string) => {
@@ -289,13 +82,45 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
     );
   };
 
-  const handleMenuClick = (item: MenuItem) => {
-    console.log("Menu clicked:", item.label, "Route:", item.route);
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginLoading(true);
+    setLoginError(null);
 
+    try {
+      await login(loginData.email, loginData.password);
+      // If we get here, login was successful
+      setShowLoginForm(false);
+      setLoginData({ email: "", password: "" });
+    } catch (error: any) {
+      console.error("Login error:", error);
+
+      // Only set error if it's actually an error (not a success message)
+      if (error?.message && !error.message.toLowerCase().includes("success")) {
+        setLoginError(error.message);
+      } else {
+        // Login might have succeeded despite the error
+        setShowLoginForm(false);
+        setLoginData({ email: "", password: "" });
+      }
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setShowProfileDropdown(false);
+      navigate("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
+  const handleMenuClick = (item: MenuItem) => {
     if (item.hasChildren) {
       toggleDropdown(item.id);
     } else if (item.route && item.route.trim() !== "") {
-      console.log("Navigating to:", item.route);
       navigate(item.route);
       setOpenDropdown(null);
       setOpenSubDropdown(null);
@@ -304,12 +129,9 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
   };
 
   const handleChildClick = (child: MenuItem) => {
-    console.log("Child menu clicked:", child.label, "Route:", child.route);
-
     if (child.hasChildren) {
       toggleSubDropdown(child.id);
     } else if (child.route && child.route.trim() !== "") {
-      console.log("Navigating to child route:", child.route);
       navigate(child.route);
       setOpenDropdown(null);
       setOpenSubDropdown(null);
@@ -318,12 +140,9 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
   };
 
   const handleSubChildClick = (subChild: MenuItem) => {
-    console.log("Sub-child clicked:", subChild.label, "Route:", subChild.route);
-
     if (subChild.hasChildren) {
       toggleSubSubDropdown(subChild.id);
     } else if (subChild.route && subChild.route.trim() !== "") {
-      console.log("Navigating to sub-child route:", subChild.route);
       navigate(subChild.route);
       setOpenDropdown(null);
       setOpenSubDropdown(null);
@@ -345,6 +164,8 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
   const isParentOrChildActive = (item: MenuItem) => {
     return isActive(item.route) || isChildActive(item);
   };
+
+  const visibleMenuItems = getVisibleMenuItems();
 
   return (
     <div
@@ -368,10 +189,11 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
         </div>
 
         <div className="w-full px-3">
-          <div className="flex items-center justify-center h-12 lg:justify-center">
+          <div className="flex items-center justify-between h-12 lg:justify-center">
+            {/* Menu Items */}
             <div className="flex space-x-[36px] items-center">
-              {menuItems.map((item) => (
-                <div key={item.id} className="relative group ">
+              {visibleMenuItems.map((item) => (
+                <div key={item.id} className="relative group">
                   <button
                     onClick={() => handleMenuClick(item)}
                     className={`flex items-center justify-center py-3 text-xs font-bold transition-all duration-300 h-14 relative overflow-hidden
@@ -422,7 +244,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
                     `}
                     >
                       <span
-                        className={` font-semibold ${
+                        className={`font-semibold ${
                           isParentOrChildActive(item)
                             ? "text-yellow-400"
                             : "text-white"
@@ -433,6 +255,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
                     </div>
                   </button>
 
+                  {/* Dropdown menus (same as before) */}
                   {item.hasChildren && openDropdown === item.id && (
                     <div className="absolute top-full left-0 mt-0 w-56 bg-[#145C72] rounded-b-md shadow-lg z-50 border-t-2 border-yellow-400">
                       <div className="py-1">
@@ -520,21 +343,11 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
                                                     <button
                                                       key={subSubChild.id}
                                                       onClick={() => {
-                                                        console.log(
-                                                          "Sub-sub-child clicked:",
-                                                          subSubChild.label,
-                                                          "Route:",
-                                                          subSubChild.route
-                                                        );
                                                         if (
                                                           subSubChild.route &&
                                                           subSubChild.route.trim() !==
                                                             ""
                                                         ) {
-                                                          console.log(
-                                                            "Navigating to sub-sub-child route:",
-                                                            subSubChild.route
-                                                          );
                                                           navigate(
                                                             subSubChild.route
                                                           );
@@ -574,6 +387,154 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
                   )}
                 </div>
               ))}
+            </div>
+
+            {/* Right side - Login/Profile */}
+            <div className="flex items-center space-x-4 px-8">
+              {!isAuthenticated ? (
+                // Login Section
+                <div className="flex items-center space-x-2 relative">
+                  {showLoginForm ? (
+                    <form
+                      onSubmit={handleLogin}
+                      className="flex items-center space-x-2"
+                    >
+                      <input
+                        type="email"
+                        placeholder="Insert Email"
+                        value={loginData.email}
+                        onChange={(e) =>
+                          setLoginData({ ...loginData, email: e.target.value })
+                        }
+                        className="px-4 py-2 rounded-full bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        required
+                        disabled={loginLoading}
+                      />
+                      <input
+                        type="password"
+                        placeholder="Insert Password"
+                        value={loginData.password}
+                        onChange={(e) =>
+                          setLoginData({
+                            ...loginData,
+                            password: e.target.value,
+                          })
+                        }
+                        className="px-4 py-2 rounded-full bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        required
+                        disabled={loginLoading}
+                      />
+                      <button
+                        type="submit"
+                        disabled={loginLoading}
+                        className="px-6 py-2 bg-yellow-400 text-black font-bold rounded-full hover:bg-yellow-300 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {loginLoading ? "LOGIN..." : "LOGIN"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowLoginForm(false);
+                          setLoginError(null);
+                        }}
+                        disabled={loginLoading}
+                        className="px-4 py-2 text-white hover:text-yellow-400 transition-colors duration-200"
+                      >
+                        Cancel
+                      </button>
+                    </form>
+                  ) : (
+                    <div className="rounded-full bg-yellow-300">
+                      <button
+                        onClick={() => setShowLoginForm(true)}
+                        className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 ${
+                          showLoginForm
+                            ? "bg-yellow-400 text-white"
+                            : "bg-transparent text-gray-400 hover:text-yellow-400"
+                        }`}
+                      >
+                        <svg
+                          className="w-5 h-5 transform rotate-90"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Error message */}
+                  {loginError && showLoginForm && (
+                    <div className="absolute top-full right-0 mt-2 p-2 bg-red-500 text-white text-sm rounded shadow-lg z-50">
+                      {loginError}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                // Profile Section
+                <div className="relative p-4">
+                  <button
+                    onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                    className="flex items-center space-x-2 px-4 py-2  text-white font-bold rounded transition-colors duration-200 hover:bg-[#1a6b82]"
+                  >
+                    <img src="/account.svg" alt="Account" className="w-6 h-6" />
+                  </button>
+
+                  {showProfileDropdown && (
+                    <div className="absolute top-full right-0 mt-2 w-48 bg-[#155C72] rounded-md shadow-lg z-50">
+                      <div className="py-2">
+                        <div className="px-4 py-2 text-white border-b border-gray-600">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-8 h-8 bg-white rounded-full"></div>
+                            <div>
+                              <div className="font-semibold">{user?.nama}</div>
+                              <div className="text-sm text-gray-300">
+                                {user?.role?.toUpperCase()}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {user?.role === "super admin" && (
+                          <button
+                            onClick={() => {
+                              navigate("/admin");
+                              setShowProfileDropdown(false);
+                            }}
+                            className="block w-full text-left px-4 py-2 text-white hover:bg-yellow-400 hover:text-black transition-colors duration-200"
+                          >
+                            Admin Panel
+                          </button>
+                        )}
+
+                        <button
+                          onClick={() => {
+                            navigate("/profile");
+                            setShowProfileDropdown(false);
+                          }}
+                          className="block w-full text-left px-4 py-2 text-white hover:bg-yellow-400 hover:text-black transition-colors duration-200"
+                        >
+                          Profile
+                        </button>
+
+                        <button
+                          onClick={handleLogout}
+                          className="block w-full text-left px-4 py-2 text-red-400 hover:bg-red-400 hover:text-white transition-colors duration-200"
+                        >
+                          LOGOUT
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

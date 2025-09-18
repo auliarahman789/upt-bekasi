@@ -112,13 +112,12 @@ const DefaultLayout: React.FC<DefaultLayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className=" ">
+    <div>
       {/* Conditional Navbar Rendering */}
       {isMobile ? (
         <NavbarMobile
           currentRoute={currentRoute}
           onRouteChange={handleRouteChange}
-          navigate={navigate}
         />
       ) : (
         <Navbar currentRoute={currentRoute} onRouteChange={handleRouteChange} />
