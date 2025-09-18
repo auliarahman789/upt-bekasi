@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import NavbarMobile from "../components/NavbarMobile";
 
@@ -96,7 +96,7 @@ const useMobileDetection = (debounceMs: number = 150) => {
 
 const DefaultLayout: React.FC<DefaultLayoutProps> = ({ children }) => {
   const location = useLocation();
-  const navigate = useNavigate();
+
   const [currentRoute, setCurrentRoute] = useState(location.pathname);
 
   // Use the improved mobile detection hook

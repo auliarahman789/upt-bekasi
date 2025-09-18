@@ -249,7 +249,7 @@ const NavbarMobile: React.FC<NavbarMobileProps> = ({
     <>
       {/* Fixed Navbar */}
       <nav
-        className="bg-cover bg-center bg-no-repeat h-[56px] backdrop-blur-sm mr-3 relative fixed top-0 left-0 right-0 z-[60]"
+        className="bg-cover bg-center bg-no-repeat h-[56px] backdrop-blur-sm mr-3 relative  top-0 left-0 right-0 z-[60]"
         style={{
           backgroundImage: "url('/bgNavMobile.svg')",
         }}
