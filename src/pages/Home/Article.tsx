@@ -47,14 +47,14 @@ const Article: React.FC = () => {
     });
   };
 
-  // Helper function to construct image URL
+  // Helper function to construct image URL - Updated to match your preferred structure
   const getImageUrl = (imagePath: string): string => {
     // If it's already a full URL, return as is
     if (imagePath.startsWith("http")) {
       return imagePath;
     }
-    // Otherwise, construct the full URL with your backend base URL
-    return `${import.meta.env.VITE_API_LINK_BE}/uploads/${imagePath}`;
+    // Updated to match your preferred image URL structure
+    return `${import.meta.env.VITE_API_LINK_BE}/api/images/${imagePath}`;
   };
 
   const fetchArticleData = async () => {
@@ -345,6 +345,16 @@ const Article: React.FC = () => {
           bottom: 0;
           width: 4px;
           background: #FFF11E;
+        }
+
+        /* Image error handling */
+        .image-fallback {
+          background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #666;
+          font-size: 12px;
         }
       `}</style>
 

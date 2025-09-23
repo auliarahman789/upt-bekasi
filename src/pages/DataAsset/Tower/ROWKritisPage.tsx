@@ -343,7 +343,7 @@ const ROWKritisPage: React.FC = () => {
                       <XAxis
                         dataKey="ultg"
                         tick={{ fontSize: 12, fill: "#374151" }}
-                        angle={-45}
+                        angle={0}
                         textAnchor="end"
                         height={60}
                       />
