@@ -240,7 +240,7 @@ const TowerKritisPage: React.FC = () => {
       <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl md:text-[32px] font-bold text-[#145C72] text-center">
+          <h1 className="text-2xl md:text-[32px] font-bold text-[#155C72] text-center mb-4 md:mb-6">
             TOWER KRITIS
           </h1>
         </div>

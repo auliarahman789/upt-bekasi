@@ -262,6 +262,13 @@ const AnggaranPage: React.FC = () => {
     <DefaultLayout>
       <div className="p-8 bg-gray-50 min-h-screen">
         <div className="mx-auto max-w-full">
+          <div className="mb-8">
+            <h1 className="text-2xl md:text-[32px] font-bold text-[#155C72] text-center mb-4 md:mb-6">
+              {activeTab === "anggaran-operasi"
+                ? "ANGGARAN OPERASI 2025"
+                : "INVESTASI"}
+            </h1>
+          </div>
           <div className="flex gap-2 mb-8">
             <button
               onClick={() => setActiveTab("anggaran-operasi")}
@@ -283,14 +290,6 @@ const AnggaranPage: React.FC = () => {
             >
               INVESTASI
             </button>
-          </div>
-
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-[#145C72] text-center uppercase">
-              {activeTab === "anggaran-operasi"
-                ? "ANGGARAN OPERASI 2025"
-                : "INVESTASI"}
-            </h1>
           </div>
 
           {activeTab === "anggaran-operasi" && (

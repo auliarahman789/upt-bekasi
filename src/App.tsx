@@ -33,6 +33,7 @@ import SustainabilityPage from "./pages/Monitoring/HSSE/Sustainability";
 import ProfilePage from "../src/pages/Profile/ProfilePage";
 import AdminPanel from "../src/pages/Admin/AdminPanel";
 import LoginPage from "../src/pages/Auth/LoginPage";
+import ROWKritisPage from "./pages/DataAsset/Tower/ROWKritisPage";
 
 // Protected Route Component
 interface ProtectedRouteProps {
@@ -205,9 +206,7 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <PageTitle title="UPT Bekasi - Row Kritis" />
-            <div className="p-8">
-              <h1 className="text-2xl font-bold">Row Kritis Page</h1>
-            </div>
+            <ROWKritisPage />
           </ProtectedRoute>
         }
       />
