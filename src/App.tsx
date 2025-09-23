@@ -34,6 +34,7 @@ import ProfilePage from "../src/pages/Profile/ProfilePage";
 import AdminPanel from "../src/pages/Admin/AdminPanel";
 import LoginPage from "../src/pages/Auth/LoginPage";
 import ROWKritisPage from "./pages/DataAsset/Tower/ROWKritisPage";
+import LMABOPage from "./pages/Monitoring/LMABO/LMABO";
 
 // Protected Route Component
 interface ProtectedRouteProps {
@@ -316,10 +317,8 @@ function AppContent() {
         path="/monitoring/lead-measure"
         element={
           <ProtectedRoute>
-            <PageTitle title="UPT Bekasi - Lead Measure" />
-            <div className="p-8">
-              <h1 className="text-2xl font-bold">Lead Measure Page</h1>
-            </div>
+            <PageTitle title="UPT Bekasi - Lead Measure & Anti Blackout" />
+            <LMABOPage />
           </ProtectedRoute>
         }
       />
