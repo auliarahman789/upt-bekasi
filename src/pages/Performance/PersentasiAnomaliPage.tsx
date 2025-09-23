@@ -185,8 +185,8 @@ const PersentasiAnomaliPage = () => {
       <div className="min-h-screen bg-white p-2 sm:p-4">
         {/* Header */}
         <div className="mb-4 sm:mb-6">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-center text-gray-800 mb-3 sm:mb-4">
-            PRESENTASE ANOMALI UPT
+          <h1 className="text-2xl md:text-[32px] font-bold text-[#155C72] text-center mb-4 md:mb-6">
+            PROSENTASE ANOMALI UPT
           </h1>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <button className="px-3 sm:px-4 py-2 bg-[#145C72] text-white rounded-full text-xs sm:text-sm font-medium shadow-2xl">

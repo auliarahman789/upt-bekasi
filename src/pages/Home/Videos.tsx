@@ -1,71 +1,79 @@
-import React, { useState, useRef, useCallback } from "react";
+import axios from "axios";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 
-// Mock data interface for videos
+// Updated data interface for videos to match API response
 interface VideoData {
   id: number;
   title: string;
   description: string;
-  date: string;
-  videoId: string; // YouTube video ID
+  date: string; // This will be formatted from the API date
+  videoId: string;
   thumbnail: string;
+  createdAt: string;
+  updatedAt: string;
+  is_active: boolean;
 }
 
-// Mock video data array
-const mockVideos: VideoData[] = [
-  {
-    id: 1,
-    title: "Manajemen PLN UPT Bekasi Laksanakan Care for Asset",
-    description:
-      "Sebagai bentuk komitmen dalam menjaga keandalan sistem transmisi dan keselamatan instalasi, Manajemen PLN UPT Bekasi melaksanakan kegiatan Care for Asset dengan melakukan perbaikan kebocoran pada sleakbox bay busbar B 150 kV GI Suzuki di wilayah kerja ULTG Cikarang.",
-    date: "21 Juli 2025",
-    videoId: "fLgU4xlfNK8", // Example YouTube video ID
-    thumbnail: "https://img.youtube.com/vi/fLgU4xlfNK8/maxresdefault.jpg",
-  },
-  {
-    id: 2,
-    title:
-      "Bersama Jaga Alam: PLN UPT Bekasi dan Aksi Nyata Revitalisasi Mangrove",
-    description:
-      "Bersama masyarakat sekitar, kami menanam harapan lewat pohon-pohon mangrove dan berbagi pengetahuan agar lingkungan tetap lestari dan bisa dimanfaatkan secara berkelanjutan.",
-    date: "22 Juli 2025",
-    videoId: "F0-FHo10gfo", // Example YouTube video ID
-    thumbnail: "https://img.youtube.com/vi/F0-FHo10gfo/maxresdefault.jpg",
-  },
-
-  {
-    id: 3,
-    title: "PLN UPT Bekasi Siap Jadi Zona Integritas! ✨",
-    description:
-      "Ini bukan cuma soal aturan, tapi soal komitmen bersama untuk membangun budaya kerja yang jujur, profesional, dan bebas dari praktik yang merugikan. Karena pelayanan terbaik dimulai dari integritas! 🙌",
-    date: "08 Agustus 2025",
-    videoId: "60CLb7blo6k", // Example YouTube video ID
-    thumbnail: "https://img.youtube.com/vi/60CLb7blo6k/maxresdefault.jpg",
-  },
-  {
-    id: 4,
-    title: "CAPAIAN TRANSFORMASI PLN",
-    description:
-      "Dengan berbasis inovasi dan digitalisasi, PLN mengubah seluruh proses bisnis secara end to end.",
-    date: "4 November 2023",
-    videoId: "E2NyhjMbBZQ", // Example YouTube video ID
-    thumbnail: "https://img.youtube.com/vi/E2NyhjMbBZQ/maxresdefault.jpg",
-  },
-  {
-    id: 5,
-    title: "Listrik IKN Nusantara Smart, Green, & Beautiful",
-    description:
-      "Inilah persembahan PLN mengukseskan pembangunan IKN Nusantara. Mewujudkan kemandirian energi nasional, mempercepat transformasi Indonesia dan mengakselerasi transisi energi.",
-    date: "18 Juli 2025",
-    videoId: "9JFDxPc-yyI", // Example YouTube video ID
-    thumbnail: "https://img.youtube.com/vi/9JFDxPc-yyI/maxresdefault.jpg",
-  },
-];
+// Updated API response interface
+interface ApiResponse {
+  status: string;
+  message: string;
+  data: VideoData[];
+}
 
 const Videos: React.FC = () => {
-  const [selectedVideo, setSelectedVideo] = useState<VideoData>(mockVideos[0]);
+  const [videos, setVideos] = useState<VideoData[]>([]);
+  const [selectedVideo, setSelectedVideo] = useState<VideoData | null>(null);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [showOverlay, setShowOverlay] = useState(true);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    fetchVideoData();
+  }, []);
+
+  // Helper function to format date
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  const fetchVideoData = async () => {
+    setLoading(true);
+
+    const url = `${import.meta.env.VITE_API_LINK_BE}/api/video`;
+
+    try {
+      const response = await axios.get<ApiResponse>(url, {
+        withCredentials: true,
+      });
+
+      console.log("API Response:", response.data);
+
+      // Process the video data
+      if (response.data.data && response.data.data.length > 0) {
+        const processedVideos = response.data.data
+          .filter((video) => video.is_active) // Only show active videos
+          .map((video) => ({
+            ...video,
+            date: formatDate(video.date), // Format the date
+          }));
+
+        setVideos(processedVideos);
+        setSelectedVideo(processedVideos[0]); // Set first video as default
+      }
+    } catch (error: any) {
+      console.error("Error fetching video data:", error);
+      // Optionally, you can fallback to mock data or show error message
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleVideoSelect = (video: VideoData) => {
     setSelectedVideo(video);
@@ -94,6 +102,41 @@ const Videos: React.FC = () => {
       setShowOverlay(true);
     }
   }, [isVideoPlaying]);
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="w-full bg-white py-4 sm:py-8">
+        <div className="flex w-full h-12 sm:h-16 lg:h-20 mb-4 sm:mb-6 lg:mb-8 items-start justify-start">
+          <img src="videos.svg" alt="" className="h-full object-contain" />
+        </div>
+        <div className="px-2 sm:px-4 flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#13A2BA] mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading videos...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if no videos available
+  if (!videos.length || !selectedVideo) {
+    return (
+      <div className="w-full bg-white py-4 sm:py-8">
+        <div className="flex w-full h-12 sm:h-16 lg:h-20 mb-4 sm:mb-6 lg:mb-8 items-start justify-start">
+          <img src="videos.svg" alt="" className="h-full object-contain" />
+        </div>
+        <div className="px-2 sm:px-4 flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-gray-600 text-lg">
+              No videos available at the moment.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -431,19 +474,19 @@ const Videos: React.FC = () => {
               </div>
             </div>
 
-            {/* Right Side - 5 Video List */}
+            {/* Right Side - Video List */}
             <div
               className="w-[30%] rounded-lg shadow-xl overflow-hidden animate-slideInRight stagger-4 h-[616px] flex flex-col"
               style={{
                 background: "linear-gradient(to bottom, #15677B, #179FB7)",
               }}
             >
-              {mockVideos.map((video, index) => (
+              {videos.map((video, index) => (
                 <div
                   key={video.id}
                   onClick={() => handleVideoSelect(video)}
                   className={`flex-1  ${
-                    index < mockVideos.length - 1
+                    index < videos.length - 1
                       ? "border-b-2 p-3 border-white/20"
                       : "p-3"
                   } ${
@@ -560,7 +603,7 @@ const Videos: React.FC = () => {
               {/* Mobile: Horizontal Scroll */}
               <div className="block md:hidden">
                 <div className="flex gap-4 overflow-x-auto pb-4 px-2 -mx-2 scrollbar-hide">
-                  {mockVideos.map((video, index) => (
+                  {videos.map((video, index) => (
                     <div
                       key={video.id}
                       onClick={() => handleVideoSelect(video)}
@@ -598,13 +641,13 @@ const Videos: React.FC = () => {
               {/* Tablet: Vertical List */}
               <div className="hidden md:block lg:hidden">
                 <div className="grid gap-4">
-                  {mockVideos.map((video, index) => (
+                  {videos.map((video, index) => (
                     <div
                       key={video.id}
                       onClick={() => handleVideoSelect(video)}
                       className={`rounded-lg overflow-hidden shadow-lg cursor-pointer transition-all duration-300 ${
                         selectedVideo.id === video.id
-                          ? "ring-2 ring-yellow-400 bg-gradient-to-r from-[#15677B to-[#179FB7]"
+                          ? "ring-2 ring-yellow-400 bg-gradient-to-r from-[#15677B] to-[#179FB7]"
                           : "bg-gradient-to-r from-[#15677B] to-[#179FB7]"
                       }`}
                       style={{ animationDelay: `${index * 0.1}s` }}

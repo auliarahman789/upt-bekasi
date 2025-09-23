@@ -436,7 +436,7 @@ const RekapAnomaliPage = () => {
       <div className="min-h-screen bg-gray-50">
         <div className="p-2 sm:p-4">
           <div className="text-center">
-            <h1 className="text-lg sm:text-xl font-bold text-[#145C72] mb-2">
+            <h1 className="text-2xl md:text-[32px] font-bold text-[#155C72] text-center mb-4 md:mb-6">
               REKAP ANOMALI UPT
             </h1>
           </div>

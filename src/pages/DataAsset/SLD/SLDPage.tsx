@@ -159,7 +159,7 @@ const SLDPage: React.FC = () => {
         <div className="max-w-screen mx-auto">
           {/* Header */}
           <div className="text-center mb-6 md:mb-8">
-            <h1 className="text-2xl md:text-4xl font-bold text-[#145C72] mb-4">
+            <h1 className="text-2xl md:text-[32px] font-bold text-[#155C72] text-center mb-4 md:mb-6">
               SINGLE LINE DIAGRAM
             </h1>
           </div>

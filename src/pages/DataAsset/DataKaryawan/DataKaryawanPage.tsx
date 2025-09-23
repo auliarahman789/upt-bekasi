@@ -354,7 +354,7 @@ const DataKaryawanPage: React.FC = () => {
         <div className="min-h-screen bg-gray-50 p-6">
           {/* Header */}
           <div className="mb-8 ">
-            <h1 className="text-[32px] font-bold text-[#155C72] text-center mb-6">
+            <h1 className="text-2xl md:text-[32px] font-bold text-[#155C72] text-center mb-4 md:mb-6">
               DATA KEPEGAWAIAN
             </h1>
 

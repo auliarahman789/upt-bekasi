@@ -54,13 +54,13 @@ export const menuItems: MenuItem[] = [
       },
       {
         id: "tower",
-        label: "TOWER",
+        label: "JARINGAN",
         icon: "",
         hasChildren: true,
         children: [
           {
             id: "tower-1",
-            label: "KRITIS",
+            label: "TOWER KRITIS",
             icon: "",
             route: "/data-asset/tower/kritis",
           },
@@ -101,7 +101,7 @@ export const menuItems: MenuItem[] = [
       },
       {
         id: "performance-2",
-        label: "PERSENTASI ANOMALI UPT",
+        label: "PROSENTASE ANOMALI UPT",
         icon: "",
         route: "/performance/persentasianimali",
       },

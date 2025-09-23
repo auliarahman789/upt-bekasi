@@ -307,7 +307,7 @@ const SLOPage: React.FC = () => {
       <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
         {/* Header */}
         <div className="text-center mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-[32px] text-center font-bold text-[#155C72] mb-6">
+          <h1 className="text-2xl md:text-[32px] font-bold text-[#155C72] text-center mb-4 md:mb-6">
             SLO
           </h1>
         </div>

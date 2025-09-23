@@ -1,109 +1,139 @@
-import React, { useState } from "react";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
 
-// Mock data interface
+// Updated data interface to match API response
 interface ArticleData {
   id: number;
   title: string;
   description: string;
-  date: string;
-  readMore: string;
+  date: string; // This will be formatted from the API date
   image: string;
+  link: string;
+  createdAt: string;
+  updatedAt: string;
+  is_active: boolean;
+  readMore: string; // We'll add this as a constant
 }
 
-// Mock data array
-const mockArticles: ArticleData[] = [
-  {
-    id: 1,
-    title: "Perbaikan Rembesan Minyak Pada Trafo 1",
-    description:
-      "Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.",
-    date: "22 Juli 2025",
-    readMore: "BACA SELENGKAPNYA",
-    image: "/Article/Article1.png",
-  },
-  {
-    id: 2,
-    title: "Perbaikan Tuas Pendorong PMS Line",
-    description:
-      "Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.",
-    date: "21 Juli 2025",
-    readMore: "BACA SELENGKAPNYA",
-    image: "/Article/Article2.png",
-  },
-  {
-    id: 3,
-    title: "Pencegahan Gangguan Akibat Binatang",
-    description:
-      "Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.",
-    date: "20 Juli 2025",
-    readMore: "BACA SELENGKAPNYA",
-    image: "/Article/Article3.png",
-  },
-  {
-    id: 4,
-    title: "ULTG Cikarang Terus Menunjukkan Komitmen ",
-    description:
-      "Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.",
-    date: "19 Juli 2025",
-    readMore: "BACA SELENGKAPNYA",
-    image: "/Article/Article4.png",
-  },
-  {
-    id: 5,
-    title: "Pengujian Kabel Power",
-    description:
-      "Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.",
-    date: "18 Juli 2025",
-    readMore: "BACA SELENGKAPNYA",
-    image: "/Article/Article5.png",
-  },
-  {
-    id: 6,
-    title: "Pemeliharaan Rutin 2 Tahunan",
-    description:
-      "Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.",
-    date: "18 Juli 2025",
-    readMore: "BACA SELENGKAPNYA",
-    image: "/Article/Article6.png",
-  },
-  {
-    id: 7,
-    title: "Upaya Pencegahan Gangguan External",
-    description:
-      "Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.",
-    date: "18 Juli 2025",
-    readMore: "BACA SELENGKAPNYA",
-    image: "/Article/Article7.png",
-  },
-  {
-    id: 8,
-    title: "Pemeliharaan Rutin 2 Tahunan",
-    description:
-      "Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.Lorem ipsum dolor sit amet, do ut labore et incididunt sit eiusmod tempor magna.",
-    date: "18 Juli 2025",
-    readMore: "BACA SELENGKAPNYA",
-    image: "/Article/Article8.png",
-  },
-];
+// Updated API response interface
+interface ApiResponse {
+  status: string;
+  message: string;
+  data: ArticleData[];
+}
 
 const Article: React.FC = () => {
-  // State to manage which articles are displayed in the featured section
-  const [featuredArticles, setFeaturedArticles] = useState<ArticleData[]>([
-    mockArticles[0],
-    mockArticles[1],
-  ]);
+  const [articles, setArticles] = useState<ArticleData[]>([]);
+  const [featuredArticles, setFeaturedArticles] = useState<ArticleData[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   // Get articles that are not currently featured (for the list)
-  const listArticles = mockArticles.filter(
+  const listArticles = articles.filter(
     (article) =>
       !featuredArticles.some((featured) => featured.id === article.id)
   );
+
+  useEffect(() => {
+    fetchArticleData();
+  }, []);
+
+  // Helper function to format date
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  // Helper function to construct image URL
+  const getImageUrl = (imagePath: string): string => {
+    // If it's already a full URL, return as is
+    if (imagePath.startsWith("http")) {
+      return imagePath;
+    }
+    // Otherwise, construct the full URL with your backend base URL
+    return `${import.meta.env.VITE_API_LINK_BE}/uploads/${imagePath}`;
+  };
+
+  const fetchArticleData = async () => {
+    setLoading(true);
+
+    const url = `${import.meta.env.VITE_API_LINK_BE}/api/article`;
+
+    try {
+      const response = await axios.get<ApiResponse>(url, {
+        withCredentials: true,
+      });
+
+      console.log("API Response:", response.data);
+
+      // Process the article data
+      if (response.data.data && response.data.data.length > 0) {
+        const processedArticles = response.data.data
+          .filter((article) => article.is_active) // Only show active articles
+          .map((article) => ({
+            ...article,
+            date: formatDate(article.date), // Format the date
+            image: getImageUrl(article.image), // Construct full image URL
+            readMore: "BACA SELENGKAPNYA", // Add the read more text
+          }));
+
+        setArticles(processedArticles);
+
+        // Set the first two articles as featured, or just the first one if only one exists
+        const featured = processedArticles.slice(0, 2);
+        setFeaturedArticles(featured);
+      }
+    } catch (error: any) {
+      console.error("Error fetching article data:", error);
+      // Optionally, you can fallback to mock data or show error message
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Function to handle clicking on a list item
   const handleArticleClick = (clickedArticle: ArticleData) => {
     // Move the clicked article to the first position and shift the current first to second
     setFeaturedArticles([clickedArticle, featuredArticles[0]]);
   };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="w-full bg-white py-4 sm:py-6 lg:py-8 min-h-screen">
+        <div className="flex w-full h-12 sm:h-16 lg:h-20 mb-4 sm:mb-6 lg:mb-8 items-start justify-start">
+          <img src="article.svg" alt="" className="h-full object-contain" />
+        </div>
+        <div className="px-4 flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#13A2BA] mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading articles...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if no articles available
+  if (!articles.length) {
+    return (
+      <div className="w-full bg-white py-4 sm:py-6 lg:py-8 min-h-screen">
+        <div className="flex w-full h-12 sm:h-16 lg:h-20 mb-4 sm:mb-6 lg:mb-8 items-start justify-start">
+          <img src="article.svg" alt="" className="h-full object-contain" />
+        </div>
+        <div className="px-4 flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-gray-600 text-lg">
+              No articles available at the moment.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -360,9 +390,14 @@ const Article: React.FC = () => {
                     <p className="text-gray-300 text-xs sm:text-sm mb-1 sm:mb-2 font-light transition-colors duration-300">
                       {article.date}
                     </p>
-                    <button className="text-[#FFF11E] text-xs sm:text-sm font-semibold hover:text-yellow-300 transition-colors duration-300">
+                    <a
+                      href={article.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#FFF11E] text-xs sm:text-sm font-semibold hover:text-yellow-300 transition-colors duration-300"
+                    >
                       {article.readMore}
-                    </button>
+                    </a>
                   </div>
                 </div>
               ))}
@@ -442,9 +477,14 @@ const Article: React.FC = () => {
                   <p className="text-gray-300 text-sm xl:text-[16px] mb-2 font-light transition-colors duration-300">
                     {article.date}
                   </p>
-                  <button className="text-[#FFF11E] text-sm xl:text-[16px] font-semibold hover:text-yellow-300 transition-colors duration-300">
+                  <a
+                    href={article.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#FFF11E] text-sm xl:text-[16px] font-semibold hover:text-yellow-300 transition-colors duration-300"
+                  >
                     {article.readMore}
-                  </button>
+                  </a>
                 </div>
               </div>
             ))}

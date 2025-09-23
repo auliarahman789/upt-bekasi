@@ -381,7 +381,7 @@ const MTUMonitoringPage = () => {
     <DefaultLayout>
       <div className="min-h-screen bg-gray-50">
         <div className="p-4">
-          <h1 className="text-2xl md:text-[32px] text-center font-bold text-[#155C72] mb-6">
+          <h1 className="text-2xl md:text-[32px] font-bold text-[#155C72] text-center mb-4 md:mb-6">
             MONITORING KONDISI MTU
           </h1>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 auto-rows-fr">
