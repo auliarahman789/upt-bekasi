@@ -22,7 +22,7 @@ interface ApiResponse {
 const LMABOPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [apiData, setApiData] = useState<ApiResponse | null>(null);
-  const [activeTab, setActiveTab] = useState("Jaringan"); // Changed to match API data
+  const [activeTab, setActiveTab] = useState("Jaringan");
 
   useEffect(() => {
     fetchLMABO();
@@ -52,13 +52,13 @@ const LMABOPage: React.FC = () => {
 
     // Filter out the header row (index 41) and filter by selected bidang
     const filteredData = apiData.data.filter(
-      (item, index) => index !== 41 && item.bidang === activeTab
+      (workItem, index) => index !== 41 && workItem.bidang === activeTab
     );
 
     const grouped: { [program: string]: WorkItem[] } = {};
 
-    filteredData.forEach((item) => {
-      let program = item.program;
+    filteredData.forEach((workItem) => {
+      let program = workItem.program;
 
       // Map programs to display names
       if (program === "LM") program = "LEAD MEASURE";
@@ -69,11 +69,11 @@ const LMABOPage: React.FC = () => {
         grouped[program] = [];
       }
 
-      grouped[program].push(item);
+      grouped[program].push(workItem);
     });
 
     return grouped;
-  }, [apiData, activeTab]); // Add activeTab as dependency
+  }, [apiData, activeTab]);
 
   // Get available tabs from the data
   const availableTabs = useMemo(() => {
@@ -83,8 +83,8 @@ const LMABOPage: React.FC = () => {
     const uniqueBidang = [
       ...new Set(
         apiData.data
-          .filter((item, index) => index !== 41)
-          .map((item) => item.bidang)
+          .filter((_, index) => index !== 41)
+          .map((dataItem) => dataItem.bidang)
       ),
     ];
 
@@ -154,8 +154,8 @@ const LMABOPage: React.FC = () => {
       {/* Items List */}
       <div>
         {items && items.length > 0 ? (
-          items.map((item, index) => (
-            <WorkItemRow key={`${title}-${index}`} item={item} />
+          items.map((workItem, itemIndex) => (
+            <WorkItemRow key={`${title}-${itemIndex}`} item={workItem} />
           ))
         ) : (
           <div className="text-gray-500 text-sm">No items available</div>
