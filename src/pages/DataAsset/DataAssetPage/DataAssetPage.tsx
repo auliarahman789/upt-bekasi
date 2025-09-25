@@ -249,10 +249,11 @@ const DataAssetPage = () => {
 
               {/* Level Tegangan GI */}
               <div className="mb-4">
-                <div className="text-gray-500 text-sm mb-2 px-2 grid grid-cols-2 text-center">
-                  <div>Level Tegangan GI</div>
+                <div className="text-gray-500 text-sm mb-2 px-2 grid grid-cols-3 text-center">
+                  <div>Level Tegangan Tower</div>
 
-                  <span className="float-right">Jumlah GI</span>
+                  <span className="float-right">Jumlah (unit)</span>
+                  <span className="float-right">Total KMS</span>
                 </div>
                 <div
                   className="rounded-2xl p-4"
@@ -262,12 +263,15 @@ const DataAssetPage = () => {
                 >
                   {mockData.petaGarduInduk.levelTegangan.map((item, index) => (
                     <div key={index} className="mb-2 last:mb-0">
-                      <div className="grid grid-cols-2 items-center space-x-2">
+                      <div className="grid grid-cols-3 items-center space-x-2">
                         <div className=" text-white px-4 py-2 rounded-full text-sm flex-1">
                           {item.level}
                         </div>
                         <div className="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-sm justify-center text-center">
                           {item.jumlah}
+                        </div>
+                        <div className="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-sm justify-center text-center">
+                          {item.jumlah} KMS
                         </div>
                       </div>
                     </div>
@@ -315,32 +319,64 @@ const DataAssetPage = () => {
                   </div>
                 </div>
 
-                {/* FTK Pegawai */}
-                <div className="mb-4">
-                  <div className="text-gray-500 text-sm mb-2 px-2 grid grid-cols-2 text-center">
-                    <div> FTK Pegawai</div>
-
-                    <span className="float-right">Jumlah Personil</span>
-                  </div>
+                <div className="bg-white ">
+                  {/* Jumlah Tower */}
                   <div
-                    className="rounded-2xl p-4"
+                    className="text-white px-4 py-3 rounded-full mb-4 text-sm font-medium  grid grid-cols-2 items-center"
                     style={{
                       background:
                         "linear-gradient(to bottom, #15677B, #179FB7)",
                     }}
                   >
-                    {mockData.petaGarduInduk.personalData.map((item, index) => (
-                      <div key={index} className="mb-2 last:mb-0">
-                        <div className="grid grid-cols-2 items-center space-x-2">
-                          <div className=" text-white px-4 py-2 rounded-full text-sm flex-1">
-                            {item.position}
+                    <span>Jumlah Tower</span>
+                    <div className="bg-white text-gray-800 px-4 py-1 rounded-full font-bold text-[16px] text-center">
+                      {mockData.petaGarduInduk.jumlahTower}
+                    </div>
+                  </div>
+
+                  {/* Total KMS Tower */}
+                  <div
+                    className="text-white px-4 py-3 rounded-full mb-4 text-sm font-medium grid grid-cols-2 items-center"
+                    style={{
+                      background:
+                        "linear-gradient(to bottom, #15677B, #179FB7)",
+                    }}
+                  >
+                    <span>Total KMS Tower</span>
+                    <div className="bg-white text-gray-800 px-4 py-1 rounded-full font-bold text-[16px] text-center">
+                      {mockData.petaGarduInduk.totalKmsTower}
+                    </div>
+                  </div>
+
+                  {/* Level Tegangan GI */}
+                  <div className="mb-4">
+                    <div className="text-gray-500 text-sm mb-2 px-2 grid grid-cols-2 text-center">
+                      <div>Level Tegangan GI</div>
+
+                      <span className="float-right">Jumlah GI</span>
+                    </div>
+                    <div
+                      className="rounded-2xl p-4"
+                      style={{
+                        background:
+                          "linear-gradient(to bottom, #15677B, #179FB7)",
+                      }}
+                    >
+                      {mockData.petaGarduInduk.levelTegangan.map(
+                        (item, index) => (
+                          <div key={index} className="mb-2 last:mb-0">
+                            <div className="grid grid-cols-2 items-center space-x-2">
+                              <div className=" text-white px-4 py-2 rounded-full text-sm flex-1">
+                                {item.level}
+                              </div>
+                              <div className="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-sm justify-center text-center">
+                                {item.jumlah}
+                              </div>
+                            </div>
                           </div>
-                          <div className="bg-white text-gray-800 px-4 py-2 rounded-full font-bold text-sm justify-center text-center">
-                            {item.jumlah}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                        )
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
