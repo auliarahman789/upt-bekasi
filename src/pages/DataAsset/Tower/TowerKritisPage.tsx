@@ -25,23 +25,18 @@ interface TowerData {
   status: string;
 }
 
-interface TrendData {
-  gi_gis: string;
-  bay: string;
-  trafo: string;
-  value: number;
-}
-
-interface TrendMonth {
-  bulan: string;
-  data: TrendData[];
-}
-
 interface ApiResponse {
   status: string;
   message: string;
   data: TowerData[];
-  data_trend_beban_trafo: TrendMonth[];
+}
+
+interface ChartData {
+  ultg: string;
+  P0_count: number;
+  P1_count: number;
+  avg_progress: number;
+  total_towers: number;
 }
 
 const TowerKritisPage: React.FC = () => {
@@ -57,18 +52,6 @@ const TowerKritisPage: React.FC = () => {
     text: string;
   } | null>(null);
   const itemsPerPage = 10;
-
-  // Color mapping for different transformer types based on gi_gis and bay
-  const colorMap: { [key: string]: string } = {
-    "GI 150KV JABABEKA TRF#3 150/20kV": "#145C72",
-    "GIS 150KV PONCOL BARU II TRF#1 150/22kV": "#179FB7",
-    "GIS 150KV PONCOL BARU II TRF#2 150/22kV": "#28A8E0",
-    "GI 150KV JUISHIN TRF#1 150/20kV": "#009A1A",
-    "GI 150KV MEKARSARI TRF#3 150/20kV": "#FF5050",
-    "GI 150KV MEKARSARI TRF#4 150/20kV": "#FFD05B",
-    "GI 150KV TAMAN MEKAR TRF#1 150/22kV": "#FF53DD",
-    "GI 150KV TEGALHERANG TRF#3 150/20kV": "#800000",
-  };
 
   useEffect(() => {
     fetchTowerKritisData();
@@ -94,64 +77,42 @@ const TowerKritisPage: React.FC = () => {
     }
   };
 
-  // Transform trend data for chart
-  const getChartData = () => {
-    if (!apiData?.data_trend_beban_trafo) return [];
-    const monthMap: { [key: string]: string } = {
-      feb: "FEBRUARI",
-      mar: "MARET",
-      apr: "APRIL",
-      mei: "MEI",
-    };
+  // Transform tower data for chart
+  const getTowerChartData = (): ChartData[] => {
+    if (!apiData?.data) return [];
 
-    return apiData.data_trend_beban_trafo.map((month) => {
-      const chartData: any = {
-        month: monthMap[month.bulan] || month.bulan.toUpperCase(),
+    const ultgGroups: { [key: string]: TowerData[] } = {};
+
+    apiData.data.forEach((item) => {
+      if (!ultgGroups[item.ultg]) {
+        ultgGroups[item.ultg] = [];
+      }
+      ultgGroups[item.ultg].push(item);
+    });
+
+    return Object.keys(ultgGroups).map((ultg) => {
+      const towers = ultgGroups[ultg];
+      const p0Count = towers.filter((t) => t.sts === "P0").length;
+      const p1Count = towers.filter((t) => t.sts === "P1").length;
+
+      // Calculate average progress
+      const totalProgress = towers.reduce((sum, tower) => {
+        const progressValue =
+          parseInt(tower.progress.replace("%", ""), 10) || 0;
+        return sum + progressValue;
+      }, 0);
+
+      const avgProgress =
+        towers.length > 0 ? Math.round(totalProgress / towers.length) : 0;
+
+      return {
+        ultg,
+        P0_count: p0Count,
+        P1_count: p1Count,
+        avg_progress: avgProgress,
+        total_towers: towers.length,
       };
-
-      month.data.forEach((item) => {
-        chartData[item.trafo] = item.value;
-      });
-
-      return chartData;
     });
-  };
-
-  // Get all unique transformer types for legend
-  const getTransformerTypes = () => {
-    if (!apiData?.data_trend_beban_trafo) return [];
-
-    const types = new Set<string>();
-    apiData.data_trend_beban_trafo.forEach((month) => {
-      month.data.forEach((item) => {
-        types.add(item.trafo);
-      });
-    });
-
-    return Array.from(types);
-  };
-
-  // Get legend items from transformer data
-  const getLegendItems = () => {
-    if (!apiData?.data_trend_beban_trafo) return [];
-
-    const legendItems: {
-      [key: string]: { gi_gis: string; bay: string; trafo: string };
-    } = {};
-
-    apiData.data_trend_beban_trafo.forEach((month) => {
-      month.data.forEach((item) => {
-        if (!legendItems[item.trafo]) {
-          legendItems[item.trafo] = {
-            gi_gis: item.gi_gis,
-            bay: item.bay,
-            trafo: item.trafo,
-          };
-        }
-      });
-    });
-
-    return Object.values(legendItems);
   };
 
   // Get unique values for filters
@@ -211,12 +172,13 @@ const TowerKritisPage: React.FC = () => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white p-3 border border-gray-300 rounded shadow-lg">
-          <p className="font-medium text-gray-900">{label}</p>
+          <p className="font-medium text-gray-900">ULTG: {label}</p>
           {payload.map((entry: any, index: number) => (
             <p key={index} style={{ color: entry.color }} className="text-sm">
-              {`${entry.dataKey.split(" ")[2]} ${
-                entry.dataKey.split(" ")[3]
-              }: ${entry.value}`}
+              {entry.dataKey === "P0_count" && `P0 Count: ${entry.value}`}
+              {entry.dataKey === "P1_count" && `P1 Count: ${entry.value}`}
+              {entry.dataKey === "avg_progress" &&
+                `Avg Progress: ${entry.value}%`}
             </p>
           ))}
         </div>
@@ -225,11 +187,17 @@ const TowerKritisPage: React.FC = () => {
     return null;
   };
 
+  // Show loading state
   if (loading) {
     return (
       <DefaultLayout>
-        <div className="flex justify-center items-center min-h-screen">
-          <div className="text-lg">Loading...</div>
+        <div className="p-4 md:p-8 bg-gray-50 min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 md:h-32 md:w-32 border-b-2 border-[#145C72]"></div>
+            <p className="mt-4 text-[#145C72] text-sm md:text-base">
+              Loading data...
+            </p>
+          </div>
         </div>
       </DefaultLayout>
     );
@@ -245,21 +213,21 @@ const TowerKritisPage: React.FC = () => {
           </h1>
         </div>
 
-        {/* Trend Chart */}
+        {/* Tower Statistics Chart */}
         <div className="bg-white rounded-lg shadow-md p-4 md:p-6 mb-8">
           <div className="flex items-center mb-6">
-            <div className="w-8 h-8  rounded-full flex items-center justify-center ">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center">
               <span className="text-white font-bold text-sm">📊</span>
             </div>
             <h2 className="text-lg md:text-xl font-bold text-[#145C72]">
-              TREND BEBAN TRAFO
+              STATISTIK TOWER PER ULTG
             </h2>
           </div>
 
           <div className="h-64 md:h-80 mb-6">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={getChartData()}
+                data={getTowerChartData()}
                 margin={{
                   top: 20,
                   right: 30,
@@ -268,46 +236,44 @@ const TowerKritisPage: React.FC = () => {
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" tick={{ fontSize: 12 }} interval={0} />
+                <XAxis dataKey="ultg" tick={{ fontSize: 12 }} interval={0} />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip content={<CustomTooltip />} />
 
-                {getTransformerTypes().map((trafo) => (
-                  <Bar
-                    key={trafo}
-                    dataKey={trafo}
-                    fill={
-                      colorMap[trafo] ||
-                      `#${Math.floor(Math.random() * 16777215).toString(16)}`
-                    }
-                  >
-                    <LabelList dataKey={trafo} position="top" fontSize={10} />
-                  </Bar>
-                ))}
+                <Bar dataKey="P0_count" fill="#FF5050" name="P0 Count">
+                  <LabelList dataKey="P0_count" position="top" fontSize={10} />
+                </Bar>
+                <Bar dataKey="P1_count" fill="#179FB7" name="P1 Count">
+                  <LabelList dataKey="P1_count" position="top" fontSize={10} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
 
           {/* Legend */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
-            {getLegendItems().map((item) => (
-              <div key={item.trafo} className="flex items-center">
-                <div
-                  className="w-3 h-3 mr-2 rounded"
-                  style={{ backgroundColor: colorMap[item.trafo] }}
-                ></div>
-                <span className="text-gray-700 truncate">
-                  {item.gi_gis} {item.bay}
-                </span>
-              </div>
-            ))}
+          <div className="flex flex-wrap gap-4 text-xs">
+            <div className="flex items-center">
+              <div
+                className="w-3 h-3 mr-2 rounded"
+                style={{ backgroundColor: "#FF5050" }}
+              ></div>
+              <span className="text-gray-700">P0 Count</span>
+            </div>
+            <div className="flex items-center">
+              <div
+                className="w-3 h-3 mr-2 rounded"
+                style={{ backgroundColor: "#179FB7" }}
+              ></div>
+              <span className="text-gray-700">P1 Count</span>
+            </div>
           </div>
         </div>
 
-        {/* Table */}
+        {/* Table - Rest of the component remains the same */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          {/* ... rest of your existing table code ... */}
           <div className="flex items-center p-4 md:p-6 border-b bg-white">
-            <div className="w-8 h-8  flex items-center justify-center ">
+            <div className="w-8 h-8 flex items-center justify-center">
               <span className="text-white font-bold text-sm">📋</span>
             </div>
             <h2

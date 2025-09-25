@@ -84,6 +84,12 @@ export const menuItems: MenuItem[] = [
         icon: "",
         route: "/data-asset/slo",
       },
+      {
+        id: "health-index",
+        label: "HEALTH INDEX",
+        icon: "",
+        route: "/data-asset/healthindex",
+      },
     ],
   },
   {

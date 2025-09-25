@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   BarChart,
   Bar,
@@ -43,14 +43,18 @@ const RekapAnomaliPage = () => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-
+  const hasFetched = useRef(false);
   // New filter and search states
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [ultgFilter, setUltgFilter] = useState("ALL");
 
   useEffect(() => {
-    fetchAnomalyData();
+    // Only fetch if we haven't already fetched
+    if (!hasFetched.current) {
+      hasFetched.current = true;
+      fetchAnomalyData();
+    }
   }, []);
 
   const fetchAnomalyData = async () => {
@@ -418,13 +422,16 @@ const RekapAnomaliPage = () => {
       .sort((a, b) => b.total - a.total); // Sort by total count descending
   }, [transformedData]);
 
+  // Show loading state
   if (loading) {
     return (
       <DefaultLayout>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="p-4 md:p-8 bg-gray-50 min-h-screen flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#145C72]"></div>
-            <p className="mt-4 text-[#145C72]">Loading anomaly data...</p>
+            <div className="animate-spin rounded-full h-16 w-16 md:h-32 md:w-32 border-b-2 border-[#145C72]"></div>
+            <p className="mt-4 text-[#145C72] text-sm md:text-base">
+              Loading data...
+            </p>
           </div>
         </div>
       </DefaultLayout>

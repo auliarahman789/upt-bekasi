@@ -497,6 +497,8 @@ const SLOPage: React.FC = () => {
                 <XAxis
                   dataKey="name"
                   angle={-45}
+                  textAnchor="end"
+                  height={60}
                   fontSize={8}
                   className="md:text-xs"
                 />
@@ -530,6 +532,8 @@ const SLOPage: React.FC = () => {
                 <XAxis
                   dataKey="name"
                   angle={-45}
+                  textAnchor="end"
+                  height={60}
                   fontSize={8}
                   className="md:text-xs"
                 />
@@ -563,6 +567,8 @@ const SLOPage: React.FC = () => {
                 <XAxis
                   dataKey="name"
                   angle={-45}
+                  textAnchor="end"
+                  height={60}
                   fontSize={8}
                   className="md:text-xs"
                 />

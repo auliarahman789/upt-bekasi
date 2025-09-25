@@ -31,7 +31,6 @@ interface SheetConfig {
   spreadsheetId: string;
   sheetName: string;
   sheetGid: string;
-  apiKey: string;
 }
 
 const LevelHSSEPage: React.FC = () => {
@@ -43,6 +42,7 @@ const LevelHSSEPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const [activeSheet, setActiveSheet] = useState<"k3" | "kam">("k3");
+  const currentYear = new Date().getFullYear();
   const [totalAchievement, setTotalAchievement] = useState<{
     sem1: number;
     sem2: number;
@@ -51,30 +51,97 @@ const LevelHSSEPage: React.FC = () => {
     sem1: number;
     sem2: number;
   }>({ sem1: 0, sem2: 0 });
-  // New state for Target PLN Pusat
   const [targetPlnPusat, setTargetPlnPusat] = useState<{
     sem1: number;
     sem2: number;
   }>({ sem1: 0, sem2: 0 });
 
-  const apiKey = import.meta.env.VITE_API_LINK_KEY || "";
   const sheetid = import.meta.env.VITE_API_LINK_SHEETID || "";
   const k3SheetGid = import.meta.env.VITE_API_LINK_SHEEGID || "";
   const kamSheetGid = import.meta.env.VITE_API_LINK_SHEEGID2 || "";
 
-  // Configuration for sheets
+  // ---------------- GOOGLE AUTH HELPERS ----------------
+  const getAccessToken = async (): Promise<string> => {
+    const clientEmail = import.meta.env.VITE_GOOGLE_CLIENT_EMAIL!;
+    const privateKey = import.meta.env.VITE_GOOGLE_PRIVATE_KEY!.replace(
+      /\\n/g,
+      "\n"
+    );
+
+    const now = Math.floor(Date.now() / 1000);
+    const jwtHeader = { alg: "RS256", typ: "JWT" };
+    const jwtClaimSet = {
+      iss: clientEmail,
+      scope: "https://www.googleapis.com/auth/spreadsheets.readonly",
+      aud: "https://oauth2.googleapis.com/token",
+      exp: now + 3600,
+      iat: now,
+    };
+
+    const encode = (obj: any) =>
+      btoa(JSON.stringify(obj))
+        .replace(/=+$/, "")
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_");
+
+    const header = encode(jwtHeader);
+    const payload = encode(jwtClaimSet);
+    const data = new TextEncoder().encode(`${header}.${payload}`);
+
+    const key = await crypto.subtle.importKey(
+      "pkcs8",
+      str2ab(privateKey),
+      { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+
+    const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, data);
+    const signatureBase64 = btoa(
+      String.fromCharCode(...new Uint8Array(signature))
+    )
+      .replace(/=+$/, "")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_");
+
+    const jwt = `${header}.${payload}.${signatureBase64}`;
+
+    const res = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+        assertion: jwt,
+      }),
+    });
+
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || "Failed to get access token");
+    return json.access_token;
+  };
+
+  function str2ab(pem: string): ArrayBuffer {
+    const b64 = pem
+      .replace(/-----BEGIN PRIVATE KEY-----/, "")
+      .replace(/-----END PRIVATE KEY-----/, "")
+      .replace(/\s+/g, "");
+    const binary = atob(b64);
+    const buf = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) buf[i] = binary.charCodeAt(i);
+    return buf.buffer;
+  }
+  // -----------------------------------------------------
+
   const SHEET_CONFIGS: Record<"k3" | "kam", SheetConfig> = {
     k3: {
       spreadsheetId: sheetid,
       sheetName: "Target dan Realisasi K3",
       sheetGid: k3SheetGid,
-      apiKey: apiKey,
     },
     kam: {
       spreadsheetId: sheetid,
       sheetName: "Target dan Realisasi KAM",
       sheetGid: kamSheetGid,
-      apiKey: apiKey,
     },
   };
 
@@ -84,6 +151,64 @@ const LevelHSSEPage: React.FC = () => {
     return isNaN(parsed) ? 0 : parsed;
   };
 
+  const fetchSpecificSheetData = async (
+    sheetType: "k3" | "kam" = activeSheet
+  ): Promise<void> => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const config = SHEET_CONFIGS[sheetType];
+
+      // Try CSV export first
+      try {
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${config.spreadsheetId}/export?format=csv&gid=${config.sheetGid}`;
+        const response = await fetch(csvUrl);
+        if (response.ok) {
+          const csvText = await response.text();
+          const lines = csvText.split("\n").filter((line) => line.trim());
+          if (lines.length > 0) {
+            parseCsvData(lines);
+            return;
+          }
+        }
+      } catch (csvError) {
+        console.log("CSV method failed:", csvError);
+      }
+
+      // --- Service Account Auth Flow ---
+      const accessToken = await getAccessToken();
+      const range = `'${config.sheetName}'!A1:G50`;
+      const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${
+        config.spreadsheetId
+      }/values/${encodeURIComponent(range)}`;
+
+      const response = await fetch(apiUrl, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          `Google Sheets API error: ${response.status} - ${
+            errorData.error?.message || "Unknown error"
+          }`
+        );
+      }
+
+      const data = await response.json();
+      if (!data.values || data.values.length === 0) {
+        throw new Error(`No data found in the sheet`);
+      }
+
+      parseApiData(data.values);
+    } catch (err) {
+      console.error("Error fetching sheet data:", err);
+      setError(err instanceof Error ? err.message : "Failed to load data");
+    } finally {
+      setLoading(false);
+    }
+  };
   const parseCSVLine = (line: string): string[] => {
     return line
       .split(",")
@@ -127,68 +252,9 @@ const LevelHSSEPage: React.FC = () => {
       return criteria;
     });
   };
-
-  const fetchSpecificSheetData = async (
-    sheetType: "k3" | "kam" = activeSheet
-  ): Promise<void> => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const config = SHEET_CONFIGS[sheetType];
-
-      // Try CSV export first (this should work without API key)
-      try {
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${config.spreadsheetId}/export?format=csv&gid=${config.sheetGid}`;
-        const response = await fetch(csvUrl);
-
-        if (response.ok) {
-          const csvText = await response.text();
-          const lines = csvText.split("\n").filter((line) => line.trim());
-
-          if (lines.length > 0) {
-            parseCsvData(lines);
-            return;
-          }
-        }
-      } catch (csvError) {
-        console.log("CSV method failed:", csvError);
-      }
-
-      // Fallback to Google Sheets API
-      const range = `'${config.sheetName}'!A1:G50`;
-      const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${
-        config.spreadsheetId
-      }/values/${encodeURIComponent(range)}?key=${config.apiKey}`;
-
-      const response = await fetch(apiUrl);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          `Google Sheets API error: ${response.status} - ${
-            errorData.error?.message || "Unknown error"
-          }`
-        );
-      }
-
-      const data = await response.json();
-      console.log(data);
-      if (!data.values || data.values.length === 0) {
-        throw new Error(`No data found in the sheet`);
-      }
-
-      parseApiData(data.values);
-    } catch (err) {
-      console.error("Error fetching sheet data:", err);
-      setError(err instanceof Error ? err.message : "Failed to load data");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fixed parsing functions for both CSV and API data
-
+  useEffect(() => {
+    fetchSpecificSheetData(activeSheet);
+  }, [activeSheet]);
   const parseCsvData = (lines: string[]) => {
     // Parse summary data from RESUME section
     const summary: CriteriaData[] = [];
@@ -215,9 +281,7 @@ const LevelHSSEPage: React.FC = () => {
       if (resumeRowIndex > 0 && i >= resumeRowIndex) break; // Stop when we reach RESUME section
 
       const cells = parseCSVLine(lines[i]);
-      const subNo = cells[0]?.trim();
-
-      // Check for valid sub-criteria format (e.g., "3.1", "4.2", "5.1")
+      let subNo = cells[0]?.trim().replace(",", ".");
       if (subNo && /^\d+\.\d+$/.test(subNo) && cells.length >= 6) {
         const mainNo = parseInt(subNo.split(".")[0]);
 
@@ -411,8 +475,7 @@ const LevelHSSEPage: React.FC = () => {
 
       const row = rows[i];
       if (row && row.length >= 6) {
-        const subNo = row[0]?.toString().trim();
-
+        let subNo = row[0]?.toString().trim().replace(",", ".");
         if (subNo && /^\d+\.\d+$/.test(subNo)) {
           const mainNo = parseInt(subNo.split(".")[0]);
 
@@ -583,14 +646,19 @@ const LevelHSSEPage: React.FC = () => {
     setExpandedRows(newExpanded);
   };
 
+  // Show loading state
   if (loading) {
     return (
-      <div className="p-8 flex items-center justify-center min-h-64">
-        <div className="flex flex-col items-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Loading data...</p>
+      <DefaultLayout>
+        <div className="p-4 md:p-8 bg-gray-50 min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 md:h-32 md:w-32 border-b-2 border-[#145C72]"></div>
+            <p className="mt-4 text-[#145C72] text-sm md:text-base">
+              Loading data...
+            </p>
+          </div>
         </div>
-      </div>
+      </DefaultLayout>
     );
   }
 
@@ -653,7 +721,7 @@ const LevelHSSEPage: React.FC = () => {
           <div className="bg-[#CDE9ED] p-6 px-10 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between h-full hover:shadow-md transition-shadow">
             <div>
               <p className="text-xl font-bold mb-4 text-[#145C72]">
-                Semester 1
+                Semester 1 - {currentYear}
               </p>
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center space-x-3">
@@ -701,7 +769,7 @@ const LevelHSSEPage: React.FC = () => {
           <div className="bg-[#CDE9ED] p-6 px-10 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between h-full hover:shadow-md transition-shadow">
             <div>
               <p className="text-xl font-bold mb-4 text-[#145C72]">
-                Semester 2
+                Semester 2 - {currentYear}
               </p>
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center space-x-3">

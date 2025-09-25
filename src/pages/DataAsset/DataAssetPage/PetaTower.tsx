@@ -40,10 +40,91 @@ const PetaTower: React.FC = ({}) => {
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  // Get API credentials from environment
-  const apiKey = import.meta.env.VITE_API_LINK_KEY || "";
-  const folderId = import.meta.env.VITE_API_LINK_ID || "";
+  // ---------------- GOOGLE AUTH HELPERS ----------------
+  const getAccessToken = async (): Promise<string> => {
+    const clientEmail = import.meta.env.VITE_GOOGLE_CLIENT_EMAIL!;
+    const privateKey = import.meta.env.VITE_GOOGLE_PRIVATE_KEY!.replace(
+      /\\n/g,
+      "\n"
+    );
 
+    const now = Math.floor(Date.now() / 1000);
+    const jwtHeader = { alg: "RS256", typ: "JWT" };
+    const jwtClaimSet = {
+      iss: clientEmail,
+      scope: "https://www.googleapis.com/auth/spreadsheets.readonly",
+      aud: "https://oauth2.googleapis.com/token",
+      exp: now + 3600,
+      iat: now,
+    };
+
+    const encode = (obj: any) =>
+      btoa(JSON.stringify(obj))
+        .replace(/=+$/, "")
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_");
+
+    const header = encode(jwtHeader);
+    const payload = encode(jwtClaimSet);
+    const data = new TextEncoder().encode(`${header}.${payload}`);
+
+    const key = await crypto.subtle.importKey(
+      "pkcs8",
+      str2ab(privateKey),
+      { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+
+    const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, data);
+    const signatureBase64 = btoa(
+      String.fromCharCode(...new Uint8Array(signature))
+    )
+      .replace(/=+$/, "")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_");
+
+    const jwt = `${header}.${payload}.${signatureBase64}`;
+
+    const res = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+        assertion: jwt,
+      }),
+    });
+
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || "Failed to get access token");
+    return json.access_token;
+  };
+  const str2ab = (pem: string): ArrayBuffer => {
+    const b64 = pem
+      .replace(/-----BEGIN PRIVATE KEY-----/, "")
+      .replace(/-----END PRIVATE KEY-----/, "")
+      .replace(/\s+/g, "");
+    const binary = atob(b64);
+    const buf = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) buf[i] = binary.charCodeAt(i);
+    return buf.buffer;
+  };
+
+  const fetchSheetData = async (): Promise<TowerData[]> => {
+    const sheetId = import.meta.env.VITE_GOOGLE_SHEET_ID!;
+    const gid = import.meta.env.VITE_GOOGLE_SHEET_GID!;
+    const accessToken = await getAccessToken();
+
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (!res.ok) throw new Error(`Failed to fetch sheet: ${res.status}`);
+    const csvText = await res.text();
+    const jsonData = parseCSVData(csvText);
+    return processExcelData(jsonData);
+  };
   // Check if mobile on mount and resize
   useEffect(() => {
     const checkMobile = () => {
@@ -132,7 +213,7 @@ const PetaTower: React.FC = ({}) => {
     };
   }, []);
 
-  // Helper functions from original code
+  // ---------------- CSV HELPERS ----------------
   const findColumnValue = (row: any, possibleNames: string[]): string => {
     for (const name of possibleNames) {
       if (
@@ -143,7 +224,6 @@ const PetaTower: React.FC = ({}) => {
         return String(row[name]).trim();
       }
     }
-
     for (const name of possibleNames) {
       for (const key of Object.keys(row)) {
         if (
@@ -208,89 +288,22 @@ const PetaTower: React.FC = ({}) => {
   const processExcelData = (rawData: any[]): TowerData[] => {
     return rawData
       .filter((row) => {
-        const lat = findColumnValue(row, [
-          "LOCK LAT",
-          "Latitude",
-          "LAT",
-          "Lock Lat",
-        ]);
-        const lng = findColumnValue(row, [
-          "LOCK LONG",
-          "LOCK LON",
-          "Longitude",
-          "LONG",
-          "LON",
-          "Lock Long",
-        ]);
-        const location = findColumnValue(row, [
-          "Nama Lokasi",
-          "NAMA LOKASI",
-          "Location",
-          "LOKASI",
-        ]);
+        const lat = findColumnValue(row, ["LOCK LAT", "Latitude", "LAT"]);
+        const lng = findColumnValue(row, ["LOCK LONG", "Longitude", "LONG"]);
+        const location = findColumnValue(row, ["Nama Lokasi", "Location"]);
         return lat && lng && location;
       })
       .map((row, index) => {
-        const latStr = findColumnValue(row, [
-          "LOCK LAT",
-          "Latitude",
-          "LAT",
-          "Lock Lat",
-        ]);
-        const lngStr = findColumnValue(row, [
-          "LOCK LONG",
-          "LOCK LON",
-          "Longitude",
-          "LONG",
-          "LON",
-          "Lock Long",
-        ]);
-        const location = findColumnValue(row, [
-          "Nama Lokasi",
-          "NAMA LOKASI",
-          "Location",
-          "LOKASI",
-          "KOTA/KAB",
-        ]);
-        const voltage = findColumnValue(row, [
-          "Tegangan",
-          "TEGANGAN",
-          "Voltage",
-          "KV",
-        ]);
-        const towerType = findColumnValue(row, [
-          "TIPE",
-          "TIPE TOWER",
-          "Type",
-          "Tower Type",
-        ]);
-        const unit = findColumnValue(row, ["Unit", "UNIT", "Unit Name", "No"]);
-        const substation = findColumnValue(row, [
-          "Gardu Induk",
-          "GARDU INDUK",
-          "Substation",
-          "GI",
-        ]);
-        const region = findColumnValue(row, [
-          "KOTA/KAB",
-          "KOTA",
-          "Region",
-          "Wilayah",
-          "KAB",
-          "KABUPATEN",
-        ]);
-        const status = findColumnValue(row, [
-          "Status Operasi",
-          "STATUS",
-          "Status",
-          "Operasi",
-        ]);
-        const functloc = findColumnValue(row, [
-          "IdFunctloc",
-          "FUNCTLOC",
-          "ID",
-          "Functloc",
-        ]);
+        const latStr = findColumnValue(row, ["LOCK LAT", "Latitude", "LAT"]);
+        const lngStr = findColumnValue(row, ["LOCK LONG", "Longitude", "LONG"]);
+        const location = findColumnValue(row, ["Nama Lokasi", "Location"]);
+        const voltage = findColumnValue(row, ["Tegangan", "Voltage", "KV"]);
+        const towerType = findColumnValue(row, ["TIPE", "Tower Type"]);
+        const unit = findColumnValue(row, ["Unit", "Unit Name", "No"]);
+        const substation = findColumnValue(row, ["Gardu Induk", "Substation"]);
+        const region = findColumnValue(row, ["KOTA/KAB", "Region", "Wilayah"]);
+        const status = findColumnValue(row, ["Status Operasi", "Status"]);
+        const functloc = findColumnValue(row, ["IdFunctloc", "FUNCTLOC", "ID"]);
         const penghantar = findColumnValue(row, ["Penghantar"]);
 
         const latitude = parseFloat(latStr.replace(",", ".")) || 0;
@@ -328,178 +341,25 @@ const PetaTower: React.FC = ({}) => {
       });
   };
 
-  const downloadAndParseExcel = async (fileId: string, fileName: string) => {
-    try {
-      setLoadingProgress(`Processing ${fileName}...`);
-      const csvResponse = await fetch(
-        `https://docs.google.com/spreadsheets/d/${fileId}/export?format=csv&key=${apiKey}`
-      );
-
-      if (!csvResponse.ok) {
-        throw new Error(
-          `Failed to download ${fileName}: ${csvResponse.status}`
-        );
-      }
-
-      const csvText = await csvResponse.text();
-      const jsonData = parseCSVData(csvText);
-      return processExcelData(jsonData);
-    } catch (error: any) {
-      console.error(`Error processing ${fileName}:`, error);
-      throw error;
-    }
-  };
-
-  const fetchGoogleDriveFiles = async () => {
-    if (!apiKey || !folderId) {
-      setError(
-        "API Key and Folder ID must be configured in environment variables"
-      );
-      return;
-    }
-
-    setIsLoading(true);
-    setError("");
-    setLoadingProgress("Connecting to Google Drive...");
-
-    try {
-      const testResponse = await fetch(
-        `https://www.googleapis.com/drive/v3/files/${folderId}?key=${apiKey}&fields=id,name`
-      );
-
-      if (!testResponse.ok) {
-        const errorData = await testResponse.json();
-        throw new Error(
-          `API Test Failed (${testResponse.status}): ${
-            errorData.error?.message || "Invalid API key or folder access"
-          }`
-        );
-      }
-
-      setLoadingProgress("Fetching Excel files list...");
-      const query = encodeURIComponent(
-        `'${folderId}' in parents and (name contains '.xlsx' or name contains '.xls')`
-      );
-      const response = await fetch(
-        `https://www.googleapis.com/drive/v3/files?q=${query}&key=${apiKey}&fields=files(id,name,mimeType,size)`
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          `HTTP ${response.status}: ${
-            errorData.error?.message || "Request failed"
-          }`
-        );
-      }
-
-      const result = await response.json();
-      const excelFiles = result.files || [];
-
-      if (excelFiles.length === 0) {
-        setError("No Excel files found in the specified folder");
+  useEffect(() => {
+    const loadTowers = async () => {
+      setIsLoading(true);
+      setError("");
+      setLoadingProgress("Fetching data from Google Sheets...");
+      try {
+        const towersData = await fetchSheetData();
+        setTowers(towersData);
+        setFilteredTowers(towersData);
+        setLoadingProgress("");
+      } catch (err: any) {
+        setError(err.message);
+        setLoadingProgress("");
+      } finally {
         setIsLoading(false);
-        return;
       }
-
-      setLoadingProgress(
-        `Found ${excelFiles.length} Excel files. Processing...`
-      );
-      let allTowers: TowerData[] = [];
-
-      for (let i = 0; i < excelFiles.length; i++) {
-        const file = excelFiles[i];
-        setLoadingProgress(
-          `Processing ${file.name} (${i + 1}/${excelFiles.length})...`
-        );
-
-        try {
-          const fileTowers = await downloadAndParseExcel(file.id, file.name);
-          allTowers = [...allTowers, ...fileTowers];
-        } catch (error) {
-          console.error(`Failed to process ${file.name}:`, error);
-        }
-      }
-
-      setTowers(allTowers);
-      setFilteredTowers(allTowers);
-      setLoadingProgress("");
-
-      if (allTowers.length === 0) {
-        setError("No valid tower data found in Excel files.");
-      }
-    } catch (error: any) {
-      setError(`Error: ${error.message}`);
-      setLoadingProgress("");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Auto-load data on component mount
-  useEffect(() => {
-    if (apiKey && folderId && towers.length === 0) {
-      fetchGoogleDriveFiles();
-    }
-  }, [apiKey, folderId]);
-
-  // Apply filters
-  useEffect(() => {
-    let filtered = [...towers];
-
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      filtered = filtered.filter((tower) => {
-        const searchFields = [
-          tower.locationName || "",
-          tower.unitName || "",
-          tower.substation || "",
-          tower.region || "",
-          tower.towerType || "",
-          tower.status || "",
-          tower.id || "",
-        ];
-
-        return searchFields.some((field) =>
-          field.toLowerCase().includes(query)
-        );
-      });
-    }
-
-    if (voltageFilter.trim()) {
-      filtered = filtered.filter((tower) => {
-        const voltage = tower.voltage || 0;
-        switch (voltageFilter) {
-          case "500+":
-            return voltage >= 500;
-          case "150-499":
-            return voltage >= 150 && voltage < 500;
-          case "70-149":
-            return voltage >= 70 && voltage < 150;
-          case "<70":
-            return voltage > 0 && voltage < 70;
-          default:
-            return true;
-        }
-      });
-    }
-
-    if (regionFilter.trim()) {
-      filtered = filtered.filter(
-        (tower) =>
-          (tower.region || "").toLowerCase() === regionFilter.toLowerCase()
-      );
-    }
-
-    if (statusFilter.trim()) {
-      filtered = filtered.filter(
-        (tower) =>
-          (tower.status || "").toLowerCase() === statusFilter.toLowerCase()
-      );
-    }
-
-    setFilteredTowers(filtered);
-  }, [towers, searchQuery, voltageFilter, regionFilter, statusFilter]);
+    };
+    if (towers.length === 0) loadTowers();
+  }, []);
 
   // Update markers when filtered towers change
   useEffect(() => {
@@ -1095,7 +955,7 @@ const PetaTower: React.FC = ({}) => {
             <div className="bg-red-50 rounded-lg p-3">
               <div className="text-sm text-red-600">{error}</div>
               <button
-                onClick={fetchGoogleDriveFiles}
+                onClick={fetchSheetData}
                 className="mt-2 text-sm bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded transition-colors"
               >
                 Coba Lagi
@@ -1110,7 +970,7 @@ const PetaTower: React.FC = ({}) => {
                 dikonfigurasi.
               </div>
               <button
-                onClick={fetchGoogleDriveFiles}
+                onClick={fetchSheetData}
                 className="mt-2 text-sm bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-3 py-1 rounded transition-colors"
               >
                 Muat Data

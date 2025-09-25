@@ -15,31 +15,6 @@ import { Chart } from "react-google-charts";
 import DefaultLayout from "../../../layout/DefaultLayout";
 import axios from "axios";
 
-// Keep mock data for MATLEV (as requested)
-const mockMonthlyInventory = {
-  Januari: {
-    data: [
-      ["Kategori", "Jumlah"],
-      ["TATA KELOLA GUDANG", 105],
-      ["MANAJEMEN TENAGA KERJA", 105],
-      ["SARANA DAN PRASARANA", 105],
-      ["KEAMANAN DAN KESELAMATAN", 105],
-      ["TEKNOLOGI DAN SISTEM INFORMASI", 105],
-    ],
-    barData: [
-      { category: "TATA KELOLA\nGUDANG", value: 105, color: "#e91e63" },
-      { category: "MANAJEMEN\nTENAGA KERJA", value: 105, color: "#1f5f5f" },
-      { category: "SARANA DAN\nPRASARANA", value: 105, color: "#ADD8E6" },
-      { category: "KEAMANAN DAN\nKESELAMATAN", value: 105, color: "#2368CF" },
-      {
-        category: "TEKNOLOGI DAN\nSISTEM INFORMASI",
-        value: 105,
-        color: "#b19cd9",
-      },
-    ],
-  },
-};
-
 // Interface definitions for API response
 interface ApiResponse {
   status: string;
@@ -48,6 +23,7 @@ interface ApiResponse {
   persediaan: InventoryData;
   grafik_saldo: SaldoData;
   alat_berat: AlatBeratData;
+  matlev: MatlevData;
 }
 
 interface WarehouseData {
@@ -145,6 +121,15 @@ interface ForkliftData {
   tinggi_angkat: string;
 }
 
+interface MatlevData {
+  [key: string]: MatlevMonthData[];
+}
+
+interface MatlevMonthData {
+  kategori: string;
+  nilai: number;
+}
+
 const Logistik: React.FC = () => {
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [selectedWarehouse, setSelectedWarehouse] = useState<any>(null);
@@ -161,11 +146,11 @@ const Logistik: React.FC = () => {
 
   // New state for processed data
   const [warehouseData, setWarehouseData] = useState<any[]>([]);
-  const [inventoryData, setInventoryData] = useState<any[]>([]);
+  const [inventoryData, setInventoryData] = useState<(string | number)[][]>([]);
   const [saldoData, setSaldoData] = useState<any[]>([]);
   const [alatBeratData, setAlatBeratData] = useState<any[]>([]);
+  const [matlevData, setMatlevData] = useState<MatlevData>({});
 
-  // Check if mobile on mount and window resize
   useEffect(() => {
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -181,20 +166,60 @@ const Logistik: React.FC = () => {
     fetchSLOData();
   }, []);
 
-  // Process API data
   useEffect(() => {
     if (apiData) {
       processWarehouseData();
       processInventoryData();
       processSaldoData();
       processAlatBeratData();
+      processMatlevData();
     }
   }, [apiData]);
+
+  // Fixed helper functions for MATLEV data conversion
+  const convertMatlevToChartData = (
+    matlevArray: MatlevMonthData[]
+  ): (string | number)[][] | null => {
+    console.log("Converting matlev data:", matlevArray);
+
+    if (!matlevArray || matlevArray.length === 0) {
+      console.log("No matlev data available");
+      return null;
+    }
+
+    const chartData: (string | number)[][] = [["Kategori", "Nilai"]];
+    matlevArray.forEach((item) => {
+      if (item.kategori && typeof item.nilai === "number") {
+        chartData.push([item.kategori, item.nilai]);
+      }
+    });
+
+    console.log("Chart data result:", chartData);
+    return chartData.length > 1 ? chartData : null;
+  };
+
+  const convertMatlevToBarData = (matlevArray: MatlevMonthData[]) => {
+    if (!matlevArray || matlevArray.length === 0) return null;
+
+    const colors = ["#e91e63", "#1f5f5f", "#ADD8E6", "#2368CF", "#b19cd9"];
+
+    return matlevArray.map((item, index) => ({
+      category: item.kategori.replace(/ /g, "\n"),
+      value: item.nilai,
+      color: colors[index % colors.length],
+    }));
+  };
+
+  const getAvailableMatlevMonths = () => {
+    if (!matlevData) return [];
+    return Object.keys(matlevData).filter(
+      (month) => matlevData[month] && matlevData[month].length > 0
+    );
+  };
 
   const processWarehouseData = () => {
     if (!apiData) return;
 
-    // Group by main gudang
     const bekasi = apiData.data_gudang.filter(
       (item) => item.gudang === "BEKASI"
     );
@@ -251,7 +276,7 @@ const Logistik: React.FC = () => {
   const processInventoryData = () => {
     if (!apiData) return;
 
-    const inventory = [
+    const inventory: (string | number)[][] = [
       ["Kategori", "Jumlah"],
       ["Material Normal", apiData.persediaan.normal],
       ["Material Bursa", apiData.persediaan.bursa],
@@ -287,7 +312,6 @@ const Logistik: React.FC = () => {
       const saldoKey = `saldo_${month}`;
       const monthData = apiData.grafik_saldo[month] || [];
 
-      // Use direct realisasi from saldo object, not calculated from array
       const saldoInfo = apiData.grafik_saldo[saldoKey] || {
         rencana: 0,
         realisasi: 0,
@@ -298,7 +322,7 @@ const Logistik: React.FC = () => {
         rencana: saldoInfo.rencana,
         realisasi: saldoInfo.realisasi,
         details: monthData,
-        fullMonth: month, // Keep the full month name for matching
+        fullMonth: month,
       };
     });
 
@@ -342,6 +366,12 @@ const Logistik: React.FC = () => {
     setAlatBeratData(equipmentData);
   };
 
+  const processMatlevData = () => {
+    if (!apiData?.matlev) return;
+    console.log("Processing MATLEV data:", apiData.matlev);
+    setMatlevData(apiData.matlev);
+  };
+
   const fetchSLOData = async () => {
     setLoading(true);
     const url = `${
@@ -362,19 +392,19 @@ const Logistik: React.FC = () => {
     }
   };
 
-  // Updated colors to match the image
+  // Pie chart options (main inventory chart)
   const pieOptions = {
     title: "",
     is3D: true,
     backgroundColor: "transparent",
     colors: [
-      "#1f5f5f", // Dark teal for Material Normal
-      "#ff9500", // Orange for Material Bursa
-      "#b19cd9", // Light purple for Material Cadang
-      "#e91e63", // Magenta/Pink for Material Bongkaran
-      "#26a69a", // Teal for Material Sisa Pekerjaan
-      "#1a237e", // Dark blue for Limbah Non B3
-      "#ffb74d", // Light orange for Material Non SAP
+      "#1f5f5f",
+      "#ff9500",
+      "#b19cd9",
+      "#e91e63",
+      "#26a69a",
+      "#1a237e",
+      "#ffb74d",
     ],
     titleTextStyle: {
       color: "#145C72",
@@ -390,47 +420,36 @@ const Logistik: React.FC = () => {
     },
   };
 
-  // Small pie chart options - disable animation to prevent flickering
+  // Small pie chart options (no hover)
   const smallPieOptions = {
-    ...pieOptions,
-    width: isMobile ? 150 : 180,
-    height: isMobile ? 150 : 180,
-    chartArea: { width: "85%", height: "80%" },
+    title: "",
+    is3D: true,
+    backgroundColor: "transparent",
+    colors: ["#e91e63", "#1f5f5f", "#ADD8E6", "#2368CF", "#b19cd9"],
     legend: {
       position: "none",
     },
-    colors: [
-      "#e91e63", // Magenta for TATA KELOLA GUDANG
-      "#1f5f5f", // Dark teal for MANAJEMEN TENAGA KERJA
-      "#ADD8E6", // Teal for SARANA DAN PRASARANA
-      "#2368CF", // Orange for KEAMANAN DAN KESELAMATAN
-      "#b19cd9", // Light purple for TEKNOLOGI DAN SISTEM INFORMASI
-    ],
     pieSliceTextStyle: {
       color: "white",
       fontSize: 9,
       fontName: "Arial",
     },
-    animation: {
-      startup: false,
-      duration: 0,
+    chartArea: {
+      width: "85%",
+      height: "80%",
     },
+    width: isMobile ? 150 : 180,
+    height: isMobile ? 150 : 180,
+    // Disable hover and tooltip
     tooltip: { trigger: "none" },
-    enableInteractivity: false,
   };
 
-  // 3D Pie chart options for popup
+  // 3D Pie chart options for popup (with hover enabled)
   const popup3DPieOptions = {
     title: "",
     is3D: true,
     backgroundColor: "transparent",
-    colors: [
-      "#e91e63", // Magenta for TATA KELOLA GUDANG
-      "#1f5f5f", // Dark teal for MANAJEMEN TENAGA KERJA
-      "#ADD8E6", // Teal for SARANA DAN PRASARANA
-      "#2368CF", // Orange for KEAMANAN DAN KESELAMATAN
-      "#b19cd9", // Light purple for TEKNOLOGI DAN SISTEM INFORMASI
-    ],
+    colors: ["#e91e63", "#1f5f5f", "#ADD8E6", "#2368CF", "#b19cd9"],
     legend: {
       position: "none",
     },
@@ -443,12 +462,11 @@ const Logistik: React.FC = () => {
     height: 400,
   };
 
-  // Fixed warehouse usage pie chart options
   const warehouseUsagePieOptions = {
     title: "",
     is3D: true,
     backgroundColor: "transparent",
-    colors: ["#ff9500", "#26a69a"], // Orange and teal
+    colors: ["#ff9500", "#26a69a"],
     legend: {
       position: "bottom",
       alignment: "center",
@@ -465,18 +483,11 @@ const Logistik: React.FC = () => {
     chartArea: { width: "90%", height: "70%" },
   };
 
-  // Fixed composition pie chart options with proper legend
   const compositionPieOptions = {
     title: "",
-    is3D: false, // Disable 3D for better legend visibility
+    is3D: false,
     backgroundColor: "transparent",
-    colors: [
-      "#e91e63", // Persediaan
-      "#26a69a", // Cadang
-      "#1f5f5f", // ATTB
-      "#ff9500", // Pre Memory
-      "#b19cd9", // Limbah Non B3
-    ],
+    colors: ["#e91e63", "#26a69a", "#1f5f5f", "#ff9500", "#b19cd9"],
     legend: {
       position: "bottom",
       alignment: "start",
@@ -527,13 +538,10 @@ const Logistik: React.FC = () => {
     setShowTransactionPopup(true);
   };
 
-  // Safe number formatting function
   const formatNumber = (value: any): string => {
     if (!value || value === 0) return "0";
     if (typeof value === "string") {
-      // If it's already formatted (like "Rp106,954,605"), return as is
       if (value.includes("Rp") || value.includes(",")) return value;
-      // Try to parse as number
       const num = parseFloat(value.replace(/[^\d.-]/g, ""));
       return isNaN(num) ? value : num.toLocaleString("id-ID");
     }
@@ -543,7 +551,6 @@ const Logistik: React.FC = () => {
     return value?.toString() || "0";
   };
 
-  // Updated tooltip with safe number formatting
   const CustomSaldoTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
@@ -566,7 +573,6 @@ const Logistik: React.FC = () => {
     return null;
   };
 
-  // Simplified warehouse card to match the image
   const WarehouseCard: React.FC<{ warehouse: any }> = ({ warehouse }) => (
     <div
       className="bg-[#D2F8FF] rounded-2xl p-4 md:p-6 shadow-lg border border-[#179FB7]/20 hover:shadow-xl transition-all duration-300 cursor-pointer"
@@ -585,7 +591,6 @@ const Logistik: React.FC = () => {
     </div>
   );
 
-  // Updated Warehouse Detail Popup with fixed pie charts
   const WarehousePopup: React.FC = () => {
     if (!selectedWarehouse) return null;
 
@@ -607,9 +612,7 @@ const Logistik: React.FC = () => {
               </button>
             </div>
 
-            {/* Layout: left image, right gudang */}
             <div className="grid grid-cols-1 md:grid-cols-5 lg:grid-cols-6 gap-6 mb-6">
-              {/* Left - Image placeholder */}
               <div className="col-span-1 space-y-4">
                 <h3 className="font-bold text-[#145C72] text-center">
                   GAMBAR GUDANG
@@ -630,65 +633,57 @@ const Logistik: React.FC = () => {
                 </div>
               </div>
 
-              {/* Right - SubGudang cards */}
               <div className="col-span-1 md:col-span-4 lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {subGudangData.map((subGudang: any, index: any) => {
-                  return (
-                    <div
-                      key={index}
-                      className="bg-gray-50 rounded-lg p-4 shadow"
-                    >
-                      <h3 className="font-bold text-[#145C72] mb-2 text-center">
-                        {subGudang.name}
-                      </h3>
-                      <p className="text-sm text-gray-600 mb-4 text-center">
-                        Luas Total: {subGudang.luas_total.toLocaleString()} m²
-                      </p>
+                {subGudangData.map((subGudang: any, index: number) => (
+                  <div key={index} className="bg-gray-50 rounded-lg p-4 shadow">
+                    <h3 className="font-bold text-[#145C72] mb-2 text-center">
+                      {subGudang.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-4 text-center">
+                      Luas Total: {subGudang.luas_total.toLocaleString()} m²
+                    </p>
 
-                      {/* Usage pie chart */}
-                      <div className="mb-4 flex justify-center">
-                        <Chart
-                          chartType="PieChart"
-                          data={[
-                            ["Status", "Luas (m²)"],
-                            ["Luas Terpakai", subGudang.luas_terpakai],
-                            [
-                              "Luas Tersedia",
-                              subGudang.luas_total - subGudang.luas_terpakai,
-                            ],
-                          ]}
-                          options={warehouseUsagePieOptions}
-                          width="100%"
-                          height="180px"
-                        />
-                      </div>
-
-                      {/* Composition pie chart */}
-                      <div>
-                        <h4 className="font-semibold text-[#145C72] mb-2 text-xs text-center">
-                          KOMPOSISI MATERIAL (%)
-                        </h4>
-                        <Chart
-                          chartType="PieChart"
-                          data={[
-                            ["Kategori", "Persentase"],
-                            ["Persediaan", subGudang.composition.persediaan],
-                            ["Cadang", subGudang.composition.cadang],
-                            ["ATTB", subGudang.composition.attb],
-                            ["Pre Memory", subGudang.composition.pre_memory],
-                            [
-                              "Limbah Non B3",
-                              subGudang.composition.limbah_non_b3,
-                            ],
-                          ]}
-                          options={compositionPieOptions}
-                          width="100%"
-                          height="180px"
-                        />
-                      </div>
+                    <div className="mb-4 flex justify-center">
+                      <Chart
+                        chartType="PieChart"
+                        data={[
+                          ["Status", "Luas (m²)"],
+                          ["Luas Terpakai", subGudang.luas_terpakai],
+                          [
+                            "Luas Tersedia",
+                            subGudang.luas_total - subGudang.luas_terpakai,
+                          ],
+                        ]}
+                        options={warehouseUsagePieOptions}
+                        width="100%"
+                        height="180px"
+                      />
                     </div>
-                  );
-                })}
+
+                    <div>
+                      <h4 className="font-semibold text-[#145C72] mb-2 text-xs text-center">
+                        KOMPOSISI MATERIAL (%)
+                      </h4>
+                      <Chart
+                        chartType="PieChart"
+                        data={[
+                          ["Kategori", "Persentase"],
+                          ["Persediaan", subGudang.composition.persediaan],
+                          ["Cadang", subGudang.composition.cadang],
+                          ["ATTB", subGudang.composition.attb],
+                          ["Pre Memory", subGudang.composition.pre_memory],
+                          [
+                            "Limbah Non B3",
+                            subGudang.composition.limbah_non_b3,
+                          ],
+                        ]}
+                        options={compositionPieOptions}
+                        width="100%"
+                        height="180px"
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -697,11 +692,8 @@ const Logistik: React.FC = () => {
     );
   };
 
-  // CORRECTED Transaction Details Popup
   const TransactionPopup = () => {
     if (!selectedTransactionData) return null;
-
-    console.log("Selected transaction data:", selectedTransactionData);
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -720,7 +712,6 @@ const Logistik: React.FC = () => {
               </button>
             </div>
 
-            {/* Summary */}
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="bg-blue-50 p-4 rounded-lg">
                 <h3 className="font-semibold text-blue-700">Rencana</h3>
@@ -736,7 +727,6 @@ const Logistik: React.FC = () => {
               </div>
             </div>
 
-            {/* Transaction Details Table */}
             {selectedTransactionData.details &&
             Array.isArray(selectedTransactionData.details) &&
             selectedTransactionData.details.length > 0 ? (
@@ -831,12 +821,38 @@ const Logistik: React.FC = () => {
     );
   };
 
-  // MATLEV Detail Popup (unchanged - using mock data as requested)
   const MatlevPopup = () => {
-    const monthData =
-      mockMonthlyInventory[
-        selectedMonth as keyof typeof mockMonthlyInventory
-      ] || mockMonthlyInventory.Januari;
+    if (
+      !selectedMonth ||
+      !matlevData[selectedMonth] ||
+      matlevData[selectedMonth].length === 0
+    ) {
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-[#145C72]">
+                MATLEV {selectedMonth?.toUpperCase()}
+              </h2>
+              <button
+                onClick={() => setShowMatlevPopup(false)}
+                className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="text-center py-8 text-gray-500">
+              <p>Tidak ada data MATLEV untuk bulan {selectedMonth}</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const chartData = convertMatlevToChartData(matlevData[selectedMonth]);
+    const barData = convertMatlevToBarData(matlevData[selectedMonth]);
+
+    if (!chartData || !barData) return null;
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -859,20 +875,20 @@ const Logistik: React.FC = () => {
               <div className="flex justify-center items-center">
                 <Chart
                   chartType="PieChart"
-                  data={monthData.data}
+                  data={chartData}
                   options={popup3DPieOptions}
                   width="400px"
                   height="400px"
                 />
               </div>
 
-              {/* Right - Bar Chart with individual colors */}
+              {/* Right - Bar Chart */}
               <div className="flex justify-center items-center">
                 <div className="w-full">
                   <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
-                        data={monthData.barData}
+                        data={barData}
                         margin={{
                           top: 20,
                           right: 30,
@@ -890,7 +906,7 @@ const Logistik: React.FC = () => {
                           height={100}
                         />
                         <YAxis
-                          domain={[0, 120]}
+                          domain={[0, 5]}
                           tick={{ fontSize: 12, fill: "#374151" }}
                           tickLine={{ stroke: "#9CA3AF" }}
                         />
@@ -902,10 +918,10 @@ const Logistik: React.FC = () => {
                             fontSize: "12px",
                           }}
                           labelStyle={{ color: "#374151" }}
-                          formatter={(value) => [value, "Jumlah"]}
+                          formatter={(value) => [value, "Nilai"]}
                         />
                         <Bar dataKey="value" radius={[2, 2, 0, 0]}>
-                          {monthData.barData.map((entry, index) => (
+                          {barData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                           <LabelList
@@ -916,6 +932,7 @@ const Logistik: React.FC = () => {
                               fontSize: 12,
                               fontWeight: "bold",
                             }}
+                            formatter={(value: any) => value?.toFixed(2)}
                           />
                         </Bar>
                       </BarChart>
@@ -930,7 +947,6 @@ const Logistik: React.FC = () => {
     );
   };
 
-  // Updated Alat Berat Popup with detailed table
   const AlatBeratPopup = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-7xl w-full max-h-[90vh] overflow-y-auto">
@@ -1150,10 +1166,12 @@ const Logistik: React.FC = () => {
   if (loading) {
     return (
       <DefaultLayout>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="p-4 md:p-8 bg-gray-50 min-h-screen flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#145C72]"></div>
-            <p className="mt-4 text-[#145C72] font-semibold">Loading...</p>
+            <div className="animate-spin rounded-full h-16 w-16 md:h-32 md:w-32 border-b-2 border-[#145C72]"></div>
+            <p className="mt-4 text-[#145C72] text-sm md:text-base">
+              Loading data...
+            </p>
           </div>
         </div>
       </DefaultLayout>
@@ -1181,7 +1199,6 @@ const Logistik: React.FC = () => {
             {warehouseData.map((warehouse) => (
               <WarehouseCard key={warehouse.id} warehouse={warehouse} />
             ))}
-            {/* Alat Berat card */}
             <div
               className="text-lg font-bold text-[#145C72] bg-[#FFF8D2] px-3 py-1 md:p-6 rounded-2xl shadow-md flex items-center cursor-pointer hover:shadow-xl transition-all duration-300"
               onClick={handleAlatBeratClick}
@@ -1203,7 +1220,6 @@ const Logistik: React.FC = () => {
                 </span>
               </div>
 
-              {/* Main pie chart */}
               <div className="mb-4">
                 <Chart
                   chartType="PieChart"
@@ -1261,7 +1277,7 @@ const Logistik: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Column - Monthly Pie Charts (kept as mock data) */}
+          {/* Right Column - Monthly Pie Charts */}
           <div className="lg:col-span-4">
             <div className="bg-white rounded-2xl shadow-lg p-4 md:p-6 border border-gray-200">
               <div className="flex items-center mb-4">
@@ -1270,33 +1286,45 @@ const Logistik: React.FC = () => {
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                {Object.entries(mockMonthlyInventory).map(
-                  ([month, monthData]) => (
-                    <div
-                      key={month}
-                      className="text-center cursor-pointer"
-                      onClick={() => handleMatlevClick(month)}
-                    >
-                      <Chart
-                        chartType="PieChart"
-                        data={monthData.data}
-                        options={smallPieOptions}
-                        width="80%"
-                        height={isMobile ? "140px" : "160px"}
-                      />
-                      <p className="text-xs font-medium text-[#145C72] mt-2">
-                        {month}
-                      </p>
-                    </div>
-                  )
-                )}
-              </div>
+              {getAvailableMatlevMonths().length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                  {getAvailableMatlevMonths().map((month) => {
+                    const chartData = convertMatlevToChartData(
+                      matlevData[month]
+                    );
+
+                    return (
+                      <div
+                        key={month}
+                        className="text-center cursor-pointer"
+                        onClick={() => handleMatlevClick(month)}
+                      >
+                        {chartData && (
+                          <Chart
+                            chartType="PieChart"
+                            data={chartData}
+                            options={smallPieOptions}
+                            width="80%"
+                            height={isMobile ? "140px" : "160px"}
+                          />
+                        )}
+                        <p className="text-xs font-medium text-[#145C72] mt-2">
+                          {month.charAt(0).toUpperCase() + month.slice(1)}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <p>Tidak ada data MATLEV tersedia</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Bar Chart - Saldo (Updated with API data) */}
+        {/* Bar Chart - Saldo */}
         <div className="mb-8">
           <div className="bg-white rounded-2xl shadow-lg p-4 md:p-6 border border-gray-200">
             <div className="flex items-center mb-6">
@@ -1305,16 +1333,11 @@ const Logistik: React.FC = () => {
               </span>
             </div>
 
-            <div className="h-64 md:h-80 ">
+            <div className="h-64 md:h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={saldoData}
-                  margin={{
-                    top: 20,
-                    right: 30,
-                    left: 20,
-                    bottom: 5,
-                  }}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis
@@ -1342,13 +1365,12 @@ const Logistik: React.FC = () => {
                     tick={{ fontSize: 12, fill: "#374151" }}
                     tickLine={{ stroke: "#9CA3AF" }}
                     tickFormatter={(value) =>
-                      `${(value / 1000000).toFixed(0)}M`
+                      `${(value / 1000000).toFixed(0)}JT`
                     }
                   />
                   <Tooltip content={<CustomSaldoTooltip />} />
                   <Legend wrapperStyle={{ fontSize: "12px" }} />
 
-                  {/* Rencana Bar */}
                   <Bar
                     dataKey="rencana"
                     fill="#FF6B6B"
@@ -1373,13 +1395,13 @@ const Logistik: React.FC = () => {
                       }}
                       formatter={(value: React.ReactNode) =>
                         typeof value === "number"
-                          ? `${(value / 1000000).toFixed(0)}M`
+                          ? `${(value / 1000000).toFixed(0)}JT`
                           : ""
                       }
                     />
                   </Bar>
                   <Bar
-                    dataKey={() => 1} // force constant value, so bar always has height
+                    dataKey={() => 1}
                     fill="transparent"
                     onClick={(data) =>
                       handleBarClick({ payload: data.payload })
@@ -1387,7 +1409,6 @@ const Logistik: React.FC = () => {
                     isAnimationActive={false}
                     style={{ cursor: "pointer" }}
                   />
-                  {/* Realisasi Bar */}
                   <Bar
                     dataKey="realisasi"
                     fill="#145C72"
