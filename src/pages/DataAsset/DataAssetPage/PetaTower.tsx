@@ -42,72 +42,10 @@ const PetaTower: React.FC = ({}) => {
 
   // ---------------- GOOGLE AUTH HELPERS ----------------
   const getAccessToken = async (): Promise<string> => {
-    const clientEmail = import.meta.env.VITE_GOOGLE_CLIENT_EMAIL!;
-    const privateKey = import.meta.env.VITE_GOOGLE_PRIVATE_KEY!.replace(
-      /\\n/g,
-      "\n"
-    );
-
-    const now = Math.floor(Date.now() / 1000);
-    const jwtHeader = { alg: "RS256", typ: "JWT" };
-    const jwtClaimSet = {
-      iss: clientEmail,
-      scope: "https://www.googleapis.com/auth/spreadsheets.readonly",
-      aud: "https://oauth2.googleapis.com/token",
-      exp: now + 3600,
-      iat: now,
-    };
-
-    const encode = (obj: any) =>
-      btoa(JSON.stringify(obj))
-        .replace(/=+$/, "")
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_");
-
-    const header = encode(jwtHeader);
-    const payload = encode(jwtClaimSet);
-    const data = new TextEncoder().encode(`${header}.${payload}`);
-
-    const key = await crypto.subtle.importKey(
-      "pkcs8",
-      str2ab(privateKey),
-      { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
-      false,
-      ["sign"]
-    );
-
-    const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, data);
-    const signatureBase64 = btoa(
-      String.fromCharCode(...new Uint8Array(signature))
-    )
-      .replace(/=+$/, "")
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_");
-
-    const jwt = `${header}.${payload}.${signatureBase64}`;
-
-    const res = await fetch("https://oauth2.googleapis.com/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-        assertion: jwt,
-      }),
-    });
-
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || "Failed to get access token");
-    return json.access_token;
-  };
-  const str2ab = (pem: string): ArrayBuffer => {
-    const b64 = pem
-      .replace(/-----BEGIN PRIVATE KEY-----/, "")
-      .replace(/-----END PRIVATE KEY-----/, "")
-      .replace(/\s+/g, "");
-    const binary = atob(b64);
-    const buf = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) buf[i] = binary.charCodeAt(i);
-    return buf.buffer;
+    const res = await fetch("/api/google-token");
+    if (!res.ok) throw new Error("Failed to fetch token");
+    const { accessToken } = await res.json();
+    return accessToken;
   };
 
   const fetchSheetData = async (): Promise<TowerData[]> => {
