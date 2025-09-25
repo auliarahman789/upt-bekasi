@@ -248,10 +248,12 @@ const AnggaranPage: React.FC = () => {
   if (loading) {
     return (
       <DefaultLayout>
-        <div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="p-4 md:p-8 bg-gray-50 min-h-screen flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#145C72]"></div>
-            <p className="mt-4 text-[#145C72]">Loading data...</p>
+            <div className="animate-spin rounded-full h-16 w-16 md:h-32 md:w-32 border-b-2 border-[#145C72]"></div>
+            <p className="mt-4 text-[#145C72] text-sm md:text-base">
+              Loading data...
+            </p>
           </div>
         </div>
       </DefaultLayout>

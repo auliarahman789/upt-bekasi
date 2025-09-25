@@ -35,6 +35,7 @@ import AdminPanel from "../src/pages/Admin/AdminPanel";
 import LoginPage from "../src/pages/Auth/LoginPage";
 import ROWKritisPage from "./pages/DataAsset/Tower/ROWKritisPage";
 import LMABOPage from "./pages/Monitoring/LMABO/LMABO";
+import HealthIndexPage from "./pages/DataAsset/HealthIndexPage";
 
 // Protected Route Component
 interface ProtectedRouteProps {
@@ -211,7 +212,15 @@ function AppContent() {
           </ProtectedRoute>
         }
       />
-
+      <Route
+        path="/data-asset/healthindex"
+        element={
+          <ProtectedRoute>
+            <PageTitle title="UPT Bekasi - Health Index" />
+            <HealthIndexPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/data-asset/sld"
         element={
