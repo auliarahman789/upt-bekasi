@@ -63,8 +63,8 @@ const ROWKritisPage: React.FC = () => {
     NORMAL: "#10B981", // Green
     CRITICAL: "#EC4899", // Pink
     BAHAYA: "#3B82F6", // Blue
-    BAHAYA_I: "#1E40AF", // Darker Blue
-    BAHAYA_II: "#7C3AED", // Purple
+    BAHAYA_I: "#ffA500", // Darker Blue
+    BAHAYA_II: "#0000FF", // Purple
     WARNING: "#F59E0B", // Amber
     ALERT: "#EF4444", // Red
     MAINTENANCE: "#6B7280", // Gray
@@ -82,8 +82,8 @@ const ROWKritisPage: React.FC = () => {
     if (status.startsWith("BAHAYA")) {
       const variations = [
         "#3B82F6",
-        "#1E40AF",
-        "#7C3AED",
+        "#ffA500",
+        "#0000FF",
         "#4338CA",
         "#6366F1",
       ];

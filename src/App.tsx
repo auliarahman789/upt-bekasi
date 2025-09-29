@@ -36,6 +36,7 @@ import LoginPage from "../src/pages/Auth/LoginPage";
 import ROWKritisPage from "./pages/DataAsset/Tower/ROWKritisPage";
 import LMABOPage from "./pages/Monitoring/LMABO/LMABO";
 import HealthIndexPage from "./pages/DataAsset/HealthIndexPage";
+import LevelLingkunganPage from "./pages/Monitoring/HSSE/LevelLingkungan";
 
 // Protected Route Component
 interface ProtectedRouteProps {
@@ -403,7 +404,15 @@ function AppContent() {
           </ProtectedRoute>
         }
       />
-
+      <Route
+        path="/monitoring/hsse/levellingkungan"
+        element={
+          <ProtectedRoute>
+            <PageTitle title="UPT Bekasi - Maturing Level Lingkungan" />
+            <LevelLingkunganPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/monitoring/hsse/sustainability"
         element={

@@ -47,6 +47,7 @@ const TowerKritisPage: React.FC = () => {
   const [filterULTG, setFilterULTG] = useState("");
   const [filterSTS, setFilterSTS] = useState("");
   const [filterYear, setFilterYear] = useState("");
+  const [filterProgress, setFilterProgress] = useState("all"); // New filter state
   const [hoveredStatus, setHoveredStatus] = useState<{
     index: number;
     text: string;
@@ -77,13 +78,35 @@ const TowerKritisPage: React.FC = () => {
     }
   };
 
-  // Transform tower data for chart
+  // Filter data by progress percentage
+  const filterByProgress = (data: TowerData[]) => {
+    if (filterProgress === "all") return data;
+
+    return data.filter((item) => {
+      const progressValue = parseInt(item.progress.replace("%", ""), 10) || 0;
+
+      if (filterProgress === "100") {
+        return progressValue === 100;
+      } else if (filterProgress === "0") {
+        return progressValue === 0;
+      } else if (filterProgress === "in-progress") {
+        return progressValue > 0 && progressValue < 100;
+      }
+
+      return true;
+    });
+  };
+
+  // Transform tower data for chart (now uses filtered data)
   const getTowerChartData = (): ChartData[] => {
     if (!apiData?.data) return [];
 
+    // Apply progress filter to data before grouping
+    const filteredByProgress = filterByProgress(apiData.data);
+
     const ultgGroups: { [key: string]: TowerData[] } = {};
 
-    apiData.data.forEach((item) => {
+    filteredByProgress.forEach((item) => {
       if (!ultgGroups[item.ultg]) {
         ultgGroups[item.ultg] = [];
       }
@@ -131,7 +154,7 @@ const TowerKritisPage: React.FC = () => {
     return [...new Set(apiData.data.map((item) => item.tgl_temuan))].sort();
   };
 
-  // Filter and search logic
+  // Filter and search logic (now includes progress filter)
   const getFilteredData = () => {
     if (!apiData?.data) return [];
 
@@ -146,7 +169,27 @@ const TowerKritisPage: React.FC = () => {
       const matchesSTS = filterSTS === "" || item.sts === filterSTS;
       const matchesYear = filterYear === "" || item.tgl_temuan === filterYear;
 
-      return matchesSearch && matchesULTG && matchesSTS && matchesYear;
+      // Progress filter logic
+      let matchesProgress = true;
+      if (filterProgress !== "all") {
+        const progressValue = parseInt(item.progress.replace("%", ""), 10) || 0;
+
+        if (filterProgress === "100") {
+          matchesProgress = progressValue === 100;
+        } else if (filterProgress === "0") {
+          matchesProgress = progressValue === 0;
+        } else if (filterProgress === "in-progress") {
+          matchesProgress = progressValue > 0 && progressValue < 100;
+        }
+      }
+
+      return (
+        matchesSearch &&
+        matchesULTG &&
+        matchesSTS &&
+        matchesYear &&
+        matchesProgress
+      );
     });
   };
 
@@ -166,7 +209,7 @@ const TowerKritisPage: React.FC = () => {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterULTG, filterSTS, filterYear]);
+  }, [searchTerm, filterULTG, filterSTS, filterYear, filterProgress]);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -269,9 +312,8 @@ const TowerKritisPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Table - Rest of the component remains the same */}
+        {/* Table */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          {/* ... rest of your existing table code ... */}
           <div className="flex items-center p-4 md:p-6 border-b bg-white">
             <div className="w-8 h-8 flex items-center justify-center">
               <span className="text-white font-bold text-sm">📋</span>
@@ -286,7 +328,7 @@ const TowerKritisPage: React.FC = () => {
 
           {/* Filters and Search */}
           <div className="p-4 md:p-6 border-b bg-gray-50">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
               {/* Search */}
               <div className="">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -357,15 +399,38 @@ const TowerKritisPage: React.FC = () => {
                   ))}
                 </select>
               </div>
+
+              {/* Progress Filter - NEW */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Progress
+                </label>
+                <select
+                  value={filterProgress}
+                  onChange={(e) => setFilterProgress(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                >
+                  <option value="all">All Progress</option>
+                  <option value="0">0% (Not Started)</option>
+                  <option value="in-progress">1-99% (In Progress)</option>
+                  <option value="100">100% (Completed)</option>
+                </select>
+              </div>
+
               {/* Clear Filters */}
               <div className="mt-4 flex flex-wrap items-center gap-2">
-                {(searchTerm || filterULTG || filterSTS || filterYear) && (
+                {(searchTerm ||
+                  filterULTG ||
+                  filterSTS ||
+                  filterYear ||
+                  filterProgress !== "all") && (
                   <button
                     onClick={() => {
                       setSearchTerm("");
                       setFilterULTG("");
                       setFilterSTS("");
                       setFilterYear("");
+                      setFilterProgress("all");
                     }}
                     className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300"
                   >

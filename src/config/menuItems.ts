@@ -101,7 +101,7 @@ export const menuItems: MenuItem[] = [
     children: [
       {
         id: "performance-1",
-        label: "REKAP ANOMALI",
+        label: "REKAP ANOMALI INTERNAL UPT",
         icon: "",
         route: "/performance/rekapanomali",
       },
@@ -143,7 +143,7 @@ export const menuItems: MenuItem[] = [
     children: [
       {
         id: "monitoring-1",
-        label: "LEAD MEASURE",
+        label: "LM & ABO",
         icon: "",
         route: "/monitoring/lead-measure",
       },
@@ -216,6 +216,12 @@ export const menuItems: MenuItem[] = [
             label: "MATURING LEVEL SUSTAINABILITY",
             icon: "",
             route: "/monitoring/hsse/sustainability",
+          },
+          {
+            id: "hsse-5",
+            label: "MATURING LEVEL LINGKUNGAN",
+            icon: "",
+            route: "/monitoring/hsse/levellingkungan",
           },
         ],
       },
