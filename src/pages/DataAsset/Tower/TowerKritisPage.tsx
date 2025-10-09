@@ -68,7 +68,7 @@ const TowerKritisPage: React.FC = () => {
       const res = await axios.get<ApiResponse>(url, {
         withCredentials: true,
       });
-      console.log("kritis", res.data);
+
       setApiData(res.data);
     } catch (error: any) {
       console.log(error);
@@ -76,25 +76,6 @@ const TowerKritisPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Filter data by progress percentage
-  const filterByProgress = (data: TowerData[]) => {
-    if (filterProgress === "all") return data;
-
-    return data.filter((item) => {
-      const progressValue = parseInt(item.progress.replace("%", ""), 10) || 0;
-
-      if (filterProgress === "100") {
-        return progressValue === 100;
-      } else if (filterProgress === "0") {
-        return progressValue === 0;
-      } else if (filterProgress === "in-progress") {
-        return progressValue > 0 && progressValue < 100;
-      }
-
-      return true;
-    });
   };
 
   const getTowerChartData = (): ChartData[] => {

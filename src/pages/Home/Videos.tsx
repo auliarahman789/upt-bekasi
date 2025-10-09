@@ -53,8 +53,6 @@ const Videos: React.FC = () => {
         withCredentials: true,
       });
 
-      console.log("API Response:", response.data);
-
       // Process the video data
       if (response.data.data && response.data.data.length > 0) {
         const processedVideos = response.data.data

@@ -95,7 +95,7 @@ const JadwalK3: React.FC = () => {
       const response = await axios.get(
         `${import.meta.env.VITE_API_LINK_BE}/api/monitoring/hsse/pekerjaanK3`
       );
-      console.log("API Response:", response.data);
+
       const apiData = response.data.data;
       setData(apiData);
       setError(null);
@@ -132,8 +132,6 @@ const JadwalK3: React.FC = () => {
     const currentMonth = new Date().getMonth() + 1;
 
     // Add debugging
-    console.log("Current year:", currentYear, "Current month:", currentMonth);
-    console.log("Sample data item:", data[0]);
 
     // Helper function to parse date - try multiple formats
     const parseDate = (dateString: string): Date | null => {
@@ -207,11 +205,9 @@ const JadwalK3: React.FC = () => {
     // 1. Chart Jumlah Pekerjaan dalam Bulan Berjalan
     const currentMonthData = data.filter((item) => {
       const isCurrentMonthItem = isCurrentMonth(item.rencana_mulai_tgl);
-      console.log(`Checking ${item.rencana_mulai_tgl}: ${isCurrentMonthItem}`);
+
       return isCurrentMonthItem;
     });
-
-    console.log("Current month data count:", currentMonthData.length);
 
     const pekerjaanBulanIni = currentMonthData.reduce((acc, item) => {
       const kategori = item.keterangan?.toUpperCase() || "TIDAK DIKETAHUI";
@@ -250,9 +246,6 @@ const JadwalK3: React.FC = () => {
           status.includes("DONE"))
     );
 
-    console.log("All statuses found:", allStatuses);
-    console.log("Identified completed statuses:", completedStatuses);
-
     data.forEach((item) => {
       const itemStatus = item.status_pekerjaan?.toUpperCase();
       if (itemStatus && completedStatuses.includes(itemStatus)) {
@@ -277,11 +270,9 @@ const JadwalK3: React.FC = () => {
     // 3. Chart Total Pengawasan selama tahun berjalan
     const currentYearData = data.filter((item) => {
       const isCurrentYearItem = isCurrentYear(item.rencana_mulai_tgl);
-      console.log(`Year check ${item.rencana_mulai_tgl}: ${isCurrentYearItem}`);
+
       return isCurrentYearItem;
     });
-
-    console.log("Current year data count:", currentYearData.length);
 
     const statusCount: Record<string, number> = {};
     currentYearData.forEach((item) => {
@@ -295,8 +286,6 @@ const JadwalK3: React.FC = () => {
         jumlah,
       })
     );
-
-    console.log("Chart pengawasan data:", chartPengawasan);
 
     return {
       pekerjaanBulanIni: chartPekerjaanBulanIni,

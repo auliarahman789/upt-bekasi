@@ -69,7 +69,6 @@ const RekapAnomaliPage = () => {
         withCredentials: true,
       });
 
-      console.log("API Response:", response.data);
       setApiData(response.data);
     } catch (error: any) {
       console.error("Error fetching sustainability data:", error);

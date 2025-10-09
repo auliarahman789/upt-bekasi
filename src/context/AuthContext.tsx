@@ -38,7 +38,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const checkAuth = async () => {
     try {
       const response = await authService.getMe();
-      console.log("CheckAuth response:", response);
+
       if (response.success && response.data) {
         setUser(response.data);
       } else {
@@ -57,11 +57,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string) => {
     try {
       const response = await authService.login({ email, password });
-      console.log("Login context response:", response);
 
       // Check if login was successful
       if (response.success && response.data) {
-        console.log("Setting user:", response.data);
         setUser(response.data);
         return;
       } else {
@@ -94,15 +92,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     checkAuth();
   }, []);
-
-  // Debug logging
-  useEffect(() => {
-    console.log("Auth state changed:", {
-      user,
-      isAuthenticated: !!user,
-      isLoading,
-    });
-  }, [user, isLoading]);
 
   const value = {
     user,

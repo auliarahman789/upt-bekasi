@@ -201,7 +201,6 @@ const AnggaranPage: React.FC = () => {
       const res = await axios.get<ApiResponse>(url, {
         withCredentials: true,
       });
-      console.log("API Response", res.data);
 
       const convertedData: CategoryData[] = [
         {

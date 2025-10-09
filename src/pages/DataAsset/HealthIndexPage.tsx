@@ -60,7 +60,7 @@ const HealthIndexPage: React.FC = () => {
       const res = await axios.get<ApiResponse>(url, {
         withCredentials: true,
       });
-      console.log("health index", res.data);
+
       setApiData(res.data);
     } catch (error: any) {
       console.log(error);

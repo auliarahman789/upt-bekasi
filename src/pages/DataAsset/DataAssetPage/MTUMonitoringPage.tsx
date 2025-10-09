@@ -333,8 +333,6 @@ const MTUMonitoringPage = () => {
         `${import.meta.env.VITE_API_LINK_BE}/api/data-asset/mtu/kondisi`
       );
 
-      console.log("MTU monitoring data fetched successfully:", response.data);
-
       // Transform API data to component format
       const transformedData = transformApiData(response.data);
       setMonitoringData(transformedData);

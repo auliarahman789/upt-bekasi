@@ -36,7 +36,7 @@ const LMABOPage: React.FC = () => {
       const res = await axios.get<ApiResponse>(url, {
         withCredentials: true,
       });
-      console.log("LM ABO", res.data);
+
       setApiData(res.data);
     } catch (error: any) {
       console.log(error);

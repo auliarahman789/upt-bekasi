@@ -43,7 +43,6 @@ const CommonEnemyPage = () => {
         `${import.meta.env.VITE_API_LINK_BE}/api/performance/common-enemy`
       );
 
-      console.log("Common Enemy data fetched successfully:", response.data);
       setData(response.data);
     } catch (err) {
       console.error("Error fetching Common Enemy data:", err);

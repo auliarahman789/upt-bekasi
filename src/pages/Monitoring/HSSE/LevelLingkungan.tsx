@@ -169,8 +169,6 @@ const LevelLingkunganPage: React.FC = () => {
         withCredentials: true,
       });
 
-      console.log("API Response:", response.data);
-
       if (response.data.status === "success") {
         parseApiData(response.data);
       } else {

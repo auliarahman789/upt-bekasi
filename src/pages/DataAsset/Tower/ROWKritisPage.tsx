@@ -154,7 +154,7 @@ const ROWKritisPage: React.FC = () => {
         params: { tahun: filterYear },
         withCredentials: true,
       });
-      console.log("transmission data", res.data);
+
       setApiData(res.data);
     } catch (error: any) {
       console.log(error);

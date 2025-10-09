@@ -46,19 +46,6 @@ const ProfilePage: React.FC = () => {
       });
     }
   }, [user]);
-  useEffect(() => {
-    if (user) {
-      console.log("🟢 [AuthContext user] from getMe:", user);
-      console.log("🟢 [AuthContext user.image_url]:", user.image_url);
-    } else {
-      console.log("⚠️ No user found in AuthContext yet.");
-    }
-  }, [user]);
-
-  useEffect(() => {
-    console.log("📋 [ProfileForm State Updated]:", profileForm);
-    console.log("📷 [ProfileForm.image_url]:", profileForm.image_url);
-  }, [profileForm]);
 
   // File handling functions
   async function handleFileUpload(file: File): Promise<string> {
@@ -164,18 +151,12 @@ const ProfilePage: React.FC = () => {
       setLoading(true);
       let imageFileName = profileForm.image_url;
 
-      console.log(
-        "🔹 [Before Update] profileForm.image_url:",
-        profileForm.image_url
-      );
-
       // Upload new image if selected
       if (selectedFile) {
         if (profileForm.image_url) {
           await handleFileDelete(profileForm.image_url);
         }
         imageFileName = await handleFileUpload(selectedFile);
-        console.log("📤 [Uploaded] New image file name:", imageFileName);
       }
 
       // Always send password fields — even if empty
@@ -188,22 +169,17 @@ const ProfilePage: React.FC = () => {
         confPassword: profileForm.confPassword || "",
       };
 
-      console.log("🟦 [PUT Payload] updateData:", updateData);
-
       // Send update request
       await axios.put(`${API_BASE}/api/users/${user.id}`, updateData, {
         withCredentials: true,
       });
 
       // Refresh auth info
-      console.log("🔄 Calling checkAuth() to refresh user...");
-      await checkAuth();
 
-      console.log("✅ [After checkAuth] user from context:", user);
+      await checkAuth();
 
       // Re-sync form data from refreshed user
       if (user) {
-        console.log("🟢 [Sync] New user.image_url:", user.image_url);
         setProfileForm({
           nama: user.nama || "",
           email: user.email || "",

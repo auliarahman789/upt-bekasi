@@ -606,10 +606,6 @@ const LevelHSSEPage: React.FC = () => {
       }
     }
 
-    console.log("Parsed summary data:", summary);
-    console.log("Parsed detail data:", details);
-    console.log("Expected criteria count:", activeSheet === "k3" ? 7 : 8);
-
     // Calculate averages for criteria that have sub-criteria
     const updatedSummary = calculateAveragesForCriteria(summary, details);
 
@@ -662,7 +658,6 @@ const LevelHSSEPage: React.FC = () => {
     );
   }
 
-  console.log(pencapaianPercentages);
   if (error) {
     return (
       <div className="p-8">

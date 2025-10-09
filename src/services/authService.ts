@@ -16,8 +16,6 @@ export const authService = {
         withCredentials: true,
       });
 
-      console.log("Login API response:", res.data);
-
       // Handle your specific API response structure
       if (res.data && res.data.status === "success") {
         return {
@@ -66,8 +64,6 @@ export const authService = {
       const res = await axios.get(url, {
         withCredentials: true,
       });
-
-      console.log("GetMe API response:", res.data);
 
       // Handle your specific API response structure for /me endpoint
       if (res.data && (res.data.status === "success" || res.data.email)) {

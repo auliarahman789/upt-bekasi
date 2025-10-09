@@ -180,8 +180,6 @@ const Logistik: React.FC = () => {
   const convertMatlevToChartData = (
     matlevArray: MatlevMonthData[]
   ): (string | number)[][] | null => {
-    console.log("Converting matlev data:", matlevArray);
-
     if (!matlevArray || matlevArray.length === 0) {
       console.log("No matlev data available");
       return null;
@@ -194,7 +192,6 @@ const Logistik: React.FC = () => {
       }
     });
 
-    console.log("Chart data result:", chartData);
     return chartData.length > 1 ? chartData : null;
   };
 
@@ -368,7 +365,7 @@ const Logistik: React.FC = () => {
 
   const processMatlevData = () => {
     if (!apiData?.matlev) return;
-    console.log("Processing MATLEV data:", apiData.matlev);
+
     setMatlevData(apiData.matlev);
   };
 
@@ -382,7 +379,7 @@ const Logistik: React.FC = () => {
       const res = await axios.get<ApiResponse>(url, {
         withCredentials: true,
       });
-      console.log("slo", res.data);
+
       setApiData(res.data);
     } catch (error: any) {
       console.log(error);

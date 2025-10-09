@@ -67,8 +67,6 @@ const Article: React.FC = () => {
         withCredentials: true,
       });
 
-      console.log("API Response:", response.data);
-
       // Process the article data
       if (response.data.data && response.data.data.length > 0) {
         const processedArticles = response.data.data

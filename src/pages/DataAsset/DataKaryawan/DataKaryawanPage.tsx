@@ -134,7 +134,6 @@ const DataKaryawanPage: React.FC = () => {
         withCredentials: true,
       });
       setData(res.data);
-      console.log("Fetched employee data:", res.data);
     } catch (error: any) {
       console.log(error);
     } finally {
