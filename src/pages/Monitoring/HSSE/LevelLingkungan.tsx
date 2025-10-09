@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { TrendingUp, LayoutList, Calendar, Target } from "lucide-react";
+import { TrendingUp, LayoutList } from "lucide-react";
 import DefaultLayout from "../../../layout/DefaultLayout";
 import axios from "axios";
 
@@ -34,20 +34,20 @@ interface ApiResponse {
   sustainability: SustainabilityData[];
 }
 
-interface MonthlyRecap {
-  month: string;
-  monthName: string;
-  totalTrue: number;
-  totalFalse: number;
-  percentage: number;
-}
+// interface MonthlyRecap {
+//   month: string;
+//   monthName: string;
+//   totalTrue: number;
+//   totalFalse: number;
+//   percentage: number;
+// }
 
-interface PointRecap {
-  point: string;
-  totalTrue: number;
-  totalFalse: number;
-  percentage: number;
-}
+// interface PointRecap {
+//   point: string;
+//   totalTrue: number;
+//   totalFalse: number;
+//   percentage: number;
+// }
 
 const LevelLingkunganPage: React.FC = () => {
   const [lingkunganData, setLingkunganData] = useState<LingkunganData[]>([]);
@@ -60,8 +60,8 @@ const LevelLingkunganPage: React.FC = () => {
     target: number;
     pencapaian: number;
   }>({ target: 0, pencapaian: 0 });
-  const [monthlyRecap, setMonthlyRecap] = useState<MonthlyRecap[]>([]);
-  const [pointRecap, setPointRecap] = useState<PointRecap[]>([]);
+  // const [monthlyRecap, setMonthlyRecap] = useState<MonthlyRecap[]>([]);
+  // const [pointRecap, setPointRecap] = useState<PointRecap[]>([]);
 
   // Month names for display
   const months = [
@@ -106,55 +106,55 @@ const LevelLingkunganPage: React.FC = () => {
     return isNaN(parsed) ? 0 : parsed;
   };
 
-  const calculateRecaps = (sustainability: SustainabilityData[]) => {
-    // Calculate monthly recap
-    const monthlyData: MonthlyRecap[] = months.map((month, index) => {
-      let totalTrue = 0;
-      let totalFalse = 0;
+  // const calculateRecaps = (sustainability: SustainabilityData[]) => {
+  //   // Calculate monthly recap
+  //   // const monthlyData: MonthlyRecap[] = months.map((month, index) => {
+  //   //   let totalTrue = 0;
+  //   //   let totalFalse = 0;
 
-      sustainability.forEach((item) => {
-        const value = item[month as keyof SustainabilityData] as string;
-        if (value === "TRUE") totalTrue++;
-        else if (value === "FALSE") totalFalse++;
-      });
+  //   //   sustainability.forEach((item) => {
+  //   //     const value = item[month as keyof SustainabilityData] as string;
+  //   //     if (value === "TRUE") totalTrue++;
+  //   //     else if (value === "FALSE") totalFalse++;
+  //   //   });
 
-      const total = totalTrue + totalFalse;
-      const percentage = total > 0 ? (totalTrue / total) * 100 : 0;
+  //   //   const total = totalTrue + totalFalse;
+  //   //   const percentage = total > 0 ? (totalTrue / total) * 100 : 0;
 
-      return {
-        month,
-        monthName: monthNames[index],
-        totalTrue,
-        totalFalse,
-        percentage,
-      };
-    });
+  //   //   return {
+  //   //     month,
+  //   //     monthName: monthNames[index],
+  //   //     totalTrue,
+  //   //     totalFalse,
+  //   //     percentage,
+  //   //   };
+  //   // });
 
-    // Calculate point recap
-    const pointData: PointRecap[] = sustainability.map((item) => {
-      let totalTrue = 0;
-      let totalFalse = 0;
+  //   // Calculate point recap
+  //   // const pointData: PointRecap[] = sustainability.map((item) => {
+  //   //   let totalTrue = 0;
+  //   //   let totalFalse = 0;
 
-      months.forEach((month) => {
-        const value = item[month as keyof SustainabilityData] as string;
-        if (value === "TRUE") totalTrue++;
-        else if (value === "FALSE") totalFalse++;
-      });
+  //   //   months.forEach((month) => {
+  //   //     const value = item[month as keyof SustainabilityData] as string;
+  //   //     if (value === "TRUE") totalTrue++;
+  //   //     else if (value === "FALSE") totalFalse++;
+  //   //   });
 
-      const total = totalTrue + totalFalse;
-      const percentage = total > 0 ? (totalTrue / total) * 100 : 0;
+  //   //   const total = totalTrue + totalFalse;
+  //   //   const percentage = total > 0 ? (totalTrue / total) * 100 : 0;
 
-      return {
-        point: item.point,
-        totalTrue,
-        totalFalse,
-        percentage,
-      };
-    });
+  //   //   return {
+  //   //     point: item.point,
+  //   //     totalTrue,
+  //   //     totalFalse,
+  //   //     percentage,
+  //   //   };
+  //   // });
 
-    setMonthlyRecap(monthlyData);
-    setPointRecap(pointData);
-  };
+  //   // setMonthlyRecap(monthlyData);
+  //   // setPointRecap(pointData);
+  // };
 
   const fetchLingkunganData = async () => {
     setLoading(true);
@@ -205,7 +205,7 @@ const LevelLingkunganPage: React.FC = () => {
     });
 
     // Calculate recaps
-    calculateRecaps(sustainability);
+    // calculateRecaps(sustainability);
   };
 
   const getCheckboxStatus = (value: string): boolean => {
