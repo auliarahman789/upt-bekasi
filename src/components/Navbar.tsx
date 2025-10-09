@@ -482,9 +482,29 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
                 <div className="relative p-4">
                   <button
                     onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-                    className="flex items-center space-x-2 px-4 py-2  text-white font-bold rounded transition-colors duration-200 hover:bg-[#1a6b82]"
+                    className="flex items-center space-x-2 px-2 py-2 text-white font-bold rounded transition-colors duration-200 hover:bg-[#1a6b82]"
                   >
-                    <img src="/account.svg" alt="Account" className="w-6 h-6" />
+                    {user?.image_url ? (
+                      <img
+                        src={`${import.meta.env.VITE_API_LINK_BE}/api/images/${
+                          user.image_url
+                        }`}
+                        alt="Profile"
+                        className="w-8 h-8 rounded-full object-cover border-2 border-white"
+                        onError={(e) => {
+                          // Fallback to default icon if image fails to load
+                          e.currentTarget.style.display = "none";
+                          e.currentTarget.nextElementSibling?.classList.remove(
+                            "hidden"
+                          );
+                        }}
+                      />
+                    ) : null}
+                    <img
+                      src="/account.svg"
+                      alt="Account"
+                      className={`w-6 h-6 ${user?.image_url ? "hidden" : ""}`}
+                    />
                   </button>
 
                   {showProfileDropdown && (
@@ -492,7 +512,32 @@ const Navbar: React.FC<NavbarProps> = ({ currentRoute }) => {
                       <div className="py-2">
                         <div className="px-4 py-2 text-white border-b border-gray-600">
                           <div className="flex items-center space-x-2">
-                            <div className="w-8 h-8 bg-white rounded-full"></div>
+                            {user?.image_url ? (
+                              <img
+                                src={`${
+                                  import.meta.env.VITE_API_LINK_BE
+                                }/api/images/${user.image_url}`}
+                                alt="Profile"
+                                className="w-8 h-8 rounded-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.src = "/default-avatar.png";
+                                }}
+                              />
+                            ) : (
+                              <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+                                <svg
+                                  className="w-5 h-5 text-gray-500"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              </div>
+                            )}
                             <div>
                               <div className="font-semibold">{user?.nama}</div>
                               <div className="text-sm text-gray-300">

@@ -28,6 +28,7 @@ export const authService = {
             nama: res.data.name,
             email: res.data.email,
             role: res.data.role,
+            image_url: res.data.image_url,
           },
         };
       }
@@ -78,6 +79,7 @@ export const authService = {
             nama: res.data.name || res.data.nama,
             email: res.data.email,
             role: res.data.role,
+            image_url: res.data.image_url,
           },
         };
       }

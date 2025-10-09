@@ -107,9 +107,9 @@ export const menuItems: MenuItem[] = [
       },
       {
         id: "performance-2",
-        label: "PROSENTASE ANOMALI UPT",
+        label: "COMMON ENEMY",
         icon: "",
-        route: "/performance/persentasianimali",
+        route: "/performance/commonenemy",
       },
     ],
   },

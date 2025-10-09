@@ -282,9 +282,10 @@ const AdminPanel: React.FC = () => {
     try {
       setLoading(true);
       const response = await axios.get(`${API_BASE}/api/article`, {
+        params: { is_active: true },
         withCredentials: true,
       });
-
+      console.log(response);
       // Add default readMore value
       const articlesWithReadMore = response.data.data.map(
         (article: Article) => ({
@@ -362,10 +363,10 @@ const AdminPanel: React.FC = () => {
   const deleteArticle = async (id: number) => {
     if (window.confirm("Are you sure you want to delete this article?")) {
       try {
-        const article = articles.find((a) => a.id === id);
-        if (article && article.image) {
-          await handleFileDelete(article.image);
-        }
+        // const article = articles.find((a) => a.id === id);
+        // if (article && article.image) {
+        //   await handleFileDelete(article.image);
+        // }
         await axios.delete(`${API_BASE}/api/article/${id}`, {
           withCredentials: true,
         });
@@ -381,6 +382,7 @@ const AdminPanel: React.FC = () => {
     try {
       setLoading(true);
       const response = await axios.get(`${API_BASE}/api/video`, {
+        params: { is_active: true },
         withCredentials: true,
       });
 

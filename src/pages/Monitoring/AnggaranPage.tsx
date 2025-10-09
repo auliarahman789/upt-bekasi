@@ -35,8 +35,8 @@ interface MonthlyData {
 interface InvestasiData {
   month: string;
   "SKKI TERBIT": number;
-  "AKI TERKONTRAK": number;
-  "AKI TERBAYAR": number;
+  RENCANA: number;
+  REALISASI: number;
 }
 
 interface ApiResponseItem {
@@ -46,12 +46,19 @@ interface ApiResponseItem {
   presentase: string;
 }
 
+interface InvestasiApiResponse {
+  realisasi: Record<string, string>;
+  rencana: Record<string, string>;
+  skki_terbit: Record<string, string>;
+}
+
 interface ApiResponse {
   status: string;
   message: string;
   pos_kepegawaian: ApiResponseItem[];
   pos_pemeliharaan: ApiResponseItem[];
   pos_administrasi_umum: ApiResponseItem[];
+  investasi: InvestasiApiResponse[];
 }
 
 type TabType = "anggaran-operasi" | "investasi";
@@ -102,6 +109,22 @@ const monthColors: Record<string, string> = {
   Des: "#C084FC",
 };
 
+// Map Indonesian month names from API to index
+const indonesianMonthMap: Record<string, number> = {
+  januari: 0,
+  februari: 1,
+  maret: 2,
+  april: 3,
+  mei: 4,
+  juni: 5,
+  juli: 6,
+  agustus: 7,
+  september: 8,
+  oktober: 9,
+  november: 10,
+  desember: 11,
+};
+
 // Convert API data to RawData format
 const convertApiDataToRawData = (apiData: ApiResponseItem[]): RawData[] => {
   return apiData.map((item, index) => {
@@ -120,12 +143,41 @@ const convertApiDataToRawData = (apiData: ApiResponseItem[]): RawData[] => {
   });
 };
 
-const investasiData: InvestasiData[] = monthNames.map((m) => ({
-  month: m,
-  "SKKI TERBIT": 100,
-  "AKI TERBAYAR": 50,
-  "AKI TERKONTRAK": 75,
-}));
+const convertInvestasiApiData = (
+  apiData: InvestasiApiResponse
+): InvestasiData[] => {
+  const result: InvestasiData[] = [];
+
+  // Parse values (remove dots and convert comma to decimal point)
+  const parseValue = (str: string): number => {
+    const cleaned = str.replace(/\./g, "").replace(",", ".");
+    return parseFloat(cleaned) || 0;
+  };
+
+  // Process each month
+  Object.entries(apiData.skki_terbit).forEach(([monthKey, skki_value]) => {
+    const monthIndex = indonesianMonthMap[monthKey.toLowerCase()];
+    if (monthIndex === undefined) return;
+
+    const skki = parseValue(skki_value);
+    const rencana = parseValue(apiData.rencana[monthKey] || "0");
+    const realisasi = parseValue(apiData.realisasi[monthKey] || "0");
+
+    // Calculate percentages based on SKKI as 100%
+    const skki_percentage = 100; // SKKI is always 100%
+    const rencana_percentage = skki > 0 ? (rencana / skki) * 100 : 0;
+    const realisasi_percentage = skki > 0 ? (realisasi / skki) * 100 : 0;
+
+    result[monthIndex] = {
+      month: monthNames[monthIndex],
+      "SKKI TERBIT": Math.round(skki_percentage * 100) / 100,
+      RENCANA: Math.round(rencana_percentage * 100) / 100,
+      REALISASI: Math.round(realisasi_percentage * 100) / 100,
+    };
+  });
+
+  return result;
+};
 
 const AnggaranPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>("anggaran-operasi");
@@ -135,6 +187,7 @@ const AnggaranPage: React.FC = () => {
   const [anggaranOperasiData, setAnggaranOperasiData] = useState<
     CategoryData[]
   >([]);
+  const [investasiData, setInvestasiData] = useState<InvestasiData[]>([]);
 
   useEffect(() => {
     fetchAnggaranData();
@@ -148,6 +201,7 @@ const AnggaranPage: React.FC = () => {
       const res = await axios.get<ApiResponse>(url, {
         withCredentials: true,
       });
+      console.log("API Response", res.data);
 
       const convertedData: CategoryData[] = [
         {
@@ -174,9 +228,18 @@ const AnggaranPage: React.FC = () => {
       ];
 
       setAnggaranOperasiData(convertedData);
+
+      // Process investment data
+      if (res.data.investasi && res.data.investasi.length > 0) {
+        const investasiConverted = convertInvestasiApiData(
+          res.data.investasi[0]
+        );
+        setInvestasiData(investasiConverted);
+      }
     } catch (error: any) {
       console.log(error);
       setAnggaranOperasiData([]);
+      setInvestasiData([]);
     } finally {
       setLoading(false);
     }
@@ -228,8 +291,8 @@ const AnggaranPage: React.FC = () => {
   const CustomLegend = () => {
     const orderedPayload = [
       { value: "SKKI TERBIT", color: "#B40404" },
-      { value: "AKI TERBAYAR", color: "#E78700" },
-      { value: "AKI TERKONTRAK", color: "#179FB7" },
+      { value: "RENCANA", color: "#179FB7" },
+      { value: "REALISASI", color: "#E78700" },
     ];
 
     return (
@@ -397,74 +460,90 @@ const AnggaranPage: React.FC = () => {
                     <img src="/TowerAdkon.svg" alt="tower" /> GRAFIK INVESTASI
                   </h3>
                 </div>
-                <div className="h-96">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={investasiData}
-                      margin={{ top: 30, right: 30, left: 20, bottom: 20 }}
-                      barCategoryGap="5%"
-                    >
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke="#e5e7eb"
-                        vertical={false}
-                      />
-                      <XAxis
-                        dataKey="month"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{
-                          fontSize: 10,
-                          fill: "#6b7280",
-                          fontWeight: 500,
-                        }}
-                        interval={0}
-                      />
-                      <YAxis
-                        domain={[0, 100]}
-                        ticks={[0, 20, 40, 60, 80, 100]}
-                        tickFormatter={(value: number) => `${value}%`}
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fontSize: 12, fill: "#6b7280" }}
-                      />
-                      <Tooltip
-                        content={({ active, payload, label }) => {
-                          if (active && payload && payload.length) {
-                            return (
-                              <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
-                                <p className="font-medium text-gray-800 text-sm mb-2">
-                                  {label}
-                                </p>
-                                {payload.map((entry: any, index: number) => (
-                                  <p
-                                    key={index}
-                                    className="text-sm flex items-center justify-between"
-                                    style={{ color: entry.color }}
-                                  >
-                                    <span>{entry.dataKey}:</span>
-                                    <span className="ml-2 font-medium">
-                                      {entry.value}%
-                                    </span>
-                                  </p>
-                                ))}
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                      <Bar dataKey="SKKI TERBIT" fill="#B40404" barSize={20} />
-                      <Bar dataKey="AKI TERBAYAR" fill="#E78700" barSize={20} />
-                      <Bar
-                        dataKey="AKI TERKONTRAK"
-                        fill="#179FB7"
-                        barSize={20}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-                <CustomLegend />
+                {investasiData.length > 0 ? (
+                  <>
+                    <div className="h-96">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={investasiData}
+                          margin={{ top: 30, right: 30, left: 20, bottom: 20 }}
+                          barCategoryGap="5%"
+                        >
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            stroke="#e5e7eb"
+                            vertical={false}
+                          />
+                          <XAxis
+                            dataKey="month"
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{
+                              fontSize: 10,
+                              fill: "#6b7280",
+                              fontWeight: 500,
+                            }}
+                            interval={0}
+                          />
+                          <YAxis
+                            domain={[0, 100]}
+                            ticks={[0, 20, 40, 60, 80, 100]}
+                            tickFormatter={(value: number) => `${value}%`}
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fontSize: 12, fill: "#6b7280" }}
+                          />
+                          <Tooltip
+                            content={({ active, payload, label }) => {
+                              if (active && payload && payload.length) {
+                                return (
+                                  <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+                                    <p className="font-medium text-gray-800 text-sm mb-2">
+                                      {label}
+                                    </p>
+                                    {payload.map(
+                                      (entry: any, index: number) => (
+                                        <p
+                                          key={index}
+                                          className="text-sm flex items-center justify-between"
+                                          style={{ color: entry.color }}
+                                        >
+                                          <span>{entry.dataKey}:</span>
+                                          <span className="ml-2 font-medium">
+                                            {entry.value.toFixed(2)}%
+                                          </span>
+                                        </p>
+                                      )
+                                    )}
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                          <Bar
+                            dataKey="SKKI TERBIT"
+                            fill="#B40404"
+                            barSize={20}
+                          />
+                          <Bar
+                            dataKey="REALISASI"
+                            fill="#E78700"
+                            barSize={20}
+                          />
+                          <Bar dataKey="RENCANA" fill="#179FB7" barSize={20} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <CustomLegend />
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">
+                      No investment data available
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           )}

@@ -50,19 +50,19 @@ const transformApiData = (apiData: any) => {
     // Since your API only has one priority entry with "-", we'll need to adapt this
     const barData = [
       {
-        name: "P1",
+        name: "P0",
         value: Math.floor(prioritas[0]?.jumlah * 0.3) || 0,
-        color: colors.primary,
+        color: colors.red,
+      },
+      {
+        name: "P1",
+        value: Math.floor(prioritas[0]?.jumlah * 0.4) || 0,
+        color: colors.tertiary,
       },
       {
         name: "P2",
-        value: Math.floor(prioritas[0]?.jumlah * 0.4) || 0,
-        color: colors.secondary,
-      },
-      {
-        name: "P3",
         value: Math.floor(prioritas[0]?.jumlah * 0.3) || 0,
-        color: colors.tertiary,
+        color: colors.lb,
       },
     ];
 

@@ -273,6 +273,7 @@ const PeralatanDanSaranaPage: React.FC = () => {
         `${import.meta.env.VITE_API_LINK_BE}/api/monitoring/hsse/katalog`,
         { withCredentials: true }
       );
+      console.log(response);
       setKatalogData(response.data.data);
     } catch (err) {
       console.error("Error fetching katalog data:", err);

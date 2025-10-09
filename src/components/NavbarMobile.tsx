@@ -7,6 +7,7 @@ interface NavbarMobileProps {
   currentRoute: string;
   onRouteChange: (route: string) => void;
 }
+const API_BASE = import.meta.env.VITE_API_LINK_BE;
 
 const NavbarMobile: React.FC<NavbarMobileProps> = ({
   currentRoute,
@@ -130,7 +131,27 @@ const NavbarMobile: React.FC<NavbarMobileProps> = ({
             onClick={() => handleItemClick(item)}
           >
             <div className="flex items-center space-x-3">
-              <img src={item.icon} alt={item.label} className="w-6 h-6" />
+              {item.id === "profile" ? (
+                <img
+                  src={
+                    user?.image_url
+                      ? user.image_url.startsWith("http")
+                        ? user.image_url
+                        : `${API_BASE}/api/images/${user.image_url}`
+                      : "/default-avatar.png"
+                  }
+                  alt="Profile Avatar"
+                  className="w-8 h-8 rounded-full object-cover border border-gray-400"
+                  onError={(e) => {
+                    e.currentTarget.src = "/default-avatar.png";
+                  }}
+                />
+              ) : (
+                item.icon && (
+                  <img src={item.icon} alt={item.label} className="w-6 h-6" />
+                )
+              )}
+
               <div>
                 <div className="text-white font-medium text-sm">
                   {item.label}

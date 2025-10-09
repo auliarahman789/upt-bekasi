@@ -42,8 +42,9 @@ interface ApiResponse {
   message: string;
   data_kontrak: Contract[];
   anggaran_investasi: {
-    aki_terbayar: number;
-    skki_terbit: number;
+    aki_terbayar: string;
+    aki_terbit: string;
+    skki_terbit: string;
   };
   grafik_progres_fisik: ProgressData[];
   pratinjau_kontrak: Array<{
@@ -123,8 +124,24 @@ const AdkonPage: React.FC = () => {
   const investmentData = useMemo(() => {
     if (!apiData?.anggaran_investasi) return [];
 
-    const { aki_terbayar, skki_terbit } = apiData.anggaran_investasi;
-    const total = aki_terbayar + skki_terbit;
+    const parseNumber = (val: string): number => {
+      const cleaned = val.replace(/,/g, "");
+      const parsed = parseFloat(cleaned);
+      return isNaN(parsed) ? 0 : parsed;
+    };
+
+    const {
+      aki_terbayar: akiStr,
+      aki_terbit: akiTerbitStr,
+      skki_terbit: skkiStr,
+    } = apiData.anggaran_investasi;
+
+    const aki_terbayar = parseNumber(akiStr);
+    const aki_terbit = parseNumber(akiTerbitStr);
+    const skki_terbit = parseNumber(skkiStr);
+
+    const total = aki_terbayar + aki_terbit + skki_terbit;
+    if (total === 0) return [];
 
     return [
       {
@@ -132,6 +149,12 @@ const AdkonPage: React.FC = () => {
         value: Math.round((skki_terbit / total) * 100),
         color: "#FF7C50",
         amount: skki_terbit,
+      },
+      {
+        name: "AKI TERBIT",
+        value: Math.round((aki_terbit / total) * 100),
+        color: "#EFD16A",
+        amount: aki_terbit,
       },
       {
         name: "AKI TERBAYAR",
@@ -448,13 +471,13 @@ const AdkonPage: React.FC = () => {
                     {investmentData.map((item, index) => (
                       <div key={index}>
                         <div className="text-xs sm:text-sm text-cyan-500 font-medium mb-1">
-                          {item.name} (M)
+                          {item.name} (JT)
                         </div>
                         <div
                           className={`text-white px-2 py-1 sm:px-3 sm:py-2 rounded font-bold text-sm sm:text-lg`}
                           style={{ backgroundColor: item.color }}
                         >
-                          {(item.amount / 1000000000).toFixed(1)}
+                          {(item.amount / 1000000).toFixed(1)}
                         </div>
                       </div>
                     ))}

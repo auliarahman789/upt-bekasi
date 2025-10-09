@@ -37,6 +37,8 @@ import ROWKritisPage from "./pages/DataAsset/Tower/ROWKritisPage";
 import LMABOPage from "./pages/Monitoring/LMABO/LMABO";
 import HealthIndexPage from "./pages/DataAsset/HealthIndexPage";
 import LevelLingkunganPage from "./pages/Monitoring/HSSE/LevelLingkungan";
+import KinerjaULTGPage from "./pages/Kinerja/KinerjaULTGPage";
+import CommonEnemyPage from "./pages/Performance/CommonEnemy";
 
 // Protected Route Component
 interface ProtectedRouteProps {
@@ -274,7 +276,15 @@ function AppContent() {
           </ProtectedRoute>
         }
       />
-
+      <Route
+        path="/performance/commonenemy"
+        element={
+          <ProtectedRoute>
+            <PageTitle title="UPT Bekasi - Common Enemy" />
+            <CommonEnemyPage />
+          </ProtectedRoute>
+        }
+      />
       {/* Protected Kinerja Routes */}
       <Route
         path="/kinerja"
@@ -303,9 +313,7 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <PageTitle title="UPT Bekasi - Kinerja ULTG" />
-            <div className="p-8">
-              <h1 className="text-2xl font-bold">Kinerja ULTG Page</h1>
-            </div>
+            <KinerjaULTGPage />
           </ProtectedRoute>
         }
       />

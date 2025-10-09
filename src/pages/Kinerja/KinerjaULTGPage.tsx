@@ -24,33 +24,41 @@ interface KeyPerformanceData {
 interface PerformanceIndicatorData {
   abof: IndicatorData;
   anti_blackout: IndicatorData;
-  bisnis_ekselen: IndicatorData;
+  bisnis_ekselen?: IndicatorData;
   digitalisasi_aplikasi: IndicatorData;
   dokumen_legal_aset_tanah: IndicatorData;
   faktor_ketersediaan_trafo: IndicatorData;
   faktor_ketersediaan_transmisi: IndicatorData;
-  hcr_ocr: IndicatorData;
-  komunikasi_tjsl: IndicatorData;
-  maturity_level_sustainability: IndicatorData;
-  maturity_level_transmisi: IndicatorData;
-  pengendalian_penggunaan_anggaran: IndicatorData;
+  hcr_ocr?: IndicatorData;
+  komunikasi_tjsl?: IndicatorData;
+  maturity_level_sustainability?: IndicatorData;
+  maturity_level_transmisi?: IndicatorData;
+  pengendalian_penggunaan_anggaran?: IndicatorData;
   pengendalian_proteksi_security: IndicatorData;
-  produktifitas_unit: IndicatorData;
-  roadmap_pergudangan: IndicatorData;
-  usulan_penghapusan_atb: IndicatorData;
+  produktifitas_unit?: IndicatorData;
+  roadmap_pergudangan?: IndicatorData;
+  usulan_penghapusan_atb: IndicatorData | null;
+  pendukung_manajemen_sdm?: IndicatorData;
+}
+
+interface ULTGData {
+  key_performance: KeyPerformanceData;
+  key_performance_indicators: IndicatorData;
+  performance_indicator: PerformanceIndicatorData;
+  performance_indicators: IndicatorData;
+  total_nilai: IndicatorData;
 }
 
 interface ApiResponse {
   status: string;
   message: string;
   data: {
-    key_performance: KeyPerformanceData;
-    key_performance_indicators: IndicatorData;
-    performance_indicator: PerformanceIndicatorData;
-    performance_indicators: IndicatorData;
-    total_nilai: IndicatorData;
+    ultg_bekasi: ULTGData;
+    ultg_cikarang: ULTGData;
   };
 }
+
+type ULTGType = "ultg_bekasi" | "ultg_cikarang";
 
 const HorizontalBarCard: React.FC<{
   title: string;
@@ -382,17 +390,18 @@ const PerformanceIndicatorItem: React.FC<{
   );
 };
 
-const KinerjaUptPage: React.FC = () => {
+const KinerjaULTGPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [apiData, setApiData] = useState<ApiResponse | null>(null);
+  const [selectedTab, setSelectedTab] = useState<ULTGType>("ultg_bekasi");
 
   useEffect(() => {
-    fetchKinerjaUPTData();
+    fetchKinerjaULTGData();
   }, []);
 
-  const fetchKinerjaUPTData = async () => {
+  const fetchKinerjaULTGData = async () => {
     setLoading(true);
-    const url = `${import.meta.env.VITE_API_LINK_BE}/api/kinerja/upt`;
+    const url = `${import.meta.env.VITE_API_LINK_BE}/api/kinerja/ultg`;
 
     try {
       const res = await axios.get<ApiResponse>(url, {
@@ -430,7 +439,7 @@ const KinerjaUptPage: React.FC = () => {
     );
   }
 
-  const { data } = apiData;
+  const data = apiData.data[selectedTab];
 
   const getMainTitle = (indicator: string) => {
     return indicator.replace(/^[a-z]\.\s*/i, "");
@@ -442,8 +451,32 @@ const KinerjaUptPage: React.FC = () => {
         {/* Header */}
         <div className="mb-4 sm:mb-8 px-4">
           <h1 className="text-xl sm:text-2xl md:text-[32px] font-bold text-[#155C72] text-center mb-4 md:mb-6">
-            KINERJA UPT
+            KINERJA ULTG
           </h1>
+
+          {/* Tabs */}
+          <div className="flex gap-2 sm:gap-4 mb-4">
+            <button
+              onClick={() => setSelectedTab("ultg_bekasi")}
+              className={`px-6 py-3 rounded-full font-medium text-sm transition-colors ${
+                selectedTab === "ultg_bekasi"
+                  ? "bg-[#145C72] text-white"
+                  : "bg-white border border-[#179FB7] text-[#179FB7] hover:bg-gray-100"
+              }`}
+            >
+              ULTG Bekasi
+            </button>
+            <button
+              onClick={() => setSelectedTab("ultg_cikarang")}
+              className={`px-6 py-3 rounded-full font-medium text-sm transition-colors ${
+                selectedTab === "ultg_cikarang"
+                  ? "bg-[#145C72] text-white"
+                  : "bg-white border border-[#179FB7] text-[#179FB7] hover:bg-gray-100"
+              }`}
+            >
+              ULTG Cikarang
+            </button>
+          </div>
         </div>
 
         {/* Main Content */}
@@ -606,26 +639,28 @@ const KinerjaUptPage: React.FC = () => {
                       }
                     />
 
-                    <HorizontalBarCard
-                      title={getMainTitle(
-                        data.key_performance.verifikasi_kkp.indikator
-                      )}
-                      subtitle="(%)"
-                      value={parseFloat(
-                        data.key_performance.verifikasi_kkp.realisasi
-                      )}
-                      target={parseFloat(
-                        data.key_performance.verifikasi_kkp.target
-                      )}
-                      nilai={data.key_performance.verifikasi_kkp.nilai}
-                      icon={
-                        <img
-                          src="/IconKinerja/5.svg"
-                          alt=""
-                          className="w-6 h-6 sm:w-8 sm:h-8"
-                        />
-                      }
-                    />
+                    {data.key_performance.verifikasi_kkp && (
+                      <HorizontalBarCard
+                        title={getMainTitle(
+                          data.key_performance.verifikasi_kkp.indikator
+                        )}
+                        subtitle="(%)"
+                        value={parseFloat(
+                          data.key_performance.verifikasi_kkp.realisasi
+                        )}
+                        target={parseFloat(
+                          data.key_performance.verifikasi_kkp.target
+                        )}
+                        nilai={data.key_performance.verifikasi_kkp.nilai}
+                        icon={
+                          <img
+                            src="/IconKinerja/5.svg"
+                            alt=""
+                            className="w-6 h-6 sm:w-8 sm:h-8"
+                          />
+                        }
+                      />
+                    )}
                   </div>
                 </div>
               </div>
@@ -661,39 +696,62 @@ const KinerjaUptPage: React.FC = () => {
                       icon="/IconKinerja/anti_blackout.svg"
                     />
 
-                    <PerformanceIndicatorItem
-                      data={data.performance_indicator.bisnis_ekselen}
-                      icon="/IconKinerja/12.svg"
-                    />
+                    {data.performance_indicator.bisnis_ekselen && (
+                      <PerformanceIndicatorItem
+                        data={data.performance_indicator.bisnis_ekselen}
+                        icon="/IconKinerja/12.svg"
+                      />
+                    )}
 
-                    <PerformanceIndicatorItem
-                      data={
-                        data.performance_indicator.maturity_level_sustainability
-                      }
-                      icon="/IconKinerja/sustainability.svg"
-                    />
+                    {data.performance_indicator
+                      .maturity_level_sustainability && (
+                      <PerformanceIndicatorItem
+                        data={
+                          data.performance_indicator
+                            .maturity_level_sustainability
+                        }
+                        icon="/IconKinerja/sustainability.svg"
+                      />
+                    )}
 
-                    <PerformanceIndicatorItem
-                      data={data.performance_indicator.hcr_ocr}
-                      icon="/IconKinerja/hcr.svg"
-                    />
+                    {data.performance_indicator.hcr_ocr && (
+                      <PerformanceIndicatorItem
+                        data={data.performance_indicator.hcr_ocr}
+                        icon="/IconKinerja/hcr.svg"
+                      />
+                    )}
 
-                    <PerformanceIndicatorItem
-                      data={data.performance_indicator.produktifitas_unit}
-                      icon="/IconKinerja/produktivitas.svg"
-                    />
+                    {data.performance_indicator.produktifitas_unit && (
+                      <PerformanceIndicatorItem
+                        data={data.performance_indicator.produktifitas_unit}
+                        icon="/IconKinerja/produktivitas.svg"
+                      />
+                    )}
 
-                    <PerformanceIndicatorItem
-                      data={data.performance_indicator.komunikasi_tjsl}
-                      icon="/IconKinerja/komunikasi.svg"
-                    />
+                    {data.performance_indicator.komunikasi_tjsl && (
+                      <PerformanceIndicatorItem
+                        data={data.performance_indicator.komunikasi_tjsl}
+                        icon="/IconKinerja/komunikasi.svg"
+                      />
+                    )}
+
+                    {data.performance_indicator
+                      .pengendalian_penggunaan_anggaran && (
+                      <PerformanceIndicatorItem
+                        data={
+                          data.performance_indicator
+                            .pengendalian_penggunaan_anggaran
+                        }
+                        icon="/IconKinerja/10.svg"
+                      />
+                    )}
 
                     <PerformanceIndicatorItem
                       data={
                         data.performance_indicator
-                          .pengendalian_penggunaan_anggaran
+                          .pengendalian_proteksi_security
                       }
-                      icon="/IconKinerja/10.svg"
+                      icon="/IconKinerja/8.svg"
                     />
 
                     <PerformanceIndicatorItem
@@ -701,15 +759,19 @@ const KinerjaUptPage: React.FC = () => {
                       icon="/IconKinerja/15.svg"
                     />
 
-                    <PerformanceIndicatorItem
-                      data={data.performance_indicator.roadmap_pergudangan}
-                      icon="/IconKinerja/16.svg"
-                    />
+                    {data.performance_indicator.roadmap_pergudangan && (
+                      <PerformanceIndicatorItem
+                        data={data.performance_indicator.roadmap_pergudangan}
+                        icon="/IconKinerja/16.svg"
+                      />
+                    )}
 
-                    <PerformanceIndicatorItem
-                      data={data.performance_indicator.usulan_penghapusan_atb}
-                      icon="/IconKinerja/atb.svg"
-                    />
+                    {data.performance_indicator.usulan_penghapusan_atb && (
+                      <PerformanceIndicatorItem
+                        data={data.performance_indicator.usulan_penghapusan_atb}
+                        icon="/IconKinerja/atb.svg"
+                      />
+                    )}
                   </div>
 
                   {/* Progress Bars */}
@@ -774,33 +836,66 @@ const KinerjaUptPage: React.FC = () => {
                     </div>
 
                     {/* Maturity Level Transmisi */}
-                    <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
-                      <HorizontalBarCard
-                        title={getMainTitle(
-                          data.performance_indicator.maturity_level_transmisi
-                            .indikator
-                        )}
-                        value={parseFloat(
-                          data.performance_indicator.maturity_level_transmisi
-                            .realisasi
-                        )}
-                        target={parseFloat(
-                          data.performance_indicator.maturity_level_transmisi
-                            .target
-                        )}
-                        nilai={
-                          data.performance_indicator.maturity_level_transmisi
-                            .nilai
-                        }
-                        icon={
-                          <img
-                            src="/IconKinerja/11.svg"
-                            alt=""
-                            className="w-6 h-6 sm:w-8 sm:h-8"
-                          />
-                        }
-                      />
-                    </div>
+                    {data.performance_indicator.maturity_level_transmisi && (
+                      <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
+                        <HorizontalBarCard
+                          title={getMainTitle(
+                            data.performance_indicator.maturity_level_transmisi
+                              .indikator
+                          )}
+                          value={parseFloat(
+                            data.performance_indicator.maturity_level_transmisi
+                              .realisasi
+                          )}
+                          target={parseFloat(
+                            data.performance_indicator.maturity_level_transmisi
+                              .target
+                          )}
+                          nilai={
+                            data.performance_indicator.maturity_level_transmisi
+                              .nilai
+                          }
+                          icon={
+                            <img
+                              src="/IconKinerja/11.svg"
+                              alt=""
+                              className="w-6 h-6 sm:w-8 sm:h-8"
+                            />
+                          }
+                        />
+                      </div>
+                    )}
+
+                    {/* Pendukung Manajemen SDM */}
+                    {data.performance_indicator.pendukung_manajemen_sdm && (
+                      <div className="bg-white rounded-xl shadow-sm border p-3 sm:p-4">
+                        <HorizontalBarCard
+                          title={getMainTitle(
+                            data.performance_indicator.pendukung_manajemen_sdm
+                              .indikator
+                          )}
+                          value={parseFloat(
+                            data.performance_indicator.pendukung_manajemen_sdm
+                              .realisasi
+                          )}
+                          target={parseFloat(
+                            data.performance_indicator.pendukung_manajemen_sdm
+                              .target
+                          )}
+                          nilai={
+                            data.performance_indicator.pendukung_manajemen_sdm
+                              .nilai
+                          }
+                          icon={
+                            <img
+                              src="/IconKinerja/hcr.svg"
+                              alt=""
+                              className="w-6 h-6 sm:w-8 sm:h-8"
+                            />
+                          }
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -812,4 +907,4 @@ const KinerjaUptPage: React.FC = () => {
   );
 };
 
-export default KinerjaUptPage;
+export default KinerjaULTGPage;
