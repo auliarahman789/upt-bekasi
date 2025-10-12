@@ -1,73 +1,94 @@
 import React, { useState, useEffect } from "react";
-import { ChevronDown, ChevronUp, TrendingUp, LayoutList } from "lucide-react";
+import { LayoutList } from "lucide-react";
 import DefaultLayout from "../../../layout/DefaultLayout";
 import axios from "axios";
 
-interface CriteriaData {
-  no: string;
-  name: string;
-  bobot: string;
-  nilaiSelf: number;
-  nilaiAkhir: number;
+interface LingkunganData {
+  poin: string;
+  unsur_penilaian: string;
+  target: string;
+  pencapaian: string;
 }
 
-interface SubCriteriaData {
-  no: string;
-  kriterian: string;
-  bobot: string;
-  nilaiSelf: number;
-  nilaiAkhir: number;
-}
-
-interface ApiCriteriaItem {
-  no: string;
-  kriterian: string;
-  bobot: string;
-  nilai_self: string;
-  nilai_akhir: string;
-  children: ApiCriteriaItem[];
+interface SustainabilityData {
+  point: string;
+  transaksi_laporan: string;
+  januari: string;
+  februari: string;
+  maret: string;
+  april: string;
+  mei: string;
+  juni: string;
+  juli: string;
+  agustus: string;
+  september: string;
+  oktober: string;
+  november: string;
+  desember: string;
 }
 
 interface ApiResponse {
   status: string;
   message: string;
-  data: ApiCriteriaItem[];
+  lingkungan: LingkunganData[];
+  sustainability: SustainabilityData[];
 }
-
 const SustainabilityPage: React.FC = () => {
-  const [summaryData, setSummaryData] = useState<CriteriaData[]>([]);
-  const [detailData, setDetailData] = useState<{
-    [key: string]: SubCriteriaData[];
-  }>({});
+  const [sustainabilityData, setSustainabilityData] = useState<
+    SustainabilityData[]
+  >([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-  const [totalScore, setTotalScore] = useState<{
-    nilaiSelf: number;
-    nilaiAkhir: number;
-  }>({ nilaiSelf: 0, nilaiAkhir: 0 });
+
+  const months = [
+    "januari",
+    "februari",
+    "maret",
+    "april",
+    "mei",
+    "juni",
+    "juli",
+    "agustus",
+    "september",
+    "oktober",
+    "november",
+    "desember",
+  ];
+
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
 
   // Fetch API data
   useEffect(() => {
-    fetchSustainabilityData();
+    fetchLingkunganData();
   }, []);
 
   const parseNumberValue = (value: string): number => {
     if (!value || value === "#N/A" || value.trim() === "") return 0;
-
-    // Remove percentage sign if present
     const cleanValue = value.replace("%", "");
     const parsed = parseFloat(cleanValue);
     return isNaN(parsed) ? 0 : parsed;
   };
 
-  const fetchSustainabilityData = async () => {
+  const fetchLingkunganData = async () => {
     setLoading(true);
     setError(null);
 
     const url = `${
       import.meta.env.VITE_API_LINK_BE
-    }/api/monitoring/hsse/maturing-level-sustainability`;
+    }/api/monitoring/hsse/maturing-level-lingkungan`;
 
     try {
       const response = await axios.get<ApiResponse>(url, {
@@ -75,12 +96,12 @@ const SustainabilityPage: React.FC = () => {
       });
 
       if (response.data.status === "success") {
-        parseApiData(response.data.data);
+        parseApiData(response.data);
       } else {
         throw new Error(response.data.message || "Failed to fetch data");
       }
     } catch (error: any) {
-      console.error("Error fetching sustainability data:", error);
+      console.error("Error fetching lingkungan data:", error);
       setError(
         error.response?.data?.message || error.message || "Failed to load data"
       );
@@ -89,82 +110,27 @@ const SustainabilityPage: React.FC = () => {
     }
   };
 
-  const parseApiData = (data: ApiCriteriaItem[]) => {
-    const summary: CriteriaData[] = [];
-    const details: { [key: string]: SubCriteriaData[] } = {};
-    let totalNilaiSelf = 0;
-    let totalNilaiAkhir = 0;
+  const parseApiData = (data: ApiResponse) => {
+    const { lingkungan, sustainability } = data;
 
-    data.forEach((item) => {
-      // Skip the TOTAL row for main criteria
-      if (item.no === "-" || item.kriterian === "TOTAL") {
-        // Extract total values if available
-        const selfValue = parseNumberValue(item.nilai_self);
-        const akhirValue = parseNumberValue(item.nilai_akhir);
+    setSustainabilityData(sustainability);
 
-        if (selfValue > 0 || akhirValue > 0) {
-          setTotalScore({
-            nilaiSelf: selfValue,
-            nilaiAkhir: akhirValue,
-          });
-        }
-        return;
-      }
+    // Calculate totals - only from main items (A, B, C, D, etc.)
+    let totalTarget = 0;
+    let totalPencapaian = 0;
 
-      // Parse main criteria
-      const nilaiSelf = parseNumberValue(item.nilai_self);
-      const nilaiAkhir = parseNumberValue(item.nilai_akhir);
-
-      summary.push({
-        no: item.no,
-        name: item.kriterian,
-        bobot: item.bobot,
-        nilaiSelf: nilaiSelf,
-        nilaiAkhir: nilaiAkhir,
-      });
-
-      // Parse sub-criteria if they exist
-      if (item.children && item.children.length > 0) {
-        const subCriteria: SubCriteriaData[] = item.children.map((child) => ({
-          no: child.no,
-          kriterian: child.kriterian,
-          bobot: child.bobot,
-          nilaiSelf: parseNumberValue(child.nilai_self),
-          nilaiAkhir: parseNumberValue(child.nilai_akhir),
-        }));
-
-        details[item.no] = subCriteria;
-      }
-
-      // Add to totals (exclude invalid values)
-      if (!isNaN(nilaiSelf) && nilaiSelf > 0) {
-        totalNilaiSelf += nilaiSelf;
-      }
-      if (!isNaN(nilaiAkhir) && nilaiAkhir > 0) {
-        totalNilaiAkhir += nilaiAkhir;
+    lingkungan.forEach((item) => {
+      // Only sum main items (single letter), not detail items (A1, A2, etc.)
+      const isMainItem = /^[A-Z]$/.test(item.poin);
+      if (isMainItem) {
+        totalTarget += parseNumberValue(item.target);
+        totalPencapaian += parseNumberValue(item.pencapaian);
       }
     });
-
-    setSummaryData(summary);
-    setDetailData(details);
-
-    // If no total was found in TOTAL row, calculate from sum
-    if (totalScore.nilaiSelf === 0 && totalScore.nilaiAkhir === 0) {
-      setTotalScore({
-        nilaiSelf: totalNilaiSelf,
-        nilaiAkhir: totalNilaiAkhir,
-      });
-    }
   };
 
-  const toggleExpanded = (criteriaNo: string) => {
-    const newExpanded = new Set(expandedRows);
-    if (newExpanded.has(criteriaNo)) {
-      newExpanded.delete(criteriaNo);
-    } else {
-      newExpanded.add(criteriaNo);
-    }
-    setExpandedRows(newExpanded);
+  const getCheckboxStatus = (value: string): boolean => {
+    return value === "TRUE";
   };
 
   // Show loading state
@@ -193,7 +159,7 @@ const SustainabilityPage: React.FC = () => {
             </h3>
             <p className="mt-2 text-sm text-red-700">{error}</p>
             <button
-              onClick={fetchSustainabilityData}
+              onClick={fetchLingkunganData}
               className="mt-4 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
             >
               Try Again
@@ -215,212 +181,91 @@ const SustainabilityPage: React.FC = () => {
           </h1>
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          {/* Nilai Self Card */}
-          <div className="bg-[#CDE9ED] p-6 px-10 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between h-full hover:shadow-md transition-shadow">
-            <div>
-              <p className="text-xl font-bold mb-4 text-[#145C72]">
-                Nilai Self Assessment
-              </p>
-              <div className="flex justify-center items-center mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className="p-3 rounded-full bg-white">
-                    <TrendingUp className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      Total Score
-                    </p>
-                    <p className="text-3xl font-semibold text-[#145C72]">
-                      {totalScore.nilaiSelf.toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Nilai Akhir Card */}
-          <div className="bg-[#CDE9ED] p-6 px-10 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between h-full hover:shadow-md transition-shadow">
-            <div>
-              <p className="text-xl font-bold mb-4 text-[#145C72]">
-                Nilai Akhir
-              </p>
-              <div className="flex justify-center items-center mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className="p-3 rounded-full bg-white">
-                    <TrendingUp className="h-6 w-6 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      Final Score
-                    </p>
-                    <p className="text-3xl font-semibold text-[#145C72]">
-                      {totalScore.nilaiAkhir.toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Table */}
+        {/* Sustainability Checklist Table - Compact with direct view */}
         <div className="bg-white rounded-lg shadow-sm border">
-          <div className="px-6 py-4 border-b">
-            <h2 className="text-xl font-semibold text-[#145C72] flex gap-1 items-center">
-              <LayoutList size={16} />
-              Sustainability Criteria
+          <div className="px-3 py-2 border-b">
+            <h2 className="text-sm md:text-base font-semibold text-[#145C72] flex gap-1 items-center">
+              <LayoutList size={14} />
+              Sustainability Checklist
             </h2>
-            <p className="text-sm text-[#145C72]">
-              Click on a row to view detailed sub-criteria
-            </p>
           </div>
 
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 text-[#145C72]">
               <thead className="bg-gray-50 font-bold">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs uppercase">No</th>
-                  <th className="px-6 py-3 text-left text-xs uppercase">
-                    Criteria
+                  <th className="px-2 md:px-4 py-2 text-left text-xs uppercase">
+                    Point
                   </th>
-                  <th className="px-6 py-3 text-center text-xs uppercase">
-                    Weight
+                  <th className="px-2 md:px-4 py-2 text-left text-xs uppercase">
+                    Transaksi
                   </th>
-                  <th className="px-6 py-3 text-center text-xs uppercase">
-                    Self Assessment
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs uppercase">
-                    Final Score
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs uppercase">
-                    Details
-                  </th>
+                  {monthNames.map((month) => (
+                    <th
+                      key={month}
+                      className="px-1 md:px-2 py-2 text-center text-xs uppercase"
+                    >
+                      {month}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200 text-[#145C72]">
-                {summaryData.map((item, index) => (
-                  <React.Fragment key={item.no}>
-                    <tr
-                      className={`${
-                        index % 2 === 0 ? "bg-[#CDE9ED]" : "bg-white"
-                      } hover:bg-blue-50 cursor-pointer`}
-                      onClick={() => toggleExpanded(item.no)}
-                    >
-                      <td className="px-6 py-4 text-sm font-medium">
-                        {item.no}
-                      </td>
-                      <td className="px-6 py-4 text-sm">{item.name}</td>
-                      <td className="px-6 py-4 text-center text-sm">
-                        {item.bobot}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                          {item.nilaiSelf.toFixed(2)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                          {item.nilaiAkhir.toFixed(2)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-center justify-center gap-2 text-xs text-gray-500 flex">
-                        {detailData[item.no]?.length || 0} items
-                        {detailData[item.no] &&
-                          (expandedRows.has(item.no) ? (
-                            <ChevronUp size={16} className="text-gray-400" />
-                          ) : (
-                            <ChevronDown size={16} className="text-gray-400" />
-                          ))}
-                      </td>
-                    </tr>
+                {sustainabilityData.map((item, index) => (
+                  <tr
+                    key={item.point}
+                    className={`${
+                      index % 2 === 0 ? "bg-[#CDE9ED]" : "bg-white"
+                    }`}
+                  >
+                    <td className="px-2 md:px-4 py-2 text-xs md:text-sm font-medium">
+                      {item.point}
+                    </td>
+                    <td className="px-2 md:px-4 py-2 text-xs md:text-sm">
+                      {item.transaksi_laporan}
+                    </td>
+                    {months.map((month) => {
+                      const isChecked = getCheckboxStatus(
+                        item[month as keyof SustainabilityData] as string
+                      );
 
-                    {/* Expanded Details */}
-                    {expandedRows.has(item.no) && detailData[item.no] && (
-                      <tr className="border-1 border-[#145C72]">
-                        <td colSpan={6} className="px-0 py-0">
-                          <table className="min-w-full divide-y divide-gray-200 text-[#145C72]">
-                            <thead className="bg-gray-50 font-bold">
-                              <tr>
-                                <th className="px-6 py-3 text-left text-xs uppercase">
-                                  Sub No
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs uppercase">
-                                  Sub Criteria
-                                </th>
-                                <th className="px-6 py-3 text-center text-xs uppercase">
-                                  Weight
-                                </th>
-                                <th className="px-6 py-3 text-center text-xs uppercase">
-                                  Self Assessment
-                                </th>
-                                <th className="px-6 py-3 text-center text-xs uppercase">
-                                  Final Score
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200 text-[#145C72]">
-                              {detailData[item.no].map(
-                                (detail, detailIndex) => (
-                                  <tr
-                                    key={detail.no}
-                                    className={`${
-                                      detailIndex % 2 === 0
-                                        ? "bg-white"
-                                        : "bg-gray-50"
-                                    } hover:bg-blue-50`}
-                                  >
-                                    <td className="px-6 py-4 text-sm font-medium">
-                                      {detail.no}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm">
-                                      {detail.kriterian}
-                                    </td>
-                                    <td className="px-6 py-4 text-center text-sm">
-                                      {detail.bobot}
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
-                                      <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                                        {detail.nilaiSelf.toFixed(2)}
-                                      </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
-                                      <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                                        {detail.nilaiAkhir.toFixed(2)}
-                                      </span>
-                                    </td>
-                                  </tr>
-                                )
+                      return (
+                        <td
+                          key={month}
+                          className="px-1 md:px-2 py-2 text-center"
+                        >
+                          <div className="flex justify-center">
+                            <div
+                              className={`w-3 h-3 md:w-4 md:h-4 rounded border-2 flex items-center justify-center ${
+                                isChecked
+                                  ? "bg-green-500 border-green-500"
+                                  : "bg-white border-gray-300"
+                              }`}
+                            >
+                              {isChecked && (
+                                <svg
+                                  className="w-2 h-2 md:w-2.5 md:h-2.5 text-white"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
                               )}
-                            </tbody>
-                          </table>
+                            </div>
+                          </div>
                         </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
+                      );
+                    })}
+                  </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </div>
-
-        {/* No Data */}
-        {summaryData.length === 0 && !loading && (
-          <div className="text-center py-12">
-            <p className="text-lg text-gray-600">No data available</p>
-            <p className="text-sm text-gray-500 mt-2">
-              Please check if the API is working correctly
-            </p>
-            <button
-              onClick={fetchSustainabilityData}
-              className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-            >
-              Reload Data
-            </button>
-          </div>
-        )}
       </div>
     </DefaultLayout>
   );

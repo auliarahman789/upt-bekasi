@@ -34,21 +34,27 @@ export const menuItems: MenuItem[] = [
       },
       {
         id: "mtu",
-        label: "MTU",
+        label: "GARDU INDUK",
         icon: "",
         hasChildren: true,
         children: [
           {
             id: "mtu-1",
-            label: "MONITORING KONDISI",
+            label: "MONITORING KONDISI MTU",
             icon: "",
             route: "/data-asset/mtu/monitoringkondisi",
           },
           {
             id: "mtu-2",
-            label: "PENGGANTIAN",
+            label: "PENGGANTIAN MTU",
             icon: "",
             route: "/data-asset/mtu/penggantian",
+          },
+          {
+            id: "mtu-3",
+            label: "HEALTH INDEX",
+            icon: "",
+            route: "/data-asset/mtu/healthindex",
           },
         ],
       },
@@ -83,12 +89,6 @@ export const menuItems: MenuItem[] = [
         label: "SLO",
         icon: "",
         route: "/data-asset/slo",
-      },
-      {
-        id: "health-index",
-        label: "HEALTH INDEX",
-        icon: "",
-        route: "/data-asset/healthindex",
       },
     ],
   },

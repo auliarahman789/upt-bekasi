@@ -216,7 +216,7 @@ function AppContent() {
         }
       />
       <Route
-        path="/data-asset/healthindex"
+        path="/data-asset/mtu/healthindex"
         element={
           <ProtectedRoute>
             <PageTitle title="UPT Bekasi - Health Index" />

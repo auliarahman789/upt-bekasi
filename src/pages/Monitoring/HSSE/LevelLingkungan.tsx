@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { TrendingUp, LayoutList } from "lucide-react";
+import { TrendingUp, LayoutList, ChevronDown, ChevronUp } from "lucide-react";
 import DefaultLayout from "../../../layout/DefaultLayout";
 import axios from "axios";
 
@@ -27,27 +27,18 @@ interface SustainabilityData {
   desember: string;
 }
 
+interface GroupedData {
+  groupKey: string;
+  groupData: LingkunganData; // Main group item
+  items: LingkunganData[]; // Detail items (A1, A2, etc.)
+}
+
 interface ApiResponse {
   status: string;
   message: string;
   lingkungan: LingkunganData[];
   sustainability: SustainabilityData[];
 }
-
-// interface MonthlyRecap {
-//   month: string;
-//   monthName: string;
-//   totalTrue: number;
-//   totalFalse: number;
-//   percentage: number;
-// }
-
-// interface PointRecap {
-//   point: string;
-//   totalTrue: number;
-//   totalFalse: number;
-//   percentage: number;
-// }
 
 const LevelLingkunganPage: React.FC = () => {
   const [lingkunganData, setLingkunganData] = useState<LingkunganData[]>([]);
@@ -60,39 +51,7 @@ const LevelLingkunganPage: React.FC = () => {
     target: number;
     pencapaian: number;
   }>({ target: 0, pencapaian: 0 });
-  // const [monthlyRecap, setMonthlyRecap] = useState<MonthlyRecap[]>([]);
-  // const [pointRecap, setPointRecap] = useState<PointRecap[]>([]);
-
-  // Month names for display
-  const months = [
-    "januari",
-    "februari",
-    "maret",
-    "april",
-    "mei",
-    "juni",
-    "juli",
-    "agustus",
-    "september",
-    "oktober",
-    "november",
-    "desember",
-  ];
-
-  const monthNames = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   // Fetch API data
   useEffect(() => {
@@ -105,56 +64,6 @@ const LevelLingkunganPage: React.FC = () => {
     const parsed = parseFloat(cleanValue);
     return isNaN(parsed) ? 0 : parsed;
   };
-
-  // const calculateRecaps = (sustainability: SustainabilityData[]) => {
-  //   // Calculate monthly recap
-  //   // const monthlyData: MonthlyRecap[] = months.map((month, index) => {
-  //   //   let totalTrue = 0;
-  //   //   let totalFalse = 0;
-
-  //   //   sustainability.forEach((item) => {
-  //   //     const value = item[month as keyof SustainabilityData] as string;
-  //   //     if (value === "TRUE") totalTrue++;
-  //   //     else if (value === "FALSE") totalFalse++;
-  //   //   });
-
-  //   //   const total = totalTrue + totalFalse;
-  //   //   const percentage = total > 0 ? (totalTrue / total) * 100 : 0;
-
-  //   //   return {
-  //   //     month,
-  //   //     monthName: monthNames[index],
-  //   //     totalTrue,
-  //   //     totalFalse,
-  //   //     percentage,
-  //   //   };
-  //   // });
-
-  //   // Calculate point recap
-  //   // const pointData: PointRecap[] = sustainability.map((item) => {
-  //   //   let totalTrue = 0;
-  //   //   let totalFalse = 0;
-
-  //   //   months.forEach((month) => {
-  //   //     const value = item[month as keyof SustainabilityData] as string;
-  //   //     if (value === "TRUE") totalTrue++;
-  //   //     else if (value === "FALSE") totalFalse++;
-  //   //   });
-
-  //   //   const total = totalTrue + totalFalse;
-  //   //   const percentage = total > 0 ? (totalTrue / total) * 100 : 0;
-
-  //   //   return {
-  //   //     point: item.point,
-  //   //     totalTrue,
-  //   //     totalFalse,
-  //   //     percentage,
-  //   //   };
-  //   // });
-
-  //   // setMonthlyRecap(monthlyData);
-  //   // setPointRecap(pointData);
-  // };
 
   const fetchLingkunganData = async () => {
     setLoading(true);
@@ -190,26 +99,71 @@ const LevelLingkunganPage: React.FC = () => {
     setLingkunganData(lingkungan);
     setSustainabilityData(sustainability);
 
-    // Calculate totals
+    // Calculate totals - only from main items (A, B, C, D, etc.)
     let totalTarget = 0;
     let totalPencapaian = 0;
 
     lingkungan.forEach((item) => {
-      totalTarget += parseNumberValue(item.target);
-      totalPencapaian += parseNumberValue(item.pencapaian);
+      // Only sum main items (single letter), not detail items (A1, A2, etc.)
+      const isMainItem = /^[A-Z]$/.test(item.poin);
+      if (isMainItem) {
+        totalTarget += parseNumberValue(item.target);
+        totalPencapaian += parseNumberValue(item.pencapaian);
+      }
     });
 
     setTotalScore({
       target: totalTarget,
       pencapaian: totalPencapaian,
     });
-
-    // Calculate recaps
-    // calculateRecaps(sustainability);
   };
 
-  const getCheckboxStatus = (value: string): boolean => {
-    return value === "TRUE";
+  // Group lingkungan data by main category (A, B, C, D, etc.)
+  const groupLingkunganData = (): GroupedData[] => {
+    const groups: { [key: string]: GroupedData } = {};
+    const mainItems: { [key: string]: LingkunganData } = {};
+    const detailItems: { [key: string]: LingkunganData[] } = {};
+
+    // First pass: separate main items and detail items
+    lingkunganData.forEach((item) => {
+      const groupKey = item.poin.match(/^[A-Z]+/)?.[0] || item.poin;
+      const isMainItem = /^[A-Z]$/.test(item.poin);
+
+      if (isMainItem) {
+        mainItems[groupKey] = item;
+        if (!detailItems[groupKey]) {
+          detailItems[groupKey] = [];
+        }
+      } else {
+        if (!detailItems[groupKey]) {
+          detailItems[groupKey] = [];
+        }
+        detailItems[groupKey].push(item);
+      }
+    });
+
+    // Second pass: create grouped data
+    Object.keys(mainItems).forEach((groupKey) => {
+      groups[groupKey] = {
+        groupKey,
+        groupData: mainItems[groupKey],
+        items: detailItems[groupKey] || [],
+      };
+    });
+
+    return Object.values(groups);
+  };
+
+  const toggleGroup = (groupKey: string) => {
+    setExpandedGroups((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(groupKey)) {
+        newSet.delete(groupKey);
+      } else {
+        newSet.add(groupKey);
+      }
+      return newSet;
+    });
   };
 
   // Show loading state
@@ -249,6 +203,8 @@ const LevelLingkunganPage: React.FC = () => {
     );
   }
 
+  const groupedData = groupLingkunganData();
+
   return (
     <DefaultLayout>
       <div className="p-3 md:p-6 bg-gray-50 min-h-screen">
@@ -286,117 +242,9 @@ const LevelLingkunganPage: React.FC = () => {
               </div>
             </div>
           </div>
-
-          {/* Monthly Average */}
-          {/* <div className="bg-[#CDE9ED] p-2 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex items-center gap-1">
-              <Calendar className="h-3 w-3 text-purple-600 flex-shrink-0" />
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-gray-600">Monthly Avg</p>
-                <p className="text-base md:text-lg font-semibold text-[#145C72]">
-                  {monthlyRecap.length > 0
-                    ? (
-                        monthlyRecap.reduce((sum, m) => sum + m.percentage, 0) /
-                        monthlyRecap.length
-                      ).toFixed(0)
-                    : 0}
-                  %
-                </p>
-              </div>
-            </div>
-          </div> */}
-
-          {/* Point Average */}
-          {/* <div className="bg-[#CDE9ED] p-2 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex items-center gap-1">
-              <Target className="h-3 w-3 text-orange-600 flex-shrink-0" />
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-gray-600">Point Avg</p>
-                <p className="text-base md:text-lg font-semibold text-[#145C72]">
-                  {pointRecap.length > 0
-                    ? (
-                        pointRecap.reduce((sum, p) => sum + p.percentage, 0) /
-                        pointRecap.length
-                      ).toFixed(0)
-                    : 0}
-                  %
-                </p>
-              </div>
-            </div>
-          </div> */}
         </div>
 
-        {/* Monthly Recap Section - Compact
-        <div className="bg-white rounded-lg shadow-sm border mb-3">
-          <div className="px-3 py-2 border-b">
-            <h2 className="text-sm md:text-base font-semibold text-[#145C72] flex gap-1 items-center">
-              <Calendar size={14} />
-              Monthly Recap
-            </h2>
-          </div>
-          <div className="p-2">
-            <div className="grid grid-cols-6 md:grid-cols-12 gap-1.5">
-              {monthlyRecap.map((month) => (
-                <div
-                  key={month.month}
-                  className="bg-gray-50 p-1.5 rounded border text-center"
-                >
-                  <h3 className="font-medium text-[#145C72] text-xs mb-0.5">
-                    {month.monthName}
-                  </h3>
-                  <div
-                    className={`text-sm font-bold ${
-                      month.percentage >= 80
-                        ? "text-green-600"
-                        : month.percentage >= 60
-                        ? "text-yellow-600"
-                        : "text-red-600"
-                    }`}
-                  >
-                    {month.percentage.toFixed(0)}%
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div> */}
-
-        {/* Point Recap Section - Compact */}
-        {/* <div className="bg-white rounded-lg shadow-sm border mb-3">
-          <div className="px-3 py-2 border-b">
-            <h2 className="text-sm md:text-base font-semibold text-[#145C72] flex gap-1 items-center">
-              <Target size={14} />
-              Point Recap
-            </h2>
-          </div>
-          <div className="p-2">
-            <div className="grid grid-cols-6 md:grid-cols-11 gap-1.5">
-              {pointRecap.map((point) => (
-                <div
-                  key={point.point}
-                  className="bg-gray-50 p-1.5 rounded border text-center"
-                >
-                  <h3 className="font-medium text-[#145C72] text-xs mb-0.5">
-                    {point.point}
-                  </h3>
-                  <div
-                    className={`text-sm font-bold ${
-                      point.percentage >= 80
-                        ? "text-green-600"
-                        : point.percentage >= 60
-                        ? "text-yellow-600"
-                        : "text-red-600"
-                    }`}
-                  >
-                    {point.percentage.toFixed(0)}%
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div> */}
-
-        {/* Lingkungan Assessment Table - Compact */}
+        {/* Lingkungan Assessment Table - Grouped with Expandable Details */}
         <div className="bg-white rounded-lg shadow-sm border mb-3">
           <div className="px-3 py-2 border-b">
             <h2 className="text-sm md:text-base font-semibold text-[#145C72] flex gap-1 items-center">
@@ -421,117 +269,78 @@ const LevelLingkunganPage: React.FC = () => {
                   <th className="px-2 md:px-4 py-2 text-center text-xs uppercase">
                     Pencapaian
                   </th>
+                  <th className="px-2 md:px-4 py-2 text-center text-xs uppercase">
+                    Details
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200 text-[#145C72]">
-                {lingkunganData.map((item, index) => (
-                  <tr
-                    key={item.poin}
-                    className={`${
-                      index % 2 === 0 ? "bg-[#CDE9ED]" : "bg-white"
-                    }`}
-                  >
-                    <td className="px-2 md:px-4 py-2 text-xs md:text-sm font-medium">
-                      {item.poin}
-                    </td>
-                    <td className="px-2 md:px-4 py-2 text-xs md:text-sm">
-                      {item.unsur_penilaian}
-                    </td>
-                    <td className="px-2 md:px-4 py-2 text-center text-xs md:text-sm">
-                      {item.target}
-                    </td>
-                    <td className="px-2 md:px-4 py-2 text-center">
-                      <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800">
-                        {item.pencapaian}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Sustainability Checklist Table - Compact with direct view */}
-        <div className="bg-white rounded-lg shadow-sm border">
-          <div className="px-3 py-2 border-b">
-            <h2 className="text-sm md:text-base font-semibold text-[#145C72] flex gap-1 items-center">
-              <LayoutList size={14} />
-              Sustainability Checklist
-            </h2>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-[#145C72]">
-              <thead className="bg-gray-50 font-bold">
-                <tr>
-                  <th className="px-2 md:px-4 py-2 text-left text-xs uppercase">
-                    Point
-                  </th>
-                  <th className="px-2 md:px-4 py-2 text-left text-xs uppercase">
-                    Transaksi
-                  </th>
-                  {monthNames.map((month) => (
-                    <th
-                      key={month}
-                      className="px-1 md:px-2 py-2 text-center text-xs uppercase"
+                {groupedData.map((group, groupIndex) => (
+                  <React.Fragment key={group.groupKey}>
+                    {/* Main Group Row */}
+                    <tr
+                      className={`${
+                        groupIndex % 2 === 0 ? "bg-[#CDE9ED]" : "bg-white"
+                      } font-medium`}
                     >
-                      {month}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200 text-[#145C72]">
-                {sustainabilityData.map((item, index) => (
-                  <tr
-                    key={item.point}
-                    className={`${
-                      index % 2 === 0 ? "bg-[#CDE9ED]" : "bg-white"
-                    }`}
-                  >
-                    <td className="px-2 md:px-4 py-2 text-xs md:text-sm font-medium">
-                      {item.point}
-                    </td>
-                    <td className="px-2 md:px-4 py-2 text-xs md:text-sm">
-                      {item.transaksi_laporan}
-                    </td>
-                    {months.map((month) => {
-                      const isChecked = getCheckboxStatus(
-                        item[month as keyof SustainabilityData] as string
-                      );
+                      <td className="px-2 md:px-4 py-2 text-xs md:text-sm">
+                        {group.groupData.poin}
+                      </td>
+                      <td className="px-2 md:px-4 py-2 text-xs md:text-sm">
+                        {group.groupData.unsur_penilaian}
+                      </td>
+                      <td className="px-2 md:px-4 py-2 text-center text-xs md:text-sm">
+                        {group.groupData.target}
+                      </td>
+                      <td className="px-2 md:px-4 py-2 text-center">
+                        <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800">
+                          {group.groupData.pencapaian}
+                        </span>
+                      </td>
+                      <td className="px-2 md:px-4 py-2 text-center">
+                        {group.items.length > 0 && (
+                          <button
+                            onClick={() => toggleGroup(group.groupKey)}
+                            className="inline-flex items-center gap-1 text-[#145C72] hover:text-[#0d3d4d] transition-colors"
+                          >
+                            <span className="text-xs">
+                              {group.items.length} items
+                            </span>
+                            {expandedGroups.has(group.groupKey) ? (
+                              <ChevronUp size={16} />
+                            ) : (
+                              <ChevronDown size={16} />
+                            )}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
 
-                      return (
-                        <td
-                          key={month}
-                          className="px-1 md:px-2 py-2 text-center"
+                    {/* Detail Rows (Expandable) */}
+                    {expandedGroups.has(group.groupKey) &&
+                      group.items.map((item, itemIndex) => (
+                        <tr
+                          key={item.poin}
+                          className="bg-gray-50 border-l-4 border-[#145C72]"
                         >
-                          <div className="flex justify-center">
-                            <div
-                              className={`w-3 h-3 md:w-4 md:h-4 rounded border-2 flex items-center justify-center ${
-                                isChecked
-                                  ? "bg-green-500 border-green-500"
-                                  : "bg-white border-gray-300"
-                              }`}
-                            >
-                              {isChecked && (
-                                <svg
-                                  className="w-2 h-2 md:w-2.5 md:h-2.5 text-white"
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                >
-                                  <path
-                                    fillRule="evenodd"
-                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                    clipRule="evenodd"
-                                  />
-                                </svg>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                      );
-                    })}
-                  </tr>
+                          <td className="px-2 md:px-4 py-2 pl-6 md:pl-8 text-xs md:text-sm">
+                            {item.poin}
+                          </td>
+                          <td className="px-2 md:px-4 py-2 text-xs md:text-sm">
+                            {item.unsur_penilaian}
+                          </td>
+                          <td className="px-2 md:px-4 py-2 text-center text-xs md:text-sm">
+                            {item.target}
+                          </td>
+                          <td className="px-2 md:px-4 py-2 text-center">
+                            <span className="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800">
+                              {item.pencapaian}
+                            </span>
+                          </td>
+                          <td className="px-2 md:px-4 py-2"></td>
+                        </tr>
+                      ))}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>
