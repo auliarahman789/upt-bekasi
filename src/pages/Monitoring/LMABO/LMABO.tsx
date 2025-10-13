@@ -1,7 +1,9 @@
 // L.tsx
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import DefaultLayout from "../../../layout/DefaultLayout";
 import axios from "axios";
+import { useReactToPrint } from "react-to-print";
+import PrintableLMABO from "./PrintableLMABO";
 
 // Interfaces
 interface WorkItem {
@@ -23,7 +25,7 @@ const LMABOPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [apiData, setApiData] = useState<ApiResponse | null>(null);
   const [activeTab, setActiveTab] = useState("Jaringan");
-
+  const printRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     fetchLMABO();
   }, []);
@@ -45,7 +47,47 @@ const LMABOPage: React.FC = () => {
       setLoading(false);
     }
   };
-
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `LM-ABO-${activeTab}-${new Date().toLocaleDateString(
+      "id-ID"
+    )}`,
+    pageStyle: `
+      @page {
+        size: landscape;
+        margin: 15mm;
+      }
+      
+      @media print {
+        body {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+          margin: 0;
+          padding: 0;
+        }
+        
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+        
+        .print-page {
+          page-break-after: always !important;
+          page-break-inside: avoid !important;
+          height: 100vh;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
+        
+        .print-page:last-child {
+          page-break-after: auto !important;
+        }
+      }
+    `,
+  });
   // Process data to group by program for the selected bidang
   const processedData = useMemo(() => {
     if (!apiData?.data) return {};
@@ -179,7 +221,7 @@ const LMABOPage: React.FC = () => {
       </DefaultLayout>
     );
   }
-
+  const filteredData = apiData?.data.filter((_, index) => index !== 41) || [];
   return (
     <DefaultLayout>
       <div className="min-h-screen bg-gray-50 p-3 sm:p-6">
@@ -205,6 +247,27 @@ const LMABOPage: React.FC = () => {
               {tab.toUpperCase()}
             </button>
           ))}
+        </div>
+        <div className="pb-3">
+          <button
+            onClick={handlePrint}
+            className="bg-[#E78700] text-white px-6 py-2 rounded-lg hover:bg-[#d17a00] transition-colors flex items-center gap-2"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+              />
+            </svg>
+            <span className="text-sm font-medium">Print </span>
+          </button>
         </div>
 
         {/* Three Column Layout */}
@@ -240,6 +303,13 @@ const LMABOPage: React.FC = () => {
             </p>
           </div>
         )}
+        <div style={{ display: "none" }}>
+          <PrintableLMABO
+            ref={printRef}
+            data={filteredData}
+            selectedBidang={activeTab}
+          />
+        </div>
       </div>
     </DefaultLayout>
   );
