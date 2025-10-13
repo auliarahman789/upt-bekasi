@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import { useReactToPrint } from "react-to-print";
 import DefaultLayout from "../../../layout/DefaultLayout";
 import {
   BarChart,
@@ -16,6 +17,7 @@ import {
   Line,
   LabelList,
 } from "recharts";
+import PrintableReport from "./PrintableReport";
 
 // Types for the API response
 interface Employee {
@@ -120,6 +122,7 @@ const DataKaryawanPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [showRetirementDetail, setShowRetirementDetail] = useState(false);
+  const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchEmployeeData();
@@ -140,6 +143,46 @@ const DataKaryawanPage: React.FC = () => {
       setLoading(false);
     }
   };
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Data-Kepegawaian-${activeFilter}-Report`,
+    pageStyle: `
+    @page {
+      size: landscape;
+      margin: 15mm;
+    }
+    
+    @media print {
+      body {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+        margin: 0;
+        padding: 0;
+      }
+      
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+      
+      .print-page {
+        page-break-after: always !important;
+        page-break-inside: avoid !important;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      
+      .print-page:last-child {
+        page-break-after: auto !important;
+      }
+    }
+  `,
+  });
 
   // Helper function to get filtered data based on active filter
   const getFilteredData = () => {
@@ -192,13 +235,11 @@ const DataKaryawanPage: React.FC = () => {
   };
 
   if (loading || !data) {
-    // Show loading state
-
     return (
       <DefaultLayout>
         <div className="p-4 md:p-8 bg-gray-50 min-h-screen flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 md:h-32 md:w-32 border-b-2 border-[#145C72]"></div>
+            <div className="animate-spin rounded-full h-16 w-16 md:h-32 md:w-32border-b-2 border-[#145C72]"></div>
             <p className="mt-4 text-[#145C72] text-sm md:text-base">
               Loading data...
             </p>
@@ -255,7 +296,7 @@ const DataKaryawanPage: React.FC = () => {
     },
     {
       category: "TAD",
-      value: activeFilter === "ALL" ? data.tad : 0, // TAD might not be available per unit
+      value: activeFilter === "ALL" ? data.tad : 0,
       color: COLORS.darkTeal,
     },
   ];
@@ -390,7 +431,7 @@ const DataKaryawanPage: React.FC = () => {
                       key={filter}
                       onClick={() => {
                         setActiveFilter(filter);
-                        setCurrentPage(1); // Reset pagination when filter changes
+                        setCurrentPage(1);
                       }}
                       className={`flex items-center justify-center gap-1 px-2 lg:px-3 py-2 text-xs lg:text-[11px] rounded-full transition-colors relative ${
                         activeFilter === filter
@@ -541,454 +582,288 @@ const DataKaryawanPage: React.FC = () => {
 
   return (
     <DefaultLayout>
-      <div className="min-h-screen bg-gray-50 p-6 mb-2">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-teal-700 text-center mb-6">
-            DATA KEPEGAWAIAN
-          </h1>
-
-          {/* Mobile-first responsive tabs and filters */}
-          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center bg-[#E2F395] rounded-2xl lg:rounded-full p-3 space-y-3 lg:space-y-0">
-            {/* Tabs */}
-            <div className="flex space-x-2 justify-center lg:justify-start">
-              <button
-                onClick={() => setActiveTab("OVERVIEW")}
-                className="px-4 py-2 bg-[#145C72] text-white rounded-full font-medium"
-              >
-                OVERVIEW
-              </button>
-              <button
-                onClick={() => setActiveTab("DAFTAR PEGAWAI")}
-                className="px-4 py-2 bg-white text-gray-700 rounded-full font-medium hover:bg-gray-300"
-              >
-                DAFTAR PEGAWAI
-              </button>
-            </div>
-
-            {/* Filters - Mobile responsive grid */}
-            <div className="grid grid-cols-2 lg:flex lg:space-x-2 gap-2 lg:gap-0 text-center">
-              {["ALL", "UPT BEKASI", "ULTG BEKASI", "ULTG CIKARANG"].map(
-                (filter) => (
-                  <button
-                    key={filter}
-                    onClick={() => {
-                      setActiveFilter(filter);
-                    }}
-                    className={`flex items-center justify-center gap-1 px-2 lg:px-3 py-2 text-xs lg:text-[11px] rounded-full transition-colors relative ${
-                      activeFilter === filter
-                        ? "bg-[#145C72] text-white"
-                        : "bg-white border border-[#179FB7] text-[#179FB7] hover:bg-gray-100"
-                    }`}
-                  >
-                    {filter}
-                  </button>
-                )
-              )}
-            </div>
-          </div>
+      <div className="min-h-screen bg-gray-50">
+        {/* Hidden Print Component */}
+        <div style={{ display: "none" }}>
+          <PrintableReport
+            ref={printRef}
+            data={data}
+            activeFilter={activeFilter}
+            filteredData={filteredData}
+            employeeCountData={employeeCountData}
+            personnelComparisonData={personnelComparisonData}
+            compositionData={compositionData}
+            workPeriodData={workPeriodData}
+            maleEmployees={maleEmployees}
+            femaleEmployees={femaleEmployees}
+            retirement2025={retirement2025}
+            retirement2026={retirement2026}
+            COLORS={COLORS}
+            PIE_COLORS={PIE_COLORS}
+          />
         </div>
 
-        {/* Dashboard Grid */}
-        <div className="space-y-6">
-          {/* First Row - Equal Height Columns */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:h-[600px]">
-            {/* Left Column - Employee Count Chart and Composition - 40% on desktop */}
-            <div className="lg:col-span-5 flex flex-col h-full">
-              <div className="bg-white rounded-xl shadow-lg p-6 flex-1 flex flex-col">
-                <div className="flex items-center mb-4">
-                  <div className="w-8 h-8 bg-[#D2F8FF] rounded-full flex items-center justify-center mr-3">
-                    <span className="text-teal-600 font-bold">👥</span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-800">
-                    JUMLAH PEGAWAI{" "}
-                    {activeFilter !== "ALL" && `- ${activeFilter}`}
-                  </h3>
-                </div>
+        <div className="p-4 md:p-6 mb-2">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-teal-700 text-center mb-6">
+              DATA KEPEGAWAIAN
+            </h1>
 
-                <div className="flex flex-1">
-                  <ResponsiveContainer width="70%" height="100%">
-                    <LineChart data={employeeCountData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                      <YAxis />
-                      <Tooltip />
-                      <Line
-                        type="monotone"
-                        dataKey="value"
-                        stroke={COLORS.green}
-                        strokeWidth={3}
-                        dot={{ fill: COLORS.green, r: 6 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-
-                  {/* Legend on the right */}
-                  <div className="w-30% flex flex-col justify-center space-y-2 ml-4">
-                    {/* Summary Cards */}
-                    {activeFilter === "ALL" ? (
-                      <div className="grid grid-cols-1 gap-2">
-                        <div className="text-center">
-                          <div className="text-[11px] text-gray-600">
-                            UPT BEKASI
-                          </div>
-                          <div className="text-xl font-bold text-gray-800 bg-lime-200 rounded-lg p-3">
-                            {data.pegawai_upt}
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-[11px] text-gray-600">
-                            ULTG BEKASI
-                          </div>
-                          <div className="text-xl font-bold text-gray-800 bg-lime-200 rounded-lg p-3">
-                            {data.pegawai_ultg_bekasi}
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-[11px] text-gray-600">
-                            ULTG CIKARANG
-                          </div>
-                          <div className="text-xl font-bold text-gray-800 bg-lime-200 rounded-lg p-3">
-                            {data.pegawai_ultg_cikarang}
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="mt-4">
-                        <div className="bg-lime-200 rounded-lg p-3 text-center">
-                          <div className="text-[11px] text-gray-600">
-                            {activeFilter}
-                          </div>
-                          <div className="text-xl font-bold text-gray-800">
-                            {filteredData.pegawai}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
+            {/* Mobile-first responsive tabs and filters */}
+            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center bg-[#E2F395] rounded-2xl lg:rounded-full p-3 space-y-3 lg:space-y-0">
+              {/* Tabs */}
+              <div className="flex space-x-2 justify-center lg:justify-start">
+                <button
+                  onClick={() => setActiveTab("OVERVIEW")}
+                  className="px-4 py-2 bg-[#145C72] text-white rounded-full font-medium"
+                >
+                  OVERVIEW
+                </button>
+                <button
+                  onClick={() => setActiveTab("DAFTAR PEGAWAI")}
+                  className="px-4 py-2 bg-white text-gray-700 rounded-full font-medium hover:bg-gray-300"
+                >
+                  DAFTAR PEGAWAI
+                </button>
               </div>
 
-              {/* Employee Composition - Takes remaining space */}
-              <div className="bg-white rounded-xl shadow-lg p-6 mt-4 flex-1 flex flex-col">
-                <div className="flex items-center mb-4">
-                  <div className="w-8 h-8 bg-[#D2F8FF] rounded-full flex items-center justify-center mr-3">
-                    <span className="text-teal-600 font-bold">📈</span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-800">
-                    KOMPOSISI PEGAWAI
-                  </h3>
-                </div>
+              {/* Filters - Mobile responsive grid */}
+              <div className="grid grid-cols-2 lg:flex lg:space-x-2 gap-2 lg:gap-0 text-center">
+                {["ALL", "UPT BEKASI", "ULTG BEKASI", "ULTG CIKARANG"].map(
+                  (filter) => (
+                    <button
+                      key={filter}
+                      onClick={() => {
+                        setActiveFilter(filter);
+                      }}
+                      className={`flex items-center justify-center gap-1 px-2 lg:px-3 py-2 text-xs lg:text-[11px] rounded-full transition-colors relative ${
+                        activeFilter === filter
+                          ? "bg-[#145C72] text-white"
+                          : "bg-white border border-[#179FB7] text-[#179FB7] hover:bg-gray-100"
+                      }`}
+                    >
+                      {filter}
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
 
-                <div className="flex flex-1">
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={compositionData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="unit" tick={{ fontSize: 12 }} />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="FTK" fill={COLORS.green}>
-                        {" "}
-                        <LabelList
-                          dataKey="FTK"
-                          position="insideTop"
-                          fill="#FFFFFF"
-                          formatter={(label: any) => `${label}`}
-                        />
-                        <Cell />
-                      </Bar>
-                      <Bar dataKey="EKSISTING" fill={COLORS.pink}>
-                        {" "}
-                        <LabelList
-                          dataKey="EKSISTING"
-                          position="insideTop"
-                          fill="#FFFFFF"
-                          formatter={(label: any) => `${label}`}
-                        />
-                        <Cell />
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                  <CustomLegend
-                    data={[
-                      { name: "FTK", value: "" },
-                      { name: "EKSISTING", value: "" },
-                    ]}
-                    colors={[COLORS.green, COLORS.pink]}
+            {/* Print Button */}
+            <div className="flex justify-start mt-4">
+              <button
+                onClick={handlePrint}
+                className="bg-[#E78700] text-white px-6 py-2 rounded-lg hover:bg-[#d17a00] transition-colors flex items-center gap-2"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z"
+                    clipRule="evenodd"
                   />
-                </div>
-              </div>
+                </svg>
+                Print
+              </button>
             </div>
+          </div>
 
-            {/* Middle Column - Personnel Comparison and Work Period - 30% on desktop */}
-            <div className="lg:col-span-3 flex flex-col h-full">
-              <div className="bg-white rounded-xl shadow-lg p-6 flex-1 flex flex-col">
-                <div className="flex items-center mb-4">
-                  <div className="w-8 h-8 bg-[#D2F8FF] rounded-full flex items-center justify-center mr-3">
-                    <span className="text-teal-600 font-bold">📊</span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-800">
-                    DATA PERSONIL
-                  </h3>
-                </div>
-
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart
-                    data={personnelComparisonData}
-                    margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="category" tick={{ fontSize: 12 }} />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="value" fill={COLORS.darkTeal}>
-                      {personnelComparisonData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                      <LabelList
-                        dataKey="value"
-                        position="insideTop"
-                        fill="#FFFFFF"
-                        formatter={(label: any) => `${label}`}
-                      />
-                      {personnelComparisonData.map((d, i) => (
-                        <Cell key={i} fill={d.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-lg p-6 mt-4 flex-1 flex flex-col">
-                <div className="flex items-center mb-4">
-                  <div className="w-8 h-8 bg-[#D2F8FF] rounded-full flex items-center justify-center mr-3">
-                    <span className="text-teal-600 font-bold">⏰</span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-800">
-                    MASA KERJA
-                  </h3>
-                </div>
-
-                <div className="flex items-center flex-1">
-                  <ResponsiveContainer width="50%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={workPeriodData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={30}
-                        outerRadius={60}
-                        dataKey="total"
-                        nameKey="range"
-                      >
-                        {workPeriodData.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index} ${entry}`}
-                            fill={PIE_COLORS[index % PIE_COLORS.length]}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-
-                  {/* Masa Kerja Legend */}
-                  <div className="grid grid-cols-2 gap-2 text-xs flex-1 items-center">
-                    {workPeriodData.map((item, index) => (
-                      <div key={item.range} className="flex flex-col gap-1">
-                        <span className="text-xs">{item.range}</span>
-                        <div
-                          className="flex items-center justify-between rounded p-2"
-                          style={{
-                            backgroundColor:
-                              PIE_COLORS[index % PIE_COLORS.length],
-                            color:
-                              index === 1 || index === 3 ? "white" : "black",
-                          }}
-                        >
-                          <span className="font-bold ml-2">{item.total}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column - Combined height for Gender, Grade, and Retirement - 35% on desktop */}
-            <div className="lg:col-span-4 space-y-6">
-              {/* Gender Distribution */}
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <div className="flex items-center mb-4">
-                  <div className="w-8 h-8 bg-[#D2F8FF] rounded-full flex items-center justify-center mr-3">
-                    <span className="text-teal-600 font-bold">👫</span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-800">
-                    JENIS KELAMIN
-                  </h3>
-                </div>
-
-                <div className="flex items-center mb-4">
-                  {/* Pie Chart - Left Side */}
-                  <div className="flex-shrink-0">
-                    <ResponsiveContainer width={200} height={120}>
-                      <PieChart>
-                        <Pie
-                          data={[
-                            { name: "LAKI-LAKI", value: maleEmployees },
-                            { name: "PEREMPUAN", value: femaleEmployees },
-                          ]}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={0}
-                          outerRadius={50}
-                          dataKey="value"
-                        >
-                          <Cell fill={COLORS.lightGreen} />
-                          <Cell fill={COLORS.darkTeal} />
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  {/* Unit breakdown */}
-                  {activeFilter === "ALL" ? (
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      {/* Left Column - LAKI-LAKI */}
-                      <div className="space-y-2">
-                        <div className="text-center">
-                          <div className="text-gray-700 font-medium text-[11px]">
-                            LAKI-LAKI
-                          </div>
-                          <div className="text-xl font-bold text-gray-800 bg-lime-200 rounded-lg p-3">
-                            {maleEmployees}
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-gray-700 font-medium text-[11px]">
-                            UPT BEKASI
-                          </div>
-                          <div className="text-xl font-bold text-gray-800 bg-lime-200 rounded-lg p-3">
-                            {data.jenis_kelamin_upt[1].total}
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-gray-700 font-medium text-[11px]">
-                            ULTG BEKASI
-                          </div>
-                          <div className="text-xl font-bold text-gray-800 bg-lime-200 rounded-lg p-3">
-                            {data.jenis_kelamin_ultg_bekasi[1].total}
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-gray-700 font-medium text-[11px]">
-                            ULTG CIKARANG
-                          </div>
-                          <div className="text-xl font-bold text-gray-800 bg-lime-200 rounded-lg p-3">
-                            {data.jenis_kelamin_ultg_cikarang[1].total}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right Column - PEREMPUAN */}
-                      <div className="space-y-2">
-                        <div className=" text-center ">
-                          <div className="text-gray-700 font-medium text-[11px]">
-                            PEREMPUAN
-                          </div>
-                          <div
-                            className="text-xl font-bold text-[#E2F395] p-3 rounded-lg"
-                            style={{ backgroundColor: COLORS.darkTeal }}
-                          >
-                            {femaleEmployees}
-                          </div>
-                        </div>
-                        <div className=" text-center ">
-                          <div className="text-gray-700 font-medium text-[11px]">
-                            UPT BEKASI
-                          </div>
-                          <div
-                            className="text-xl font-bold text-[#E2F395] p-3 rounded-lg"
-                            style={{ backgroundColor: COLORS.darkTeal }}
-                          >
-                            {data.jenis_kelamin_upt[0].total}
-                          </div>
-                        </div>
-                        <div className=" text-center ">
-                          <div className="text-gray-700 font-medium text-[11px]">
-                            ULTG BEKASI
-                          </div>
-                          <div
-                            className="text-xl font-bold text-[#E2F395] p-3 rounded-lg"
-                            style={{ backgroundColor: COLORS.darkTeal }}
-                          >
-                            {data.jenis_kelamin_ultg_bekasi[0].total}
-                          </div>
-                        </div>
-                        <div className=" text-center ">
-                          <div className="text-gray-700 font-medium text-[11px]">
-                            ULTG CIKARANG
-                          </div>
-                          <div
-                            className="text-xl font-bold text-[#E2F395] p-3 rounded-lg"
-                            style={{ backgroundColor: COLORS.darkTeal }}
-                          >
-                            {data.jenis_kelamin_ultg_cikarang[0].total}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-2 text-xs mt-4">
-                      <div className="bg-lime-200 rounded-lg p-3 text-center">
-                        <div className="text-gray-700 font-medium">
-                          LAKI-LAKI
-                        </div>
-                        <div className="text-xl font-bold p-3 text-gray-800">
-                          {maleEmployees}
-                        </div>
-                      </div>
-                      <div
-                        className="rounded-lg p-3 text-center text-white"
-                        style={{ backgroundColor: COLORS.darkTeal }}
-                      >
-                        <div className="font-medium">PEREMPUAN</div>
-                        <div className="text-xl font-bold p-3">
-                          {femaleEmployees}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Grade Distribution and Retirement in same row */}
-              <div className="grid grid-cols-1  gap-4">
-                {/* Grade Distribution */}
-                <div className="bg-white rounded-xl shadow-lg p-6">
+          {/* Dashboard Grid - Screen View Only */}
+          <div className="space-y-6">
+            {/* First Row - Equal Height Columns */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:h-[600px]">
+              {/* Left Column - Employee Count Chart and Composition - 40% on desktop */}
+              <div className="lg:col-span-5 flex flex-col h-full">
+                <div className="bg-white rounded-xl shadow-lg p-6 flex-1 flex flex-col">
                   <div className="flex items-center mb-4">
                     <div className="w-8 h-8 bg-[#D2F8FF] rounded-full flex items-center justify-center mr-3">
-                      <span className="text-teal-600 font-bold">🎯</span>
+                      <span className="text-teal-600 font-bold">👥</span>
                     </div>
                     <h3 className="text-lg font-semibold text-gray-800">
-                      GRADE
+                      JUMLAH PEGAWAI{" "}
+                      {activeFilter !== "ALL" && `- ${activeFilter}`}
                     </h3>
                   </div>
 
-                  <div className="flex items-center">
-                    <ResponsiveContainer width="40%" height={120}>
+                  <div className="flex flex-1">
+                    <ResponsiveContainer width="70%" height="100%">
+                      <LineChart data={employeeCountData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                        <YAxis />
+                        <Tooltip />
+                        <Line
+                          type="monotone"
+                          dataKey="value"
+                          stroke={COLORS.green}
+                          strokeWidth={3}
+                          dot={{ fill: COLORS.green, r: 6 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+
+                    {/* Legend on the right */}
+                    <div className="w-30% flex flex-col justify-center space-y-2 ml-4">
+                      {/* Summary Cards */}
+                      {activeFilter === "ALL" ? (
+                        <div className="grid grid-cols-1 gap-2">
+                          <div className="text-center">
+                            <div className="text-[11px] text-gray-600">
+                              UPT BEKASI
+                            </div>
+                            <div className="text-xl font-bold text-gray-800 bg-lime-200 rounded-lg p-3">
+                              {data.pegawai_upt}
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-[11px] text-gray-600">
+                              ULTG BEKASI
+                            </div>
+                            <div className="text-xl font-bold text-gray-800 bg-lime-200 rounded-lg p-3">
+                              {data.pegawai_ultg_bekasi}
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-[11px] text-gray-600">
+                              ULTG CIKARANG
+                            </div>
+                            <div className="text-xl font-bold text-gray-800 bg-lime-200 rounded-lg p-3">
+                              {data.pegawai_ultg_cikarang}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-4">
+                          <div className="bg-lime-200 rounded-lg p-3 text-center">
+                            <div className="text-[11px] text-gray-600">
+                              {activeFilter}
+                            </div>
+                            <div className="text-xl font-bold text-gray-800">
+                              {filteredData.pegawai}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Employee Composition - Takes remaining space */}
+                <div className="bg-white rounded-xl shadow-lg p-6 mt-4 flex-1 flex flex-col">
+                  <div className="flex items-center mb-4">
+                    <div className="w-8 h-8 bg-[#D2F8FF] rounded-full flex items-center justify-center mr-3">
+                      <span className="text-teal-600 font-bold">📈</span>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      KOMPOSISI PEGAWAI
+                    </h3>
+                  </div>
+
+                  <div className="flex flex-1">
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={compositionData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="unit" tick={{ fontSize: 12 }} />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="FTK" fill={COLORS.green}>
+                          <LabelList
+                            dataKey="FTK"
+                            position="insideTop"
+                            fill="#FFFFFF"
+                            formatter={(label: any) => `${label}`}
+                          />
+                          <Cell />
+                        </Bar>
+                        <Bar dataKey="EKSISTING" fill={COLORS.pink}>
+                          <LabelList
+                            dataKey="EKSISTING"
+                            position="insideTop"
+                            fill="#FFFFFF"
+                            formatter={(label: any) => `${label}`}
+                          />
+                          <Cell />
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                    <CustomLegend
+                      data={[
+                        { name: "FTK", value: "" },
+                        { name: "EKSISTING", value: "" },
+                      ]}
+                      colors={[COLORS.green, COLORS.pink]}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Middle Column - Personnel Comparison and Work Period - 30% on desktop */}
+              <div className="lg:col-span-3 flex flex-col h-full">
+                <div className="bg-white rounded-xl shadow-lg p-6 flex-1 flex flex-col">
+                  <div className="flex items-center mb-4">
+                    <div className="w-8 h-8 bg-[#D2F8FF] rounded-full flex items-center justify-center mr-3">
+                      <span className="text-teal-600 font-bold">📊</span>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      DATA PERSONIL
+                    </h3>
+                  </div>
+
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart
+                      data={personnelComparisonData}
+                      margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="category" tick={{ fontSize: 12 }} />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="value" fill={COLORS.darkTeal}>
+                        {personnelComparisonData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                        <LabelList
+                          dataKey="value"
+                          position="insideTop"
+                          fill="#FFFFFF"
+                          formatter={(label: any) => `${label}`}
+                        />
+                        {personnelComparisonData.map((d, i) => (
+                          <Cell key={i} fill={d.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-lg p-6 mt-4 flex-1 flex flex-col">
+                  <div className="flex items-center mb-4">
+                    <div className="w-8 h-8 bg-[#D2F8FF] rounded-full flex items-center justify-center mr-3">
+                      <span className="text-teal-600 font-bold">⏰</span>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      MASA KERJA
+                    </h3>
+                  </div>
+
+                  <div className="flex items-center flex-1">
+                    <ResponsiveContainer width="50%" height="100%">
                       <PieChart>
                         <Pie
-                          data={filteredData.grade}
+                          data={workPeriodData}
                           cx="50%"
                           cy="50%"
-                          innerRadius={20}
-                          outerRadius={40}
+                          innerRadius={30}
+                          outerRadius={60}
                           dataKey="total"
-                          nameKey="grade"
+                          nameKey="range"
                         >
-                          {filteredData.grade.map((entry, index) => (
+                          {workPeriodData.map((entry, index) => (
                             <Cell
                               key={`cell-${index} ${entry}`}
                               fill={PIE_COLORS[index % PIE_COLORS.length]}
@@ -999,15 +874,13 @@ const DataKaryawanPage: React.FC = () => {
                       </PieChart>
                     </ResponsiveContainer>
 
-                    {/* Grade Legend */}
-                    <div className="grid grid-cols-2 gap-1 text-xs flex-1">
-                      {filteredData.grade.map((grade, index) => (
-                        <div key={grade.grade} className="flex gap-1">
-                          <span className="flex items-center justify-between p-2 rounded bg-teal-600 text-white">
-                            {grade.grade}
-                          </span>
+                    {/* Masa Kerja Legend */}
+                    <div className="grid grid-cols-2 gap-2 text-xs flex-1 items-center">
+                      {workPeriodData.map((item, index) => (
+                        <div key={item.range} className="flex flex-col gap-1">
+                          <span className="text-xs">{item.range}</span>
                           <div
-                            className="flex items-center w-full justify-between p-2 rounded"
+                            className="flex items-center justify-between rounded p-2"
                             style={{
                               backgroundColor:
                                 PIE_COLORS[index % PIE_COLORS.length],
@@ -1015,56 +888,268 @@ const DataKaryawanPage: React.FC = () => {
                                 index === 1 || index === 3 ? "white" : "black",
                             }}
                           >
-                            <span className="font-bold">{grade.total}</span>
+                            <span className="font-bold ml-2">{item.total}</span>
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Retirement Section */}
-                <div className="bg-lime-100 p-6 rounded-xl shadow-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
+              {/* Right Column - Combined height for Gender, Grade, and Retirement - 35% on desktop */}
+              <div className="lg:col-span-4 space-y-6">
+                {/* Gender Distribution */}
+                <div className="bg-white rounded-xl shadow-lg p-6">
+                  <div className="flex items-center mb-4">
+                    <div className="w-8 h-8 bg-[#D2F8FF] rounded-full flex items-center justify-center mr-3">
+                      <span className="text-teal-600 font-bold">👫</span>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      JENIS KELAMIN
+                    </h3>
+                  </div>
+
+                  <div className="flex items-center mb-4">
+                    {/* Pie Chart - Left Side */}
+                    <div className="flex-shrink-0">
+                      <ResponsiveContainer width={200} height={120}>
+                        <PieChart>
+                          <Pie
+                            data={[
+                              { name: "LAKI-LAKI", value: maleEmployees },
+                              { name: "PEREMPUAN", value: femaleEmployees },
+                            ]}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={0}
+                            outerRadius={50}
+                            dataKey="value"
+                          >
+                            <Cell fill={COLORS.lightGreen} />
+                            <Cell fill={COLORS.darkTeal} />
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {/* Unit breakdown */}
+                    {activeFilter === "ALL" ? (
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        {/* Left Column - LAKI-LAKI */}
+                        <div className="space-y-2">
+                          <div className="text-center">
+                            <div className="text-gray-700 font-medium text-[11px]">
+                              LAKI-LAKI
+                            </div>
+                            <div className="text-xl font-bold text-gray-800 bg-lime-200 rounded-lg p-3">
+                              {maleEmployees}
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-gray-700 font-medium text-[11px]">
+                              UPT BEKASI
+                            </div>
+                            <div className="text-xl font-bold text-gray-800 bg-lime-200 rounded-lg p-3">
+                              {data.jenis_kelamin_upt[1].total}
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-gray-700 font-medium text-[11px]">
+                              ULTG BEKASI
+                            </div>
+                            <div className="text-xl font-bold text-gray-800 bg-lime-200 rounded-lg p-3">
+                              {data.jenis_kelamin_ultg_bekasi[1].total}
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-gray-700 font-medium text-[11px]">
+                              ULTG CIKARANG
+                            </div>
+                            <div className="text-xl font-bold text-gray-800 bg-lime-200 rounded-lg p-3">
+                              {data.jenis_kelamin_ultg_cikarang[1].total}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Right Column - PEREMPUAN */}
+                        <div className="space-y-2">
+                          <div className=" text-center ">
+                            <div className="text-gray-700 font-medium text-[11px]">
+                              PEREMPUAN
+                            </div>
+                            <div
+                              className="text-xl font-bold text-[#E2F395] p-3 rounded-lg"
+                              style={{ backgroundColor: COLORS.darkTeal }}
+                            >
+                              {femaleEmployees}
+                            </div>
+                          </div>
+                          <div className=" text-center ">
+                            <div className="text-gray-700 font-medium text-[11px]">
+                              UPT BEKASI
+                            </div>
+                            <div
+                              className="text-xl font-bold text-[#E2F395] p-3 rounded-lg"
+                              style={{ backgroundColor: COLORS.darkTeal }}
+                            >
+                              {data.jenis_kelamin_upt[0].total}
+                            </div>
+                          </div>
+                          <div className=" text-center ">
+                            <div className="text-gray-700 font-medium text-[11px]">
+                              ULTG BEKASI
+                            </div>
+                            <div
+                              className="text-xl font-bold text-[#E2F395] p-3 rounded-lg"
+                              style={{ backgroundColor: COLORS.darkTeal }}
+                            >
+                              {data.jenis_kelamin_ultg_bekasi[0].total}
+                            </div>
+                          </div>
+                          <div className=" text-center ">
+                            <div className="text-gray-700 font-medium text-[11px]">
+                              ULTG CIKARANG
+                            </div>
+                            <div
+                              className="text-xl font-bold text-[#E2F395] p-3 rounded-lg"
+                              style={{ backgroundColor: COLORS.darkTeal }}
+                            >
+                              {data.jenis_kelamin_ultg_cikarang[0].total}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2 text-xs mt-4">
+                        <div className="bg-lime-200 rounded-lg p-3 text-center">
+                          <div className="text-gray-700 font-medium">
+                            LAKI-LAKI
+                          </div>
+                          <div className="text-xl font-bold p-3 text-gray-800">
+                            {maleEmployees}
+                          </div>
+                        </div>
+                        <div
+                          className="rounded-lg p-3 text-center text-white"
+                          style={{ backgroundColor: COLORS.darkTeal }}
+                        >
+                          <div className="font-medium">PEREMPUAN</div>
+                          <div className="text-xl font-bold p-3">
+                            {femaleEmployees}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Grade Distribution and Retirement in same row */}
+                <div className="grid grid-cols-1  gap-4">
+                  {/* Grade Distribution */}
+                  <div className="bg-white rounded-xl shadow-lg p-6">
+                    <div className="flex items-center mb-4">
                       <div className="w-8 h-8 bg-[#D2F8FF] rounded-full flex items-center justify-center mr-3">
-                        <span className="text-teal-600 font-bold">👴</span>
+                        <span className="text-teal-600 font-bold">🎯</span>
                       </div>
                       <h3 className="text-lg font-semibold text-gray-800">
-                        PEGAWAI PENSIUN{" "}
-                        {activeFilter !== "ALL" && `- ${activeFilter}`}
+                        GRADE
                       </h3>
+                    </div>
+
+                    <div className="flex items-center">
+                      <ResponsiveContainer width="40%" height={120}>
+                        <PieChart>
+                          <Pie
+                            data={filteredData.grade}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={20}
+                            outerRadius={40}
+                            dataKey="total"
+                            nameKey="grade"
+                          >
+                            {filteredData.grade.map((entry, index) => (
+                              <Cell
+                                key={`cell-${index} ${entry}`}
+                                fill={PIE_COLORS[index % PIE_COLORS.length]}
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+
+                      {/* Grade Legend */}
+                      <div className="grid grid-cols-2 gap-1 text-xs flex-1">
+                        {filteredData.grade.map((grade, index) => (
+                          <div key={grade.grade} className="flex gap-1">
+                            <span className="flex items-center justify-between p-2 rounded bg-teal-600 text-white">
+                              {grade.grade}
+                            </span>
+                            <div
+                              className="flex items-center w-full justify-between p-2 rounded"
+                              style={{
+                                backgroundColor:
+                                  PIE_COLORS[index % PIE_COLORS.length],
+                                color:
+                                  index === 1 || index === 3
+                                    ? "white"
+                                    : "black",
+                              }}
+                            >
+                              <span className="font-bold">{grade.total}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between mt-4 space-x-8">
-                    <div className="flex gap-3">
-                      <div className="text-center">
-                        <div className="text-[11px]  ">2025</div>
-                        <div
-                          className="text-3xl font-bold bg-teal-600 text-white px-2 py-1 rounded mb-2"
-                          style={{ color: COLORS.green }}
-                        >
-                          {retirement2025}
+                  {/* Retirement Section */}
+                  <div className="bg-lime-100 p-6 rounded-xl shadow-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 bg-[#D2F8FF] rounded-full flex items-center justify-center mr-3">
+                          <span className="text-teal-600 font-bold">👴</span>
                         </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-[11px]  ">2026</div>
-
-                        <div
-                          className="text-3xl font-bold bg-teal-600 text-white px-2 py-1 rounded mb-2"
-                          style={{ color: COLORS.green }}
-                        >
-                          {retirement2026}
-                        </div>
+                        <h3 className="text-lg font-semibold text-gray-800">
+                          PEGAWAI PENSIUN{" "}
+                          {activeFilter !== "ALL" && `- ${activeFilter}`}
+                        </h3>
                       </div>
                     </div>
-                    <button
-                      onClick={() => setShowRetirementDetail(true)}
-                      className="bg-teal-600 text-white px-2 py-1 rounded-lg font-medium hover:bg-teal-700 transition-colors"
-                    >
-                      DETAIL
-                    </button>
+
+                    <div className="flex items-center justify-between mt-4 space-x-8">
+                      <div className="flex gap-3">
+                        <div className="text-center">
+                          <div className="text-[11px]  ">2025</div>
+                          <div
+                            className="text-3xl font-bold bg-teal-600 text-white px-2 py-1 rounded mb-2"
+                            style={{ color: COLORS.green }}
+                          >
+                            {retirement2025}
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-[11px]  ">2026</div>
+
+                          <div
+                            className="text-3xl font-bold bg-teal-600 text-white px-2 py-1 rounded mb-2"
+                            style={{ color: COLORS.green }}
+                          >
+                            {retirement2026}
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setShowRetirementDetail(true)}
+                        className="bg-teal-600 text-white px-2 py-1 rounded-lg font-medium hover:bg-teal-700 transition-colors"
+                      >
+                        DETAIL
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

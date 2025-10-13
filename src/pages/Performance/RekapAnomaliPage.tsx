@@ -12,6 +12,8 @@ import {
 } from "recharts";
 import DefaultLayout from "../../layout/DefaultLayout";
 import axios from "axios";
+import PrintableAnomalyReport from "./PrintableAnomalyReport";
+import { useReactToPrint } from "react-to-print";
 
 interface ApiResponse {
   status: string;
@@ -49,6 +51,8 @@ const RekapAnomaliPage = () => {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [ultgFilter, setUltgFilter] = useState("ALL");
 
+  const printRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     // Only fetch if we haven't already fetched
     if (!hasFetched.current) {
@@ -76,7 +80,45 @@ const RekapAnomaliPage = () => {
       setLoading(false);
     }
   };
-
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Rekap-Anomali-${selectedLocation}-${selectedAnomaly}-Report`,
+    pageStyle: `
+    @page {
+      size: landscape;
+      margin: 15mm;
+    }
+    
+    @media print {
+      body {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+        margin: 0;
+        padding: 0;
+      }
+      
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+      
+      .print-page {
+        page-break-after: always !important;
+        page-break-inside: avoid !important;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      
+      .print-page:last-child {
+        page-break-after: auto !important;
+      }
+    }
+  `,
+  });
   // Helper function to map API categories to user-friendly types
   const mapCategoryToType = (kategori: string, location: string): string => {
     if (location === "JARINGAN") {
@@ -447,7 +489,6 @@ const RekapAnomaliPage = () => {
             </h1>
           </div>
 
-          {/* Header with Location Tabs - Mobile responsive */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
             <div className="flex flex-wrap gap-1 w-full sm:w-auto">
               {locationTabs.map((tab) => (
@@ -464,6 +505,27 @@ const RekapAnomaliPage = () => {
                 </button>
               ))}
             </div>
+
+            {/* Print Button */}
+            <button
+              onClick={handlePrint}
+              className="bg-[#E78700] text-white px-6 py-2 rounded-lg hover:bg-[#d17a00] transition-colors flex items-center gap-2"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                />
+              </svg>
+              <span className="text-sm font-medium">Print </span>
+            </button>
           </div>
 
           <div className="flex flex-col lg:flex-row gap-3">
@@ -1165,6 +1227,20 @@ const RekapAnomaliPage = () => {
             </div>
           </div>
         </div>
+      </div>
+      {/* Hidden Print Component */}
+      <div style={{ display: "none" }}>
+        <PrintableAnomalyReport
+          ref={printRef}
+          selectedLocation={selectedLocation}
+          selectedAnomaly={selectedAnomaly}
+          pieData={pieData}
+          barChartData={barChartData}
+          bekasiStatusBarData={bekasiStatusBarData}
+          cikarangStatusBarData={cikarangStatusBarData}
+          filteredData={filteredData}
+          transformedData={transformedData}
+        />
       </div>
     </DefaultLayout>
   );

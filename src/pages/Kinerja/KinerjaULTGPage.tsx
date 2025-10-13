@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import DefaultLayout from "../../layout/DefaultLayout";
 import axios from "axios";
-
+import { useReactToPrint } from "react-to-print";
+import PrintableKinerjaULTG from "./PrintableKinerjaULTG";
 interface IndicatorData {
   indikator: string;
   bobot: string;
@@ -394,7 +395,7 @@ const KinerjaULTGPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [apiData, setApiData] = useState<ApiResponse | null>(null);
   const [selectedTab, setSelectedTab] = useState<ULTGType>("ultg_bekasi");
-
+  const printRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     fetchKinerjaULTGData();
   }, []);
@@ -416,6 +417,48 @@ const KinerjaULTGPage: React.FC = () => {
       setLoading(false);
     }
   };
+  // Add print handler
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Kinerja-ULTG-${
+      selectedTab === "ultg_bekasi" ? "Bekasi" : "Cikarang"
+    }-${new Date().toLocaleDateString("id-ID")}`,
+    pageStyle: `
+      @page {
+        size: landscape;
+        margin: 15mm;
+      }
+      
+      @media print {
+        body {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+          margin: 0;
+          padding: 0;
+        }
+        
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+        
+        .print-page {
+          page-break-after: always !important;
+          page-break-inside: avoid !important;
+          height: 100vh;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
+        
+        .print-page:last-child {
+          page-break-after: auto !important;
+        }
+      }
+    `,
+  });
 
   if (loading) {
     return (
@@ -440,6 +483,8 @@ const KinerjaULTGPage: React.FC = () => {
   }
 
   const data = apiData.data[selectedTab];
+  const ultgName =
+    selectedTab === "ultg_bekasi" ? "ULTG Bekasi" : "ULTG Cikarang";
 
   const getMainTitle = (indicator: string) => {
     return indicator.replace(/^[a-z]\.\s*/i, "");
@@ -477,6 +522,26 @@ const KinerjaULTGPage: React.FC = () => {
               ULTG Cikarang
             </button>
           </div>
+          {/* Print Button */}
+          <button
+            onClick={handlePrint}
+            className="bg-[#E78700] text-white px-6 py-2 rounded-lg hover:bg-[#d17a00] transition-colors flex items-center gap-2"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+              />
+            </svg>
+            <span className="text-sm font-medium">Print </span>
+          </button>
         </div>
 
         {/* Main Content */}
@@ -574,7 +639,24 @@ const KinerjaULTGPage: React.FC = () => {
                         />
                       }
                     />
+                    <HorizontalBarCard
+                      title={getMainTitle(data.key_performance.trof.indikator)}
+                      subtitle="(JAM / UNIT)"
+                      value={parseFloat(data.key_performance.trof.realisasi)}
+                      target={parseFloat(data.key_performance.trof.target)}
+                      nilai={data.key_performance.trof.nilai}
+                      icon={
+                        <img
+                          src="/IconKinerja/2.svg"
+                          alt=""
+                          className="w-6 h-6 sm:w-8 sm:h-8"
+                        />
+                      }
+                    />
+                  </div>
 
+                  {/* Right Column */}
+                  <div>
                     <HorizontalBarCard
                       title={getMainTitle(
                         data.key_performance.penyelesaian_reconductoring
@@ -594,24 +676,6 @@ const KinerjaULTGPage: React.FC = () => {
                       icon={
                         <img
                           src="/IconKinerja/5.svg"
-                          alt=""
-                          className="w-6 h-6 sm:w-8 sm:h-8"
-                        />
-                      }
-                    />
-                  </div>
-
-                  {/* Right Column */}
-                  <div>
-                    <HorizontalBarCard
-                      title={getMainTitle(data.key_performance.trof.indikator)}
-                      subtitle="(JAM / UNIT)"
-                      value={parseFloat(data.key_performance.trof.realisasi)}
-                      target={parseFloat(data.key_performance.trof.target)}
-                      nilai={data.key_performance.trof.nilai}
-                      icon={
-                        <img
-                          src="/IconKinerja/2.svg"
                           alt=""
                           className="w-6 h-6 sm:w-8 sm:h-8"
                         />
@@ -745,14 +809,6 @@ const KinerjaULTGPage: React.FC = () => {
                         icon="/IconKinerja/10.svg"
                       />
                     )}
-
-                    <PerformanceIndicatorItem
-                      data={
-                        data.performance_indicator
-                          .pengendalian_proteksi_security
-                      }
-                      icon="/IconKinerja/8.svg"
-                    />
 
                     <PerformanceIndicatorItem
                       data={data.performance_indicator.digitalisasi_aplikasi}
@@ -902,6 +958,10 @@ const KinerjaULTGPage: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+      {/* Hidden Print Component */}
+      <div style={{ display: "none" }}>
+        <PrintableKinerjaULTG ref={printRef} data={data} ultgName={ultgName} />
       </div>
     </DefaultLayout>
   );
