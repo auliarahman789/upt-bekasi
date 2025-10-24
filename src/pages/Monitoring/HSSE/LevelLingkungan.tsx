@@ -318,7 +318,7 @@ const LevelLingkunganPage: React.FC = () => {
 
                     {/* Detail Rows (Expandable) */}
                     {expandedGroups.has(group.groupKey) &&
-                      group.items.map((item, itemIndex) => (
+                      group.items.map((item, _) => (
                         <tr
                           key={item.poin}
                           className="bg-gray-50 border-l-4 border-[#145C72]"
