@@ -40,6 +40,9 @@ interface WarehouseData {
 }
 
 interface InventoryData {
+  cadang_data: never[];
+  bursa_data: never[];
+  normal_data: never[];
   normal: number;
   bursa: number;
   cadang: number;
@@ -150,6 +153,50 @@ const Logistik: React.FC = () => {
   const [saldoData, setSaldoData] = useState<any[]>([]);
   const [alatBeratData, setAlatBeratData] = useState<any[]>([]);
   const [matlevData, setMatlevData] = useState<MatlevData>({});
+  const [inventorySearchTerm, setInventorySearchTerm] = useState<string>("");
+  const [inventoryFilterLocation, setInventoryFilterLocation] =
+    useState<string>("all");
+  const [inventoryFilterType, setInventoryFilterType] = useState<string>("all");
+  const [showInventoryDetailPopup, setShowInventoryDetailPopup] =
+    useState<boolean>(false);
+  const [selectedInventoryCategory, setSelectedInventoryCategory] = useState<
+    string | null
+  >(null);
+  const getUniqueLocations = (data: any[]) => {
+    const locations = data.map((item) => item.lokasi_gudang).filter(Boolean);
+    return ["all", ...Array.from(new Set(locations))];
+  };
+
+  const getUniqueTypes = (data: any[]) => {
+    const types = data.map((item) => item.tipe_material).filter(Boolean);
+    return ["all", ...Array.from(new Set(types))];
+  };
+  const filterInventoryData = (data: any[]) => {
+    return data.filter((item) => {
+      // Search filter
+      const searchMatch =
+        !inventorySearchTerm ||
+        item.no_material
+          ?.toLowerCase()
+          .includes(inventorySearchTerm.toLowerCase()) ||
+        item.deskripsi_material
+          ?.toLowerCase()
+          .includes(inventorySearchTerm.toLowerCase()) ||
+        item.satuan?.toLowerCase().includes(inventorySearchTerm.toLowerCase());
+
+      // Location filter
+      const locationMatch =
+        inventoryFilterLocation === "all" ||
+        item.lokasi_gudang === inventoryFilterLocation;
+
+      // Type filter
+      const typeMatch =
+        inventoryFilterType === "all" ||
+        item.tipe_material === inventoryFilterType;
+
+      return searchMatch && locationMatch && typeMatch;
+    });
+  };
 
   useEffect(() => {
     const checkIsMobile = () => {
@@ -176,23 +223,29 @@ const Logistik: React.FC = () => {
     }
   }, [apiData]);
 
-  // Fixed helper functions for MATLEV data conversion
   const convertMatlevToChartData = (
     matlevArray: MatlevMonthData[]
   ): (string | number)[][] | null => {
+    // Return null immediately if no data or empty array
     if (!matlevArray || matlevArray.length === 0) {
-      console.log("No matlev data available");
       return null;
     }
 
     const chartData: (string | number)[][] = [["Kategori", "Nilai"]];
+
+    // Add valid data rows
     matlevArray.forEach((item) => {
-      if (item.kategori && typeof item.nilai === "number") {
+      if (item.kategori && typeof item.nilai === "number" && item.nilai > 0) {
         chartData.push([item.kategori, item.nilai]);
       }
     });
 
-    return chartData.length > 1 ? chartData : null;
+    // Return null if we only have headers (no actual data)
+    if (chartData.length <= 1) {
+      return null;
+    }
+
+    return chartData;
   };
 
   const convertMatlevToBarData = (matlevArray: MatlevMonthData[]) => {
@@ -208,10 +261,21 @@ const Logistik: React.FC = () => {
   };
 
   const getAvailableMatlevMonths = () => {
-    if (!matlevData) return [];
-    return Object.keys(matlevData).filter(
-      (month) => matlevData[month] && matlevData[month].length > 0
-    );
+    const allMonths = [
+      "januari",
+      "februari",
+      "maret",
+      "april",
+      "mei",
+      "juni",
+      "juli",
+      "agustus",
+      "september",
+      "oktober",
+      "november",
+      "desember",
+    ];
+    return allMonths;
   };
 
   const processWarehouseData = () => {
@@ -366,7 +430,29 @@ const Logistik: React.FC = () => {
   const processMatlevData = () => {
     if (!apiData?.matlev) return;
 
-    setMatlevData(apiData.matlev);
+    const allMonths = [
+      "januari",
+      "februari",
+      "maret",
+      "april",
+      "mei",
+      "juni",
+      "juli",
+      "agustus",
+      "september",
+      "oktober",
+      "november",
+      "desember",
+    ];
+
+    const processedMatlev: MatlevData = {};
+
+    allMonths.forEach((month) => {
+      // If month data exists in API, use it; otherwise, create empty array
+      processedMatlev[month] = apiData.matlev[month] || [];
+    });
+
+    setMatlevData(processedMatlev);
   };
 
   const fetchSLOData = async () => {
@@ -388,7 +474,21 @@ const Logistik: React.FC = () => {
       setLoading(false);
     }
   };
+  const getInventoryCategoryData = (category: string) => {
+    if (!apiData) return [];
 
+    const categoryMap: { [key: string]: any[] } = {
+      "MATERIAL NORMAL": apiData.persediaan.normal_data || [],
+      "MATERIAL BURSA": apiData.persediaan.bursa_data || [],
+      "MATERIAL CADANG": apiData.persediaan.cadang_data || [],
+      "MATERIAL BONGKARAN": [], // Not provided in API
+      "MATERIAL SISA PEKERJAAN": [], // Not provided in API
+      "LIMBAH NON B3": [], // Not provided in API
+      "MATERIAL NON SAP": [], // Not provided in API
+    };
+
+    return categoryMap[category] || [];
+  };
   // Pie chart options (main inventory chart)
   const pieOptions = {
     title: "",
@@ -546,6 +646,13 @@ const Logistik: React.FC = () => {
       return value.toLocaleString("id-ID");
     }
     return value?.toString() || "0";
+  };
+  const handleInventoryLegendClick = (category: string) => {
+    setSelectedInventoryCategory(category);
+    setInventorySearchTerm("");
+    setInventoryFilterLocation("all");
+    setInventoryFilterType("all");
+    setShowInventoryDetailPopup(true);
   };
 
   const CustomSaldoTooltip = ({ active, payload, label }: any) => {
@@ -819,11 +926,12 @@ const Logistik: React.FC = () => {
   };
 
   const MatlevPopup = () => {
-    if (
-      !selectedMonth ||
-      !matlevData[selectedMonth] ||
-      matlevData[selectedMonth].length === 0
-    ) {
+    if (!selectedMonth) return null;
+
+    const monthData = matlevData[selectedMonth] || [];
+    const hasData = monthData.length > 0;
+
+    if (!hasData) {
       return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-md w-full p-6">
@@ -833,23 +941,61 @@ const Logistik: React.FC = () => {
               </h2>
               <button
                 onClick={() => setShowMatlevPopup(false)}
-                className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center"
+                className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
               >
                 ✕
               </button>
             </div>
             <div className="text-center py-8 text-gray-500">
-              <p>Tidak ada data MATLEV untuk bulan {selectedMonth}</p>
+              <div className="mb-4">
+                <svg
+                  className="w-16 h-16 mx-auto text-gray-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+              </div>
+              <p className="font-semibold">
+                Tidak ada data MATLEV untuk bulan {selectedMonth}
+              </p>
             </div>
           </div>
         </div>
       );
     }
 
-    const chartData = convertMatlevToChartData(matlevData[selectedMonth]);
-    const barData = convertMatlevToBarData(matlevData[selectedMonth]);
+    const chartData = convertMatlevToChartData(monthData);
+    const barData = convertMatlevToBarData(monthData);
 
-    if (!chartData || !barData) return null;
+    if (!chartData || !barData) {
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-[#145C72]">
+                MATLEV {selectedMonth?.toUpperCase()}
+              </h2>
+              <button
+                onClick={() => setShowMatlevPopup(false)}
+                className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="text-center py-8 text-gray-500">
+              <p>Data tidak valid untuk bulan {selectedMonth}</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -861,7 +1007,7 @@ const Logistik: React.FC = () => {
               </h2>
               <button
                 onClick={() => setShowMatlevPopup(false)}
-                className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center"
+                className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
               >
                 ✕
               </button>
@@ -1174,7 +1320,250 @@ const Logistik: React.FC = () => {
       </DefaultLayout>
     );
   }
+  const InventoryDetailPopup = () => {
+    if (!selectedInventoryCategory) return null;
 
+    const categoryData = getInventoryCategoryData(selectedInventoryCategory);
+    const uniqueLocations = getUniqueLocations(categoryData);
+    const uniqueTypes = getUniqueTypes(categoryData);
+    const filteredData = filterInventoryData(categoryData);
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg max-w-7xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="p-6">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-[#145C72]">
+                Detail {selectedInventoryCategory}
+              </h2>
+              <button
+                onClick={() => {
+                  setShowInventoryDetailPopup(false);
+                  setInventorySearchTerm("");
+                  setInventoryFilterLocation("all");
+                  setInventoryFilterType("all");
+                }}
+                className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {categoryData.length > 0 ? (
+              <>
+                {/* Search and Filter Section */}
+                <div className="mb-6 bg-gray-50 p-4 rounded-lg">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Location Filter */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        📍 Lokasi Gudang
+                      </label>
+                      <select
+                        value={inventoryFilterLocation}
+                        onChange={(e) =>
+                          setInventoryFilterLocation(e.target.value)
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#145C72] focus:border-transparent outline-none transition-all bg-white"
+                      >
+                        {uniqueLocations.map((location) => (
+                          <option key={location} value={location}>
+                            {location === "all" ? "Semua Lokasi" : location}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Type Filter */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        🏷️ Tipe Material
+                      </label>
+                      <select
+                        value={inventoryFilterType}
+                        onChange={(e) => setInventoryFilterType(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#145C72] focus:border-transparent outline-none transition-all bg-white"
+                      >
+                        {uniqueTypes.map((type) => (
+                          <option key={type} value={type}>
+                            {type === "all" ? "Semua Tipe" : type}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Filter Summary */}
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <span className="text-sm text-gray-600">
+                      Menampilkan{" "}
+                      <span className="font-bold text-[#145C72]">
+                        {filteredData.length}
+                      </span>{" "}
+                      dari{" "}
+                      <span className="font-bold">{categoryData.length}</span>{" "}
+                      item
+                    </span>
+
+                    {/* Clear Filters Button */}
+                    {(inventorySearchTerm ||
+                      inventoryFilterLocation !== "all" ||
+                      inventoryFilterType !== "all") && (
+                      <button
+                        onClick={() => {
+                          setInventoryFilterLocation("all");
+                          setInventoryFilterType("all");
+                        }}
+                        className="ml-auto px-3 py-1 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                      >
+                        ✕ Reset Filter
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Active Filters Tags */}
+                  {(inventoryFilterLocation !== "all" ||
+                    inventoryFilterType !== "all") && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {inventoryFilterLocation !== "all" && (
+                        <span className="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                          Lokasi: {inventoryFilterLocation}
+                          <button
+                            onClick={() => setInventoryFilterLocation("all")}
+                            className="ml-2 hover:text-green-900"
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      )}
+                      {inventoryFilterType !== "all" && (
+                        <span className="inline-flex items-center px-3 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                          Tipe: {inventoryFilterType}
+                          <button
+                            onClick={() => setInventoryFilterType("all")}
+                            className="ml-2 hover:text-purple-900"
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Table */}
+                {filteredData.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border border-gray-300">
+                      <thead>
+                        <tr className="bg-[#145C72] text-white">
+                          <th className="border border-gray-300 p-2 text-sm sticky top-0 bg-[#145C72]">
+                            No
+                          </th>
+                          <th className="border border-gray-300 p-2 text-sm sticky top-0 bg-[#145C72]">
+                            No. Material
+                          </th>
+                          <th className="border border-gray-300 p-2 text-sm sticky top-0 bg-[#145C72]">
+                            Deskripsi Material
+                          </th>
+                          <th className="border border-gray-300 p-2 text-sm sticky top-0 bg-[#145C72]">
+                            Satuan
+                          </th>
+                          <th className="border border-gray-300 p-2 text-sm sticky top-0 bg-[#145C72]">
+                            Tipe Material
+                          </th>
+                          <th className="border border-gray-300 p-2 text-sm sticky top-0 bg-[#145C72]">
+                            Lokasi Gudang
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredData.map((item: any, index: number) => (
+                          <tr
+                            key={index}
+                            className={
+                              index % 2 === 0
+                                ? "bg-gray-50 hover:bg-gray-100"
+                                : "bg-white hover:bg-gray-50"
+                            }
+                          >
+                            <td className="border border-gray-300 p-2 text-sm text-center">
+                              {index + 1}
+                            </td>
+                            <td className="border border-gray-300 p-2 text-sm font-mono">
+                              {item?.no_material || "-"}
+                            </td>
+                            <td className="border border-gray-300 p-2 text-sm">
+                              {item?.deskripsi_material || "-"}
+                            </td>
+                            <td className="border border-gray-300 p-2 text-sm text-center">
+                              {item?.satuan || "-"}
+                            </td>
+                            <td className="border border-gray-300 p-2 text-sm">
+                              {item?.tipe_material || "-"}
+                            </td>
+                            <td className="border border-gray-300 p-2 text-sm">
+                              {item?.lokasi_gudang || "-"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-gray-500">
+                    <div className="mb-4">
+                      <svg
+                        className="w-16 h-16 mx-auto text-gray-300"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        />
+                      </svg>
+                    </div>
+                    <p className="font-semibold text-lg">
+                      Tidak ada hasil yang ditemukan
+                    </p>
+                    <p className="text-sm mt-2">
+                      Coba ubah kata kunci atau filter pencarian Anda
+                    </p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <div className="mb-4">
+                  <svg
+                    className="w-16 h-16 mx-auto text-gray-300"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                    />
+                  </svg>
+                </div>
+                <p className="font-semibold">
+                  Tidak ada data untuk kategori {selectedInventoryCategory}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
   return (
     <DefaultLayout>
       <div className="min-h-screen bg-gray-50 p-2 md:p-6">
@@ -1238,33 +1627,68 @@ const Logistik: React.FC = () => {
                 <div className="bg-white text-[#145C72] p-3 rounded-lg">
                   <p className="text-[16px] mb-2">DETAIL</p>
                   <div className="space-y-1 text-xs">
-                    <div className="flex items-center space-x-2">
+                    <div
+                      className="flex items-center space-x-2 cursor-pointer hover:bg-gray-100 p-1 rounded"
+                      onClick={() =>
+                        handleInventoryLegendClick("MATERIAL NORMAL")
+                      }
+                    >
                       <div className="w-3 h-3 bg-[#1f5f5f] rounded"></div>
                       <span className="text-[#969696]">MATERIAL NORMAL</span>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div
+                      className="flex items-center space-x-2 cursor-pointer hover:bg-gray-100 p-1 rounded"
+                      onClick={() =>
+                        handleInventoryLegendClick("MATERIAL BURSA")
+                      }
+                    >
                       <div className="w-3 h-3 bg-[#ff9500] rounded"></div>
                       <span className="text-[#969696]">MATERIAL BURSA</span>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div
+                      className="flex items-center space-x-2 cursor-pointer hover:bg-gray-100 p-1 rounded"
+                      onClick={() =>
+                        handleInventoryLegendClick("MATERIAL CADANG")
+                      }
+                    >
                       <div className="w-3 h-3 bg-[#b19cd9] rounded"></div>
                       <span className="text-[#969696]">MATERIAL CADANG</span>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div
+                      className="flex items-center space-x-2 cursor-pointer hover:bg-gray-100 p-1 rounded"
+                      onClick={() =>
+                        handleInventoryLegendClick("MATERIAL BONGKARAN")
+                      }
+                    >
                       <div className="w-3 h-3 bg-[#e91e63] rounded"></div>
                       <span className="text-[#969696]">MATERIAL BONGKARAN</span>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div
+                      className="flex items-center space-x-2 cursor-pointer hover:bg-gray-100 p-1 rounded"
+                      onClick={() =>
+                        handleInventoryLegendClick("MATERIAL SISA PEKERJAAN")
+                      }
+                    >
                       <div className="w-3 h-3 bg-[#26a69a] rounded"></div>
                       <span className="text-[#969696]">
                         MATERIAL SISA PEKERJAAN
                       </span>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div
+                      className="flex items-center space-x-2 cursor-pointer hover:bg-gray-100 p-1 rounded"
+                      onClick={() =>
+                        handleInventoryLegendClick("LIMBAH NON B3")
+                      }
+                    >
                       <div className="w-3 h-3 bg-[#1a237e] rounded"></div>
                       <span className="text-[#969696]">LIMBAH NON B3</span>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div
+                      className="flex items-center space-x-2 cursor-pointer hover:bg-gray-100 p-1 rounded"
+                      onClick={() =>
+                        handleInventoryLegendClick("MATERIAL NON SAP")
+                      }
+                    >
                       <div className="w-3 h-3 bg-[#ffb74d] rounded"></div>
                       <span className="text-[#969696]">MATERIAL NON SAP</span>
                     </div>
@@ -1283,40 +1707,81 @@ const Logistik: React.FC = () => {
                 </span>
               </div>
 
-              {getAvailableMatlevMonths().length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                  {getAvailableMatlevMonths().map((month) => {
-                    const chartData = convertMatlevToChartData(
-                      matlevData[month]
-                    );
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                {getAvailableMatlevMonths().map((month) => {
+                  const monthData = matlevData[month];
+                  const hasData = monthData && monthData.length > 0;
 
-                    return (
-                      <div
-                        key={month}
-                        className="text-center cursor-pointer"
-                        onClick={() => handleMatlevClick(month)}
-                      >
-                        {chartData && (
+                  // Only try to convert to chart data if we have data
+                  let chartData = null;
+                  if (hasData) {
+                    chartData = convertMatlevToChartData(monthData);
+                  }
+
+                  return (
+                    <div
+                      key={month}
+                      className={`text-center ${
+                        chartData
+                          ? "cursor-pointer hover:opacity-80 transition-opacity"
+                          : "cursor-not-allowed"
+                      }`}
+                      onClick={() => chartData && handleMatlevClick(month)}
+                    >
+                      {/* Only render Chart if chartData is valid */}
+                      {chartData ? (
+                        <div className="flex justify-center">
                           <Chart
                             chartType="PieChart"
                             data={chartData}
                             options={smallPieOptions}
-                            width="80%"
+                            width={isMobile ? "150px" : "180px"}
                             height={isMobile ? "140px" : "160px"}
                           />
-                        )}
-                        <p className="text-xs font-medium text-[#145C72] mt-2">
-                          {month.charAt(0).toUpperCase() + month.slice(1)}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <p>Tidak ada data MATLEV tersedia</p>
-                </div>
-              )}
+                        </div>
+                      ) : (
+                        <div className="flex justify-center">
+                          <Chart
+                            chartType="PieChart"
+                            data={[
+                              ["Kategori", "Nilai"],
+                              ["Segment 1", 1],
+                              ["Segment 2", 1],
+                              ["Segment 3", 1],
+                              ["Segment 4", 1],
+                              ["Segment 5", 1],
+                            ]}
+                            options={{
+                              ...smallPieOptions,
+                              colors: [
+                                "#f8b4c8",
+                                "#8fa0a0",
+                                "#d4e8ee",
+                                "#93b1d8",
+                                "#d9cee8",
+                              ],
+                              pieSliceText: "none",
+                              tooltip: { trigger: "none" },
+                              legend: { position: "none" },
+                            }}
+                            width={isMobile ? "150px" : "180px"}
+                            height={isMobile ? "140px" : "160px"}
+                          />
+                        </div>
+                      )}
+                      <p
+                        className={`text-xs font-medium mt-2 ${
+                          chartData
+                            ? "text-[#145C72] font-semibold"
+                            : "text-gray-400"
+                        }`}
+                      >
+                        {month.charAt(0).toUpperCase() + month.slice(1)}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
@@ -1446,6 +1911,9 @@ const Logistik: React.FC = () => {
         {showMatlevPopup && <MatlevPopup />}
         {showAlatBeratPopup && <AlatBeratPopup />}
         {showTransactionPopup && <TransactionPopup />}
+        {showInventoryDetailPopup && (
+          <InventoryDetailPopup key="inventory-popup" />
+        )}
       </div>
     </DefaultLayout>
   );

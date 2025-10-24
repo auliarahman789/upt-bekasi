@@ -136,7 +136,10 @@ const SLDPage: React.FC = () => {
     setSelectedTitle("");
     setPdfLoading(false);
   };
-
+  const getNamaGI = (nama: string) => {
+    const match = nama.match(/KV\s+(.+)/i);
+    return match ? match[1] : nama; // => "TANJUNG MORAWA"
+  };
   // Show loading state
   if (loading) {
     return (
@@ -220,11 +223,9 @@ const SLDPage: React.FC = () => {
                     </span>
                   </div>
 
-                  <div className="flex-shrink-0  text-center justify-center px-2">
-                    <span className="text-white text-sm font-medium truncate block">
-                      {item.desa}
-                    </span>
-                  </div>
+                  <span className="text-white text-sm font-medium truncate block text-center">
+                    {getNamaGI(item.nama_gi_gis)}
+                  </span>
                 </div>
               </div>
               //   </div>

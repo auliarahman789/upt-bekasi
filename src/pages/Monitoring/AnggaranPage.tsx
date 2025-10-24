@@ -12,10 +12,12 @@ import {
 } from "recharts";
 import DefaultLayout from "../../layout/DefaultLayout";
 import axios from "axios";
+import { useAuth } from "../../context/AuthContext"; // Add this import
 
 interface RawData {
-  date: string; // format: YYYY-MM-DD
+  date: string;
   percentage: number;
+  realValue?: number; // Add real value field
 }
 
 interface CategoryData {
@@ -29,6 +31,7 @@ interface CategoryData {
 interface MonthlyData {
   month: string;
   percentage: number;
+  realValue?: number; // Add real value field
   color: string;
 }
 
@@ -37,6 +40,9 @@ interface InvestasiData {
   "SKKI TERBIT": number;
   RENCANA: number;
   REALISASI: number;
+  "SKKI TERBIT_REAL"?: number; // Add real value fields
+  RENCANA_REAL?: number;
+  REALISASI_REAL?: number;
 }
 
 interface ApiResponseItem {
@@ -78,7 +84,6 @@ const monthNames = [
   "Desember",
 ];
 
-// Updated short month names to match filter dropdown
 const shortMonthNames = [
   "Jan",
   "Feb",
@@ -109,7 +114,6 @@ const monthColors: Record<string, string> = {
   Des: "#C084FC",
 };
 
-// Map Indonesian month names from API to index
 const indonesianMonthMap: Record<string, number> = {
   januari: 0,
   februari: 1,
@@ -125,20 +129,24 @@ const indonesianMonthMap: Record<string, number> = {
   desember: 11,
 };
 
-// Convert API data to RawData format
 const convertApiDataToRawData = (apiData: ApiResponseItem[]): RawData[] => {
   return apiData.map((item, index) => {
-    // Parse percentage from string like "4,65%" to number
     const percentageStr = item.presentase.replace("%", "").replace(",", ".");
     const percentage = parseFloat(percentageStr) || 0;
 
-    // Create a date for each month (using day 15 as default)
+    // Parse real value from realisasi_akumulasi
+    const realValueStr = item.realisasi_akumulasi
+      .replace(/\./g, "")
+      .replace(",", ".");
+    const realValue = parseFloat(realValueStr) || 0;
+
     const monthIndex = index + 1;
     const date = `2025-${String(monthIndex).padStart(2, "0")}-15`;
 
     return {
       date,
       percentage,
+      realValue, // Add real value
     };
   });
 };
@@ -148,13 +156,11 @@ const convertInvestasiApiData = (
 ): InvestasiData[] => {
   const result: InvestasiData[] = [];
 
-  // Parse values (remove dots and convert comma to decimal point)
   const parseValue = (str: string): number => {
     const cleaned = str.replace(/\./g, "").replace(",", ".");
     return parseFloat(cleaned) || 0;
   };
 
-  // Process each month
   Object.entries(apiData.skki_terbit).forEach(([monthKey, skki_value]) => {
     const monthIndex = indonesianMonthMap[monthKey.toLowerCase()];
     if (monthIndex === undefined) return;
@@ -163,8 +169,7 @@ const convertInvestasiApiData = (
     const rencana = parseValue(apiData.rencana[monthKey] || "0");
     const realisasi = parseValue(apiData.realisasi[monthKey] || "0");
 
-    // Calculate percentages based on SKKI as 100%
-    const skki_percentage = 100; // SKKI is always 100%
+    const skki_percentage = 100;
     const rencana_percentage = skki > 0 ? (rencana / skki) * 100 : 0;
     const realisasi_percentage = skki > 0 ? (realisasi / skki) * 100 : 0;
 
@@ -173,6 +178,10 @@ const convertInvestasiApiData = (
       "SKKI TERBIT": Math.round(skki_percentage * 100) / 100,
       RENCANA: Math.round(rencana_percentage * 100) / 100,
       REALISASI: Math.round(realisasi_percentage * 100) / 100,
+      // Store real values
+      "SKKI TERBIT_REAL": skki,
+      RENCANA_REAL: rencana,
+      REALISASI_REAL: realisasi,
     };
   });
 
@@ -180,6 +189,7 @@ const convertInvestasiApiData = (
 };
 
 const AnggaranPage: React.FC = () => {
+  const { user } = useAuth(); // Get user from auth context
   const [activeTab, setActiveTab] = useState<TabType>("anggaran-operasi");
   const [fromMonth, setFromMonth] = useState<string>("");
   const [toMonth, setToMonth] = useState<string>("");
@@ -188,6 +198,13 @@ const AnggaranPage: React.FC = () => {
     CategoryData[]
   >([]);
   const [investasiData, setInvestasiData] = useState<InvestasiData[]>([]);
+
+  // Check if user can see real values
+  const canSeeRealValues = useMemo(() => {
+    if (!user || !user.role) return false;
+    const role = user.role.toLowerCase();
+    return role === "super admin" || role === "investasi";
+  }, [user]);
 
   useEffect(() => {
     fetchAnggaranData();
@@ -228,7 +245,6 @@ const AnggaranPage: React.FC = () => {
 
       setAnggaranOperasiData(convertedData);
 
-      // Process investment data
       if (res.data.investasi && res.data.investasi.length > 0) {
         const investasiConverted = convertInvestasiApiData(
           res.data.investasi[0]
@@ -244,11 +260,9 @@ const AnggaranPage: React.FC = () => {
     }
   };
 
-  // Fixed filter function
   const filterByMonthRange = (data: RawData[]): RawData[] => {
     if (!fromMonth || !toMonth) return data;
 
-    // Get indices from short month names array
     const startIndex = shortMonthNames.indexOf(fromMonth);
     const endIndex = shortMonthNames.indexOf(toMonth);
 
@@ -263,19 +277,36 @@ const AnggaranPage: React.FC = () => {
   };
 
   const aggregateMonthlyData = (raw: RawData[]): MonthlyData[] => {
-    const grouped: Record<string, number[]> = {};
+    const grouped: Record<
+      string,
+      { percentages: number[]; realValues: number[] }
+    > = {};
 
     raw.forEach((d) => {
       const monthIdx = parseInt(d.date.split("-")[1], 10) - 1;
       const shortMonth = shortMonthNames[monthIdx];
 
-      if (!grouped[shortMonth]) grouped[shortMonth] = [];
-      grouped[shortMonth].push(d.percentage);
+      if (!grouped[shortMonth]) {
+        grouped[shortMonth] = { percentages: [], realValues: [] };
+      }
+      grouped[shortMonth].percentages.push(d.percentage);
+      if (d.realValue !== undefined) {
+        grouped[shortMonth].realValues.push(d.realValue);
+      }
     });
 
-    return Object.entries(grouped).map(([month, arr]) => ({
+    return Object.entries(grouped).map(([month, data]) => ({
       month,
-      percentage: Math.round(arr.reduce((a, b) => a + b, 0) / arr.length),
+      percentage: Math.round(
+        data.percentages.reduce((a, b) => a + b, 0) / data.percentages.length
+      ),
+      realValue:
+        data.realValues.length > 0
+          ? Math.round(
+              data.realValues.reduce((a, b) => a + b, 0) /
+                data.realValues.length
+            )
+          : undefined,
       color: monthColors[month],
     }));
   };
@@ -306,7 +337,11 @@ const AnggaranPage: React.FC = () => {
     );
   };
 
-  // Show loading state
+  // Format number with thousand separators
+  const formatNumber = (num: number): string => {
+    return new Intl.NumberFormat("id-ID").format(num);
+  };
+
   if (loading) {
     return (
       <DefaultLayout>
@@ -426,12 +461,43 @@ const AnggaranPage: React.FC = () => {
                             />
                             <XAxis type="number" domain={[0, 100]} hide />
                             <YAxis type="category" dataKey="month" width={30} />
-                            <Tooltip />
+                            <Tooltip
+                              content={({ active, payload }) => {
+                                if (active && payload && payload.length) {
+                                  const data = payload[0].payload;
+                                  return (
+                                    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+                                      <p className="font-medium text-gray-800 text-sm mb-1">
+                                        {data.month}
+                                      </p>
+                                      <p className="text-sm text-gray-600">
+                                        Percentage: {data.percentage}%
+                                      </p>
+                                      {canSeeRealValues &&
+                                        data.realValue !== undefined && (
+                                          <p className="text-sm text-gray-600">
+                                            Value: Rp{" "}
+                                            {formatNumber(data.realValue)}
+                                          </p>
+                                        )}
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              }}
+                            />
                             <Bar dataKey="percentage">
                               <LabelList
-                                dataKey="percentage"
+                                dataKey={
+                                  canSeeRealValues ? "realValue" : "percentage"
+                                }
                                 position="right"
-                                formatter={(label: any) => `${label}%`}
+                                formatter={(value: any) =>
+                                  canSeeRealValues
+                                    ? `Rp ${formatNumber(value)}`
+                                    : `${value}%`
+                                }
+                                style={{ fontSize: "10px" }}
                               />
                               {cat.data.map((d, i) => (
                                 <Cell key={i} fill={d.color} />
@@ -495,24 +561,38 @@ const AnggaranPage: React.FC = () => {
                           <Tooltip
                             content={({ active, payload, label }) => {
                               if (active && payload && payload.length) {
+                                const data = payload[0].payload;
                                 return (
                                   <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
                                     <p className="font-medium text-gray-800 text-sm mb-2">
                                       {label}
                                     </p>
                                     {payload.map(
-                                      (entry: any, index: number) => (
-                                        <p
-                                          key={index}
-                                          className="text-sm flex items-center justify-between"
-                                          style={{ color: entry.color }}
-                                        >
-                                          <span>{entry.dataKey}:</span>
-                                          <span className="ml-2 font-medium">
-                                            {entry.value.toFixed(2)}%
-                                          </span>
-                                        </p>
-                                      )
+                                      (entry: any, index: number) => {
+                                        const realValueKey = `${entry.dataKey}_REAL`;
+                                        const realValue = data[realValueKey];
+
+                                        return (
+                                          <div key={index} className="mb-1">
+                                            <p
+                                              className="text-sm flex items-center justify-between"
+                                              style={{ color: entry.color }}
+                                            >
+                                              <span>{entry.dataKey}:</span>
+                                              <span className="ml-2 font-medium">
+                                                {entry.value.toFixed(2)}%
+                                              </span>
+                                            </p>
+                                            {canSeeRealValues &&
+                                              realValue !== undefined && (
+                                                <p className="text-xs text-gray-600 ml-2">
+                                                  Rp {formatNumber(realValue)}{" "}
+                                                  JT
+                                                </p>
+                                              )}
+                                          </div>
+                                        );
+                                      }
                                     )}
                                   </div>
                                 );
@@ -524,13 +604,51 @@ const AnggaranPage: React.FC = () => {
                             dataKey="SKKI TERBIT"
                             fill="#B40404"
                             barSize={20}
-                          />
-                          <Bar
-                            dataKey="REALISASI"
-                            fill="#E78700"
-                            barSize={20}
-                          />
-                          <Bar dataKey="RENCANA" fill="#179FB7" barSize={20} />
+                          >
+                            {canSeeRealValues && (
+                              <LabelList
+                                dataKey="SKKI TERBIT_REAL"
+                                position="top"
+                                formatter={(value: any) => {
+                                  const numValue = Number(value);
+                                  return isNaN(numValue)
+                                    ? ""
+                                    : `Rp ${formatNumber(numValue)} JT`;
+                                }}
+                                style={{ fontSize: "9px", fill: "#B40404" }}
+                              />
+                            )}
+                          </Bar>
+                          <Bar dataKey="REALISASI" fill="#E78700" barSize={20}>
+                            {canSeeRealValues && (
+                              <LabelList
+                                dataKey="REALISASI_REAL"
+                                position="top"
+                                formatter={(value: any) => {
+                                  const numValue = Number(value);
+                                  return isNaN(numValue)
+                                    ? ""
+                                    : `Rp ${formatNumber(numValue)} JT`;
+                                }}
+                                style={{ fontSize: "9px", fill: "#E78700" }}
+                              />
+                            )}
+                          </Bar>
+                          <Bar dataKey="RENCANA" fill="#179FB7" barSize={20}>
+                            {canSeeRealValues && (
+                              <LabelList
+                                dataKey="RENCANA_REAL"
+                                position="top"
+                                formatter={(value: any) => {
+                                  const numValue = Number(value);
+                                  return isNaN(numValue)
+                                    ? ""
+                                    : `Rp ${formatNumber(numValue)} JT`;
+                                }}
+                                style={{ fontSize: "9px", fill: "#179FB7" }}
+                              />
+                            )}
+                          </Bar>
                         </BarChart>
                       </ResponsiveContainer>
                     </div>

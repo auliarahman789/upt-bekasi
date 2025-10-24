@@ -49,22 +49,27 @@ const transformApiData = (apiData: any) => {
     const statusUsia = value.status_usia;
     const prioritas = value.prioritas;
 
-    // Create bar data from prioritas (assuming P1, P2, P3 priority levels)
-    // Since your API only has one priority entry with "-", we'll need to adapt this
+    // Create a map for quick lookup of priority data
+    const priorityMap: { [key: string]: number } = {};
+    prioritas.forEach((item: any) => {
+      priorityMap[item.prioritas] = item.jumlah;
+    });
+
+    // Create bar data from prioritas with actual API values
     const barData = [
       {
         name: "P0",
-        value: Math.floor(prioritas[0]?.jumlah * 0.3) || 0,
+        value: priorityMap["P0"] || 0,
         color: colors.red,
       },
       {
         name: "P1",
-        value: Math.floor(prioritas[0]?.jumlah * 0.4) || 0,
+        value: priorityMap["P1"] || 0,
         color: colors.yellow,
       },
       {
         name: "P2",
-        value: Math.floor(prioritas[0]?.jumlah * 0.3) || 0,
+        value: priorityMap["P2"] || 0,
         color: colors.lb,
       },
     ];
@@ -416,7 +421,7 @@ const MTUMonitoringPage = () => {
       const response = await axios.get(
         `${import.meta.env.VITE_API_LINK_BE}/api/data-asset/mtu/kondisi`
       );
-
+      console.log("MTU Monitoring response.data:", response.data);
       const transformedData = transformApiData(response.data);
       setMonitoringData(transformedData);
     } catch (err) {

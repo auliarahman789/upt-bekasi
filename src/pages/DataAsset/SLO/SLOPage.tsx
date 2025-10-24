@@ -233,10 +233,10 @@ const SLOPage: React.FC = () => {
   const processTargetSLOData = () => {
     if (!apiData?.kelengkapan_data_slo) return [];
 
-    return apiData.kelengkapan_data_slo.slice(1).map((item, index) => ({
+    return apiData.kelengkapan_data_slo.map((item, index) => ({
       name: item.bay_jaringan,
       value: parseInt(item.target),
-      fill: colorPalette[(index + 3) % colorPalette.length],
+      fill: colorPalette[index % colorPalette.length],
     }));
   };
 

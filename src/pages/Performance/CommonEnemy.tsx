@@ -7,28 +7,57 @@ interface AnomalyData {
   CLOSE: number;
 }
 
+interface DetailItem {
+  upt?: string;
+  ultg?: string;
+  gi?: string;
+  bay?: string;
+  penghantar?: string;
+  lokasi?: string;
+  komponen?: string;
+  alat?: string;
+  anomali?: string;
+  kategori_anomali?: string;
+  status?: string;
+  tgl?: string;
+  role?: string;
+}
+
+interface CategoryDetail {
+  status: AnomalyData;
+  data: DetailItem[];
+}
+
 interface CommonEnemyData {
   data_gi: {
-    hotspot: AnomalyData;
-    rembesan: AnomalyData;
-    tekanan_gas: AnomalyData;
+    hotspot: CategoryDetail;
+    rembesan: CategoryDetail;
+    tekanan_gas: CategoryDetail;
   };
   data_jaringan: {
-    pentanahan: AnomalyData;
-    tegakan_tinjut: AnomalyData;
-    thermovisi: AnomalyData;
+    pentanahan: CategoryDetail;
+    tegakan_tinjut: CategoryDetail;
+    thermovisi: CategoryDetail;
   };
   data_proteksi: {
-    alarm_relai: AnomalyData;
-    annunciator: AnomalyData;
-    hotspot_sekunder: AnomalyData;
+    alarm_relai: CategoryDetail;
+    annunciator: CategoryDetail;
+    hotspot_sekunder: CategoryDetail;
   };
 }
+
+type FilterStatus = "OPEN" | "CLOSE" | "ALL";
 
 const CommonEnemyPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<CommonEnemyData | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<{
+    title: string;
+    data: DetailItem[];
+    categoryKey: string;
+  } | null>(null);
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>("OPEN");
 
   useEffect(() => {
     fetchCommongEnemy();
@@ -56,6 +85,20 @@ const CommonEnemyPage = () => {
     const total = closeCount + openCount;
     if (total === 0) return 0;
     return Math.round((closeCount / total) * 100);
+  };
+
+  const hasData = (closeCount: number, openCount: number) => {
+    return closeCount + openCount > 0;
+  };
+
+  const getFilteredData = () => {
+    if (!selectedCategory) return [];
+
+    if (filterStatus === "ALL") {
+      return selectedCategory.data;
+    }
+
+    return selectedCategory.data.filter((item) => item.status === filterStatus);
   };
 
   // Icon components
@@ -107,14 +150,204 @@ const CommonEnemyPage = () => {
     </svg>
   );
 
+  const DetailModal = () => {
+    if (!selectedCategory) return null;
+
+    const filteredData = getFilteredData();
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
+          {/* Header */}
+          <div className="bg-[#155C72] text-white p-4 md:p-6 flex justify-between items-center">
+            <h2 className="text-lg md:text-xl font-bold">
+              {selectedCategory.title} - Detail
+            </h2>
+            <button
+              onClick={() => {
+                setSelectedCategory(null);
+                setFilterStatus("OPEN");
+              }}
+              className="text-white hover:text-gray-200 text-2xl leading-none"
+            >
+              ×
+            </button>
+          </div>
+
+          {/* Filter */}
+          <div className="p-4 bg-gray-50 border-b flex gap-2 flex-wrap">
+            <button
+              onClick={() => setFilterStatus("OPEN")}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                filterStatus === "OPEN"
+                  ? "bg-red-500 text-white"
+                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
+              }`}
+            >
+              Open (
+              {selectedCategory.data.filter((d) => d.status === "OPEN").length})
+            </button>
+            <button
+              onClick={() => setFilterStatus("CLOSE")}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                filterStatus === "CLOSE"
+                  ? "bg-green-500 text-white"
+                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
+              }`}
+            >
+              Close (
+              {selectedCategory.data.filter((d) => d.status === "CLOSE").length}
+              )
+            </button>
+            <button
+              onClick={() => setFilterStatus("ALL")}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                filterStatus === "ALL"
+                  ? "bg-[#155C72] text-white"
+                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
+              }`}
+            >
+              All ({selectedCategory.data.length})
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="p-4 md:p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+            {filteredData.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                No data available for this filter
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="border border-gray-300 p-2 text-left text-sm font-semibold">
+                        No
+                      </th>
+                      <th className="border border-gray-300 p-2 text-left text-sm font-semibold">
+                        UPT
+                      </th>
+                      <th className="border border-gray-300 p-2 text-left text-sm font-semibold">
+                        ULTG
+                      </th>
+                      <th className="border border-gray-300 p-2 text-left text-sm font-semibold">
+                        GI
+                      </th>
+                      {selectedCategory.categoryKey.includes("proteksi") && (
+                        <>
+                          <th className="border border-gray-300 p-2 text-left text-sm font-semibold">
+                            Bay
+                          </th>
+                          <th className="border border-gray-300 p-2 text-left text-sm font-semibold">
+                            Alat
+                          </th>
+                          <th className="border border-gray-300 p-2 text-left text-sm font-semibold">
+                            Anomali
+                          </th>
+                        </>
+                      )}
+                      {selectedCategory.categoryKey.includes("gi") && (
+                        <>
+                          <th className="border border-gray-300 p-2 text-left text-sm font-semibold">
+                            Penghantar
+                          </th>
+                          <th className="border border-gray-300 p-2 text-left text-sm font-semibold">
+                            Lokasi
+                          </th>
+                          <th className="border border-gray-300 p-2 text-left text-sm font-semibold">
+                            Komponen
+                          </th>
+                        </>
+                      )}
+                      <th className="border border-gray-300 p-2 text-left text-sm font-semibold">
+                        Tanggal
+                      </th>
+                      <th className="border border-gray-300 p-2 text-left text-sm font-semibold">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredData.map((item, index) => (
+                      <tr
+                        key={index}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="border border-gray-300 p-2 text-sm">
+                          {index + 1}
+                        </td>
+                        <td className="border border-gray-300 p-2 text-sm">
+                          {item.upt || "-"}
+                        </td>
+                        <td className="border border-gray-300 p-2 text-sm">
+                          {item.ultg || "-"}
+                        </td>
+                        <td className="border border-gray-300 p-2 text-sm">
+                          {item.gi || "-"}
+                        </td>
+                        {selectedCategory.categoryKey.includes("proteksi") && (
+                          <>
+                            <td className="border border-gray-300 p-2 text-sm">
+                              {item.bay || "-"}
+                            </td>
+                            <td className="border border-gray-300 p-2 text-sm">
+                              {item.alat || "-"}
+                            </td>
+                            <td className="border border-gray-300 p-2 text-sm">
+                              {item.anomali || "-"}
+                            </td>
+                          </>
+                        )}
+                        {selectedCategory.categoryKey.includes("gi") && (
+                          <>
+                            <td className="border border-gray-300 p-2 text-sm">
+                              {item.penghantar || "-"}
+                            </td>
+                            <td className="border border-gray-300 p-2 text-sm">
+                              {item.lokasi || "-"}
+                            </td>
+                            <td className="border border-gray-300 p-2 text-sm">
+                              {item.komponen || "-"}
+                            </td>
+                          </>
+                        )}
+                        <td className="border border-gray-300 p-2 text-sm">
+                          {item.tgl || "-"}
+                        </td>
+                        <td className="border border-gray-300 p-2 text-sm">
+                          <span
+                            className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
+                              item.status === "OPEN"
+                                ? "bg-red-100 text-red-700"
+                                : "bg-green-100 text-green-700"
+                            }`}
+                          >
+                            {item.status || "-"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const AnomalyCard = ({
     title,
     items,
     icon,
+    categoryPrefix,
   }: {
     title: string;
-    items: { name: string; data: AnomalyData }[];
+    items: { name: string; data: CategoryDetail; key: string }[];
     icon: React.ReactNode;
+    categoryPrefix: string;
   }) => {
     return (
       <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-300">
@@ -129,29 +362,58 @@ const CommonEnemyPage = () => {
 
         <div className="space-y-5">
           {items.map((item, index) => {
-            const percentage = calculatePercentage(
-              item.data.CLOSE,
-              item.data.OPEN
+            const hasDataAvailable = hasData(
+              item.data.status.CLOSE,
+              item.data.status.OPEN
             );
+            const percentage = calculatePercentage(
+              item.data.status.CLOSE,
+              item.data.status.OPEN
+            );
+
             return (
               <div key={index}>
-                <div className="text-sm font-medium text-[#155C72] mb-2">
-                  {item.name}
+                <div className="flex justify-between items-center mb-2">
+                  <div className="text-sm font-medium text-[#155C72]">
+                    {item.name}
+                  </div>
+                  <button
+                    onClick={() =>
+                      setSelectedCategory({
+                        title: item.name,
+                        data: item.data.data,
+                        categoryKey: `${categoryPrefix}_${item.key}`,
+                      })
+                    }
+                    className="text-xs bg-[#155C72] text-white px-3 py-1 rounded-md hover:bg-[#0f4a5c] transition-colors"
+                  >
+                    Detail
+                  </button>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="flex-1 h-8 bg-gray-200 rounded-full overflow-hidden flex shadow-inner">
-                    <div
-                      className="bg-gradient-to-r from-green-400 to-green-500 h-full transition-all duration-500 ease-out"
-                      style={{ width: `${percentage}%` }}
-                    ></div>
-                    <div
-                      className="bg-gradient-to-r from-red-400 to-red-500 h-full transition-all duration-500 ease-out"
-                      style={{ width: `${100 - percentage}%` }}
-                    ></div>
-                  </div>
-                  <div className="bg-gradient-to-r from-green-400 to-green-500 text-white text-sm font-bold px-4 py-1.5 rounded-lg min-w-[65px] text-center shadow-md">
-                    {percentage}%
-                  </div>
+                  {!hasDataAvailable ? (
+                    <div className="flex-1 h-8 bg-gradient-to-r from-blue-400 to-blue-500 rounded-full shadow-inner flex items-center justify-center">
+                      <span className="text-white text-xs font-semibold">
+                        No Data
+                      </span>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex-1 h-8 bg-gray-200 rounded-full overflow-hidden flex shadow-inner">
+                        <div
+                          className="bg-gradient-to-r from-green-400 to-green-500 h-full transition-all duration-500 ease-out"
+                          style={{ width: `${percentage}%` }}
+                        ></div>
+                        <div
+                          className="bg-gradient-to-r from-red-400 to-red-500 h-full transition-all duration-500 ease-out"
+                          style={{ width: `${100 - percentage}%` }}
+                        ></div>
+                      </div>
+                      <div className="bg-gradient-to-r from-green-400 to-green-500 text-white text-sm font-bold px-4 py-1.5 rounded-lg min-w-[65px] text-center shadow-md">
+                        {percentage}%
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             );
@@ -218,15 +480,22 @@ const CommonEnemyPage = () => {
             <AnomalyCard
               title="ANOMALI GARDU INDUK"
               icon={<GarduIndukIcon />}
+              categoryPrefix="gi"
               items={[
                 {
                   name: "Rembesan / Bocor MTU & TRF",
                   data: data.data_gi.rembesan,
+                  key: "rembesan",
                 },
-                { name: "Hotspot MTU & TRF", data: data.data_gi.hotspot },
+                {
+                  name: "Hotspot MTU & TRF",
+                  data: data.data_gi.hotspot,
+                  key: "hotspot",
+                },
                 {
                   name: "Tekanan Gas SF6 PMT & GIS",
                   data: data.data_gi.tekanan_gas,
+                  key: "tekanan_gas",
                 },
               ]}
             />
@@ -235,10 +504,23 @@ const CommonEnemyPage = () => {
             <AnomalyCard
               title="ANOMALI JARINGAN"
               icon={<JaringanIcon />}
+              categoryPrefix="jaringan"
               items={[
-                { name: "Petahanan", data: data.data_jaringan.pentanahan },
-                { name: "ROW", data: data.data_jaringan.tegakan_tinjut },
-                { name: "Thermovisi", data: data.data_jaringan.thermovisi },
+                {
+                  name: "Petahanan",
+                  data: data.data_jaringan.pentanahan,
+                  key: "pentanahan",
+                },
+                {
+                  name: "ROW",
+                  data: data.data_jaringan.tegakan_tinjut,
+                  key: "tegakan_tinjut",
+                },
+                {
+                  name: "Thermovisi",
+                  data: data.data_jaringan.thermovisi,
+                  key: "thermovisi",
+                },
               ]}
             />
 
@@ -246,17 +528,30 @@ const CommonEnemyPage = () => {
             <AnomalyCard
               title="ANOMALI PROTEKSI"
               icon={<ProteksiIcon />}
+              categoryPrefix="proteksi"
               items={[
-                { name: "Alarm Relay", data: data.data_proteksi.alarm_relai },
-                { name: "Announciator", data: data.data_proteksi.annunciator },
+                {
+                  name: "Alarm Relay",
+                  data: data.data_proteksi.alarm_relai,
+                  key: "alarm_relai",
+                },
+                {
+                  name: "Announciator",
+                  data: data.data_proteksi.annunciator,
+                  key: "annunciator",
+                },
                 {
                   name: "Hotspot Sekunder",
                   data: data.data_proteksi.hotspot_sekunder,
+                  key: "hotspot_sekunder",
                 },
               ]}
             />
           </div>
         </div>
+
+        {/* Detail Modal */}
+        {selectedCategory && <DetailModal />}
       </div>
     </DefaultLayout>
   );

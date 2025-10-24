@@ -4,59 +4,82 @@ import PetaTower from "./PetaTower";
 import PetaGI from "./PetaGI";
 import DataAssetContent from "./DataAssetContent";
 import axios from "axios";
-interface GIGitet {
-  "70_kv": string;
-  "150_kv": string;
-  "500_kv": string;
-}
 
-interface GISGistet {
-  "70_kv": string;
-  "150_kv": string;
-  "500_kv": string;
-}
-
-interface JumlahTower {
-  "70_kv": string;
-  "150_kv": string;
-  "500_kv": string;
-}
-
-interface KmsData {
-  sk: string;
-  su: string;
-}
-
-interface TrafoData {
+interface LevelTegangan {
   jumlah: string;
   mva: string;
 }
 
-interface Trafo150_70 {
-  "150_20_kv": string;
+interface LevelTeganganGI {
+  "150_kv": string;
+  "500_kv": string;
+}
+
+interface LevelTeganganGIGISET {
+  "150_kv": string;
+  "500_kv": string;
+}
+
+interface LevelTeganganTower {
+  "150_kv": LevelTegangan;
+  "500_kv": LevelTegangan;
+}
+
+interface LevelTeganganTransformer {
+  "150_20_kv": LevelTegangan;
+  "500_150_kv": LevelTegangan;
+}
+
+interface ULTGData {
+  jumlah_gi: string;
+  jumlah_gitet: string;
+  jumlah_sk: string;
+  jumlah_tower: string;
+  jumlah_transformer: string;
+  level_tegangan: LevelTeganganTransformer;
+  level_tegangan_gi_gitet: LevelTeganganGI;
+  level_tegangan_gi_gitset: LevelTeganganGIGISET;
+  level_tegangan_tower: LevelTeganganTower;
+  total_kapasitas: string;
+  total_kms_transmisu: string;
+  yotal_unit: string;
+}
+
+interface AsetTidakOperasi {
+  gi_gitet: {
+    "70_kv": string;
+    "150_kv": string;
+    "500_kv": string;
+  };
+  tower: {
+    "500_kv": string;
+    "150_kv": string;
+    "70_kv": string;
+  };
+  trafo: {
+    "500_150_kv": string;
+    "150_20_kv": string;
+    "150_70_kv": string;
+  };
+}
+
+interface TotalAset {
+  title: string;
   jumlah: string;
-  mva: string;
 }
 
 interface AssetData {
-  gi_gitet: GIGitet;
-  gis_gistet: GISGistet;
-  joint_sk: string;
-  jumlah_tower: JumlahTower;
-  kms_70_kv: KmsData;
-  kms_150_kv: KmsData;
-  kms_500_kv: KmsData;
-  trafo_150_20_kv: TrafoData;
-  trafo_150_70_kv: Trafo150_70;
-  trafo_500_150_kv: TrafoData;
-  ultg: string;
-  upt: string;
+  ultg_bekasi: ULTGData;
+  ultg_cikarang: ULTGData;
+  upt: ULTGData;
+  aset_tidak_operasi: AsetTidakOperasi;
+  total_aset: TotalAset;
 }
 
 interface ApiResponse {
   status: string;
   message: string;
-  data: AssetData[];
+  data: AssetData;
 }
 
 const DataAssetPage = () => {
@@ -95,63 +118,68 @@ const DataAssetPage = () => {
     return cleaned === "-" ? 0 : parseFloat(cleaned) || 0;
   };
 
-  // Get data for specific ULTG or total
-  const getULTGData = (ultgName: string): AssetData | null => {
+  // Get data for specific ULTG
+  const getULTGData = (ultgName: "BEKASI" | "CIKARANG"): ULTGData | null => {
     if (!apiData?.data) return null;
-    return apiData.data.find((item) => item.ultg === ultgName) || null;
+    return ultgName === "BEKASI"
+      ? apiData.data.ultg_bekasi
+      : apiData.data.ultg_cikarang;
   };
 
-  // Get total data
-  const getTotalData = (): AssetData | null => {
+  // Get UPT (total) data
+  const getUPTData = (): ULTGData | null => {
     if (!apiData?.data) return null;
-    return apiData.data.find((item) => item.ultg === "Total UPT") || null;
+    return apiData.data.upt;
+  };
+
+  // Get non-operational assets
+  const getAsetTidakOperasi = (): AsetTidakOperasi | null => {
+    if (!apiData?.data) return null;
+    return apiData.data.aset_tidak_operasi;
+  };
+
+  // Get total asset value
+  const getTotalAset = (): TotalAset | null => {
+    if (!apiData?.data) return null;
+    return apiData.data.total_aset;
   };
 
   // Calculate totals for display
   const calculateTotals = () => {
-    const totalData = getTotalData();
-    if (!totalData) return null;
+    const uptData = getUPTData();
+    if (!uptData) return null;
 
-    const totalGI =
-      parseValue(totalData.gi_gitet["150_kv"]) +
-      parseValue(totalData.gi_gitet["500_kv"]) +
-      parseValue(totalData.gi_gitet["70_kv"]);
+    const totalGI = parseValue(uptData.jumlah_gi);
+    const totalGITET = parseValue(uptData.jumlah_gitet);
 
     const totalGIS =
-      parseValue(totalData.gis_gistet["150_kv"]) +
-      parseValue(totalData.gis_gistet["500_kv"]) +
-      parseValue(totalData.gis_gistet["70_kv"]);
+      parseValue(uptData.level_tegangan_gi_gitset["150_kv"]) +
+      parseValue(uptData.level_tegangan_gi_gitset["500_kv"]);
 
     const totalTransformers =
-      parseValue(totalData.trafo_500_150_kv.jumlah) +
-      parseValue(totalData.trafo_150_20_kv.jumlah) +
-      parseValue(totalData.trafo_150_70_kv.jumlah);
+      parseValue(uptData.level_tegangan["500_150_kv"].jumlah) +
+      parseValue(uptData.level_tegangan["150_20_kv"].jumlah);
 
-    const totalCapacity =
-      parseValue(totalData.trafo_500_150_kv.mva) +
-      parseValue(totalData.trafo_150_20_kv.mva) +
-      parseValue(totalData.trafo_150_70_kv.mva);
+    const totalCapacity = parseValue(uptData.total_kapasitas);
 
-    const totalTowers =
-      parseValue(totalData.jumlah_tower["500_kv"]) +
-      parseValue(totalData.jumlah_tower["150_kv"]) +
-      parseValue(totalData.jumlah_tower["70_kv"]);
+    const totalTowers = parseValue(uptData.jumlah_tower);
 
-    const totalKms =
-      parseValue(totalData.kms_500_kv.su) +
-      parseValue(totalData.kms_500_kv.sk) +
-      parseValue(totalData.kms_150_kv.su) +
-      parseValue(totalData.kms_150_kv.sk) +
-      parseValue(totalData.kms_70_kv.su) +
-      parseValue(totalData.kms_70_kv.sk);
+    const totalKms = parseValue(uptData.total_kms_transmisu);
+
+    const totalSK = parseValue(uptData.jumlah_sk);
+
+    const totalUnit = parseValue(uptData.yotal_unit);
 
     return {
       totalGI,
+      totalGITET,
       totalGIS,
       totalTransformers,
       totalCapacity,
       totalTowers,
       totalKms,
+      totalSK,
+      totalUnit,
     };
   };
 
@@ -172,11 +200,13 @@ const DataAssetPage = () => {
       );
     }
 
-    const totalData = getTotalData();
+    const uptData = getUPTData();
     const selectedData = getULTGData(selectedULTG);
     const totals = calculateTotals();
+    const asetTidakOperasi = getAsetTidakOperasi();
+    const totalAset = getTotalAset();
 
-    if (!totalData || !totals) {
+    if (!uptData || !totals) {
       return (
         <div className="flex justify-center items-center h-64">
           <div className="text-red-500">Invalid data format</div>
@@ -189,12 +219,14 @@ const DataAssetPage = () => {
         return (
           <>
             <DataAssetContent
-              totalData={totalData}
+              uptData={uptData}
               totals={totals}
               selectedData={selectedData}
               selectedULTG={selectedULTG}
               setSelectedULTG={setSelectedULTG}
               parseValue={parseValue}
+              asetTidakOperasi={asetTidakOperasi}
+              totalAset={totalAset}
             />
           </>
         );

@@ -8,7 +8,7 @@ interface User {
   id: number;
   nama: string;
   email: string;
-  role: "admin" | "super admin";
+  role: "admin" | "super admin" | "investasi" | "user";
 }
 
 interface Article {
@@ -35,7 +35,7 @@ interface UserForm {
   email: string;
   password: string;
   confPassword: string;
-  role: "admin" | "super admin";
+  role: "admin" | "super admin" | "investasi" | "user";
 }
 
 interface ArticleForm {
@@ -70,7 +70,7 @@ const AdminPanel: React.FC = () => {
     email: "",
     password: "",
     confPassword: "",
-    role: "admin",
+    role: "user",
   });
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
@@ -133,6 +133,14 @@ const AdminPanel: React.FC = () => {
       setVideoForm((prev) => ({ ...prev, videoId, thumbnail }));
     }
   }, [videoForm.videoLink]);
+
+  // Helper function to format date for input (YYYY-MM-DD)
+  const formatDateForInput = (dateString: string): string => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "";
+    return date.toISOString().split("T")[0];
+  };
 
   // File handling functions
   async function handleFileUpload(file: File): Promise<string> {
@@ -458,7 +466,7 @@ const AdminPanel: React.FC = () => {
       email: "",
       password: "",
       confPassword: "",
-      role: "admin",
+      role: "user",
     });
     setEditingUserId(null);
   };
@@ -504,7 +512,7 @@ const AdminPanel: React.FC = () => {
     setArticleForm({
       title: article.title,
       description: article.description,
-      date: article.date,
+      date: formatDateForInput(article.date),
       image: article.image,
       link: article.link,
     });
@@ -516,7 +524,7 @@ const AdminPanel: React.FC = () => {
     setVideoForm({
       title: video.title,
       description: video.description,
-      date: video.date,
+      date: formatDateForInput(video.date),
       videoId: video.videoId,
       thumbnail: video.thumbnail,
       videoLink: `https://www.youtube.com/watch?v=${video.videoId}`,
@@ -524,6 +532,7 @@ const AdminPanel: React.FC = () => {
     setEditingVideoId(video.id);
     setShowVideoModal(true);
   };
+
   // Show loading state
   if (loading) {
     return (
@@ -539,6 +548,7 @@ const AdminPanel: React.FC = () => {
       </DefaultLayout>
     );
   }
+
   return (
     <DefaultLayout>
       <div className="container mx-auto px-4 py-8">
@@ -836,13 +846,19 @@ const AdminPanel: React.FC = () => {
                     onChange={(e) =>
                       setUserForm({
                         ...userForm,
-                        role: e.target.value as "admin" | "super admin",
+                        role: e.target.value as
+                          | "admin"
+                          | "super admin"
+                          | "investasi"
+                          | "user",
                       })
                     }
                     className="w-full p-2 border border-gray-300 rounded"
                   >
+                    <option value="user">User</option>
                     <option value="admin">Admin</option>
                     <option value="super admin">Super Admin</option>
+                    <option value="investasi">Investasi</option>
                   </select>
                 </div>
 
@@ -895,14 +911,20 @@ const AdminPanel: React.FC = () => {
                     className="w-full p-2 border border-gray-300 rounded h-24"
                   />
 
-                  <input
-                    type="date"
-                    value={articleForm.date}
-                    onChange={(e) =>
-                      setArticleForm({ ...articleForm, date: e.target.value })
-                    }
-                    className="w-full p-2 border border-gray-300 rounded"
-                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Date
+                    </label>
+                    <input
+                      type="date"
+                      value={articleForm.date}
+                      onChange={(e) =>
+                        setArticleForm({ ...articleForm, date: e.target.value })
+                      }
+                      className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      onClick={(e) => e.currentTarget.showPicker?.()}
+                    />
+                  </div>
 
                   <input
                     type="url"
@@ -993,7 +1015,7 @@ const AdminPanel: React.FC = () => {
           {/* Video Modal */}
           {showVideoModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-screen overflow-y-auto">
                 <h3 className="text-lg font-semibold mb-4">
                   {editingVideoId ? "Edit Video" : "Add Video"}
                 </h3>
@@ -1021,14 +1043,20 @@ const AdminPanel: React.FC = () => {
                     className="w-full p-2 border border-gray-300 rounded h-24"
                   />
 
-                  <input
-                    type="date"
-                    value={videoForm.date}
-                    onChange={(e) =>
-                      setVideoForm({ ...videoForm, date: e.target.value })
-                    }
-                    className="w-full p-2 border border-gray-300 rounded"
-                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Date
+                    </label>
+                    <input
+                      type="date"
+                      value={videoForm.date}
+                      onChange={(e) =>
+                        setVideoForm({ ...videoForm, date: e.target.value })
+                      }
+                      className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      onClick={(e) => e.currentTarget.showPicker?.()}
+                    />
+                  </div>
 
                   <input
                     type="url"
