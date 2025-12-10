@@ -421,7 +421,7 @@ const MTUMonitoringPage = () => {
       const response = await axios.get(
         `${import.meta.env.VITE_API_LINK_BE}/api/data-asset/mtu/kondisi`
       );
-      console.log("MTU Monitoring response.data:", response.data);
+
       const transformedData = transformApiData(response.data);
       setMonitoringData(transformedData);
     } catch (err) {

@@ -147,7 +147,13 @@ const LevelHSSEPage: React.FC = () => {
 
   const parseNumber = (value: string | number): number => {
     if (!value || value.toString().trim() === "") return 0;
-    const parsed = parseFloat(value.toString().replace(",", "."));
+
+    // Remove percentage sign if present
+    const stringValue = value.toString().replace("%", "").trim();
+
+    // Replace comma with dot for decimal parsing
+    const parsed = parseFloat(stringValue.replace(",", "."));
+
     return isNaN(parsed) ? 0 : parsed;
   };
 
@@ -209,6 +215,7 @@ const LevelHSSEPage: React.FC = () => {
       setLoading(false);
     }
   };
+
   const parseCSVLine = (line: string): string[] => {
     return line
       .split(",")
@@ -252,9 +259,7 @@ const LevelHSSEPage: React.FC = () => {
       return criteria;
     });
   };
-  useEffect(() => {
-    fetchSpecificSheetData(activeSheet);
-  }, [activeSheet]);
+
   const parseCsvData = (lines: string[]) => {
     // Parse summary data from RESUME section
     const summary: CriteriaData[] = [];
@@ -262,6 +267,8 @@ const LevelHSSEPage: React.FC = () => {
     let pencapaianSem2 = 0;
     let targetPlnSem1 = 0;
     let targetPlnSem2 = 0;
+    let nilaiAkhirSem1 = 0;
+    let nilaiAkhirSem2 = 0;
 
     // Look for the row that says "RESUME" and parse criteria after it
     let resumeRowIndex = -1;
@@ -352,76 +359,79 @@ const LevelHSSEPage: React.FC = () => {
           }
         }
       }
-
-      // Look for final scores row (Nilai Akhir)
-      for (
-        let i = resumeRowIndex;
-        i < Math.min(resumeRowIndex + 20, lines.length);
-        i++
-      ) {
-        const cells = parseCSVLine(lines[i]);
-        if (
-          cells[0]?.toLowerCase().includes("nilai akhir") ||
-          cells[1]?.toLowerCase().includes("nilai akhir")
-        ) {
-          setTotalAchievement({
-            sem1: parseNumber(cells[4]),
-            sem2: parseNumber(cells[5]),
-          });
-          break;
-        }
-      }
     }
 
-    // Extract Pencapaian percentages and Target PLN Pusat from specific rows based on sheet type
+    // Extract data based on sheet type with correct row indices (0-based)
     if (activeSheet === "k3") {
-      // For K3: Target PLN Pusat from C35 and D35 (row 35, columns C=2 and D=3)
-      if (lines.length > 34) {
-        const cells35 = parseCSVLine(lines[34]);
-        if (cells35.length > 2) {
-          targetPlnSem1 = parseNumber(cells35[2]); // Column C
+      // K3 Sheet Structure:
+      // Row 34 (index 33): Nilai Akhir - columns C and D (indices 2 and 3)
+      // Row 35 (index 34): Target PLN Pusat - columns C and D (indices 2 and 3)
+      // Row 37 (index 36): Pencapaian Semester 1 - column F (index 5)
+      // Row 38 (index 37): Pencapaian Semester 2 - column F (index 5)
+
+      if (lines.length > 33) {
+        const cells34 = parseCSVLine(lines[33]); // Row 34
+        if (cells34[1]?.toLowerCase().includes("nilai akhir")) {
+          nilaiAkhirSem1 = parseNumber(cells34[2]); // Column C
+          nilaiAkhirSem2 = parseNumber(cells34[3]); // Column D
         }
-        if (cells35.length > 3) {
+      }
+
+      if (lines.length > 34) {
+        const cells35 = parseCSVLine(lines[34]); // Row 35
+        if (cells35[1]?.toLowerCase().includes("target pln pusat")) {
+          targetPlnSem1 = parseNumber(cells35[2]); // Column C
           targetPlnSem2 = parseNumber(cells35[3]); // Column D
         }
       }
 
-      // For K3: F37 and F38 for percentages
       if (lines.length > 36) {
-        const cells37 = parseCSVLine(lines[36]);
-        if (cells37.length > 5 && cells37[5].includes("%")) {
-          pencapaianSem1 = parseFloat(cells37[5].replace("%", ""));
+        const cells37 = parseCSVLine(lines[36]); // Row 37
+        if (cells37[4]?.toLowerCase().includes("semester 1")) {
+          pencapaianSem1 = parseNumber(cells37[5]); // Column F
         }
       }
+
       if (lines.length > 37) {
-        const cells38 = parseCSVLine(lines[37]);
-        if (cells38.length > 5 && cells38[5].includes("%")) {
-          pencapaianSem2 = parseFloat(cells38[5].replace("%", ""));
+        const cells38 = parseCSVLine(lines[37]); // Row 38
+        if (cells38[4]?.toLowerCase().includes("semester 2")) {
+          pencapaianSem2 = parseNumber(cells38[5]); // Column F
         }
       }
     } else if (activeSheet === "kam") {
-      // For KAM: Target PLN Pusat from C38 and D38
-      if (lines.length > 37) {
-        const cells38 = parseCSVLine(lines[37]);
-        if (cells38.length > 2) {
-          targetPlnSem1 = parseNumber(cells38[2]); // Column C
+      // KAM Sheet Structure:
+      // Row 37 (index 36): Nilai Akhir - columns C and D (indices 2 and 3)
+      // Row 38 (index 37): Target PLN Pusat - columns C and D (indices 2 and 3)
+      // Row 40 (index 39): Pencapaian Semester 1 - column F (index 5)
+      // Row 41 (index 40): Pencapaian Semester 2 - column F (index 5)
+
+      if (lines.length > 36) {
+        const cells37 = parseCSVLine(lines[36]); // Row 37
+        if (cells37[1]?.toLowerCase().includes("nilai akhir")) {
+          nilaiAkhirSem1 = parseNumber(cells37[2]); // Column C
+          nilaiAkhirSem2 = parseNumber(cells37[3]); // Column D
         }
-        if (cells38.length > 3) {
+      }
+
+      if (lines.length > 37) {
+        const cells38 = parseCSVLine(lines[37]); // Row 38
+        if (cells38[1]?.toLowerCase().includes("target pln pusat")) {
+          targetPlnSem1 = parseNumber(cells38[2]); // Column C
           targetPlnSem2 = parseNumber(cells38[3]); // Column D
         }
       }
 
-      // For KAM: F40 and F41 for percentages
       if (lines.length > 39) {
-        const cells40 = parseCSVLine(lines[39]);
-        if (cells40.length > 5 && cells40[5].includes("%")) {
-          pencapaianSem1 = parseFloat(cells40[5].replace("%", ""));
+        const cells40 = parseCSVLine(lines[39]); // Row 40
+        if (cells40[4]?.toLowerCase().includes("semester 1")) {
+          pencapaianSem1 = parseNumber(cells40[5]); // Column F
         }
       }
+
       if (lines.length > 40) {
-        const cells41 = parseCSVLine(lines[40]);
-        if (cells41.length > 5 && cells41[5].includes("%")) {
-          pencapaianSem2 = parseFloat(cells41[5].replace("%", ""));
+        const cells41 = parseCSVLine(lines[40]); // Row 41
+        if (cells41[4]?.toLowerCase().includes("semester 2")) {
+          pencapaianSem2 = parseNumber(cells41[5]); // Column F
         }
       }
     }
@@ -431,6 +441,12 @@ const LevelHSSEPage: React.FC = () => {
 
     setSummaryData(updatedSummary);
     setDetailData(details);
+
+    // Set total achievement (Nilai Akhir)
+    setTotalAchievement({
+      sem1: nilaiAkhirSem1,
+      sem2: nilaiAkhirSem2,
+    });
 
     // Set pencapaian percentages
     setPencapaianPercentages({
@@ -452,6 +468,8 @@ const LevelHSSEPage: React.FC = () => {
     let pencapaianSem2 = 0;
     let targetPlnSem1 = 0;
     let targetPlnSem2 = 0;
+    let nilaiAkhirSem1 = 0;
+    let nilaiAkhirSem2 = 0;
 
     // Look for RESUME section
     let resumeRowIndex = -1;
@@ -545,63 +563,65 @@ const LevelHSSEPage: React.FC = () => {
           }
         }
       }
-
-      // Look for final scores
-      for (
-        let i = resumeRowIndex;
-        i < Math.min(resumeRowIndex + 20, rows.length);
-        i++
-      ) {
-        const row = rows[i];
-        if (
-          row &&
-          (row[0]?.toString().toLowerCase().includes("nilai akhir") ||
-            row[1]?.toString().toLowerCase().includes("nilai akhir"))
-        ) {
-          setTotalAchievement({
-            sem1: parseNumber(row[4]),
-            sem2: parseNumber(row[5]),
-          });
-          break;
-        }
-      }
     }
 
-    // Extract Pencapaian percentages and Target PLN Pusat (same as CSV logic)
+    // Extract data based on sheet type with correct row indices (0-based)
     if (activeSheet === "k3") {
-      if (rows.length > 34 && rows[34] && rows[34].length > 3) {
-        targetPlnSem1 = parseNumber(rows[34][2]);
-        targetPlnSem2 = parseNumber(rows[34][3]);
-      }
-
-      if (rows.length > 36 && rows[36] && rows[36].length > 5) {
-        const cellF37 = rows[36][5]?.toString();
-        if (cellF37 && cellF37.includes("%")) {
-          pencapaianSem1 = parseFloat(cellF37.replace("%", ""));
+      // K3 Sheet Structure
+      if (rows.length > 33 && rows[33]) {
+        if (rows[33][1]?.toString().toLowerCase().includes("nilai akhir")) {
+          nilaiAkhirSem1 = parseNumber(rows[33][2]);
+          nilaiAkhirSem2 = parseNumber(rows[33][3]);
         }
       }
-      if (rows.length > 37 && rows[37] && rows[37].length > 5) {
-        const cellF38 = rows[37][5]?.toString();
-        if (cellF38 && cellF38.includes("%")) {
-          pencapaianSem2 = parseFloat(cellF38.replace("%", ""));
+
+      if (rows.length > 34 && rows[34]) {
+        if (
+          rows[34][1]?.toString().toLowerCase().includes("target pln pusat")
+        ) {
+          targetPlnSem1 = parseNumber(rows[34][2]);
+          targetPlnSem2 = parseNumber(rows[34][3]);
+        }
+      }
+
+      if (rows.length > 36 && rows[36]) {
+        if (rows[36][4]?.toString().toLowerCase().includes("semester 1")) {
+          pencapaianSem1 = parseNumber(rows[36][5]);
+        }
+      }
+
+      if (rows.length > 37 && rows[37]) {
+        if (rows[37][4]?.toString().toLowerCase().includes("semester 2")) {
+          pencapaianSem2 = parseNumber(rows[37][5]);
         }
       }
     } else if (activeSheet === "kam") {
-      if (rows.length > 37 && rows[37] && rows[37].length > 3) {
-        targetPlnSem1 = parseNumber(rows[37][2]);
-        targetPlnSem2 = parseNumber(rows[37][3]);
-      }
-
-      if (rows.length > 39 && rows[39] && rows[39].length > 5) {
-        const cellF40 = rows[39][5]?.toString();
-        if (cellF40 && cellF40.includes("%")) {
-          pencapaianSem1 = parseFloat(cellF40.replace("%", ""));
+      // KAM Sheet Structure
+      if (rows.length > 36 && rows[36]) {
+        if (rows[36][1]?.toString().toLowerCase().includes("nilai akhir")) {
+          nilaiAkhirSem1 = parseNumber(rows[36][2]);
+          nilaiAkhirSem2 = parseNumber(rows[36][3]);
         }
       }
-      if (rows.length > 40 && rows[40] && rows[40].length > 5) {
-        const cellF41 = rows[40][5]?.toString();
-        if (cellF41 && cellF41.includes("%")) {
-          pencapaianSem2 = parseFloat(cellF41.replace("%", ""));
+
+      if (rows.length > 37 && rows[37]) {
+        if (
+          rows[37][1]?.toString().toLowerCase().includes("target pln pusat")
+        ) {
+          targetPlnSem1 = parseNumber(rows[37][2]);
+          targetPlnSem2 = parseNumber(rows[37][3]);
+        }
+      }
+
+      if (rows.length > 39 && rows[39]) {
+        if (rows[39][4]?.toString().toLowerCase().includes("semester 1")) {
+          pencapaianSem1 = parseNumber(rows[39][5]);
+        }
+      }
+
+      if (rows.length > 40 && rows[40]) {
+        if (rows[40][4]?.toString().toLowerCase().includes("semester 2")) {
+          pencapaianSem2 = parseNumber(rows[40][5]);
         }
       }
     }
@@ -612,11 +632,19 @@ const LevelHSSEPage: React.FC = () => {
     setSummaryData(updatedSummary);
     setDetailData(details);
 
+    // Set total achievement (Nilai Akhir)
+    setTotalAchievement({
+      sem1: nilaiAkhirSem1,
+      sem2: nilaiAkhirSem2,
+    });
+
+    // Set pencapaian percentages
     setPencapaianPercentages({
       sem1: pencapaianSem1,
       sem2: pencapaianSem2,
     });
 
+    // Set Target PLN Pusat
     setTargetPlnPusat({
       sem1: targetPlnSem1,
       sem2: targetPlnSem2,
@@ -727,7 +755,7 @@ const LevelHSSEPage: React.FC = () => {
                     <p className="text-sm font-medium text-gray-600">
                       Target PLN Pusat
                     </p>
-                    <p className="text-xl font-semibold text-gray-900">
+                    <p className="text-xlfont-semibold text-gray-900">
                       {targetPlnPusat.sem1.toFixed(2)}
                     </p>
                   </div>
@@ -759,7 +787,6 @@ const LevelHSSEPage: React.FC = () => {
               </p>
             </div>
           </div>
-
           {/* Semester 2 Card */}
           <div className="bg-[#CDE9ED] p-6 px-10 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between h-full hover:shadow-md transition-shadow">
             <div>
@@ -941,10 +968,10 @@ const LevelHSSEPage: React.FC = () => {
                                     {detail.actionPlan}
                                   </td>
                                   <td className="px-6 py-4 text-center text-sm">
-                                    {detail.targetSem1}
+                                    {detail.targetSem1.toFixed(2)}
                                   </td>
                                   <td className="px-6 py-4 text-center text-sm">
-                                    {detail.targetSem2}
+                                    {detail.targetSem2.toFixed(2)}
                                   </td>
                                   <td className="px-6 py-4 text-center">
                                     <span
@@ -955,7 +982,7 @@ const LevelHSSEPage: React.FC = () => {
                                           : "bg-red-100 text-red-800"
                                       }`}
                                     >
-                                      {detail.realisasiSem1}
+                                      {detail.realisasiSem1.toFixed(2)}
                                     </span>
                                   </td>
                                   <td className="px-6 py-4 text-center">
@@ -967,7 +994,7 @@ const LevelHSSEPage: React.FC = () => {
                                           : "bg-red-100 text-red-800"
                                       }`}
                                     >
-                                      {detail.realisasiSem2}
+                                      {detail.realisasiSem2.toFixed(2)}
                                     </span>
                                   </td>
                                 </tr>
@@ -1004,5 +1031,4 @@ const LevelHSSEPage: React.FC = () => {
     </DefaultLayout>
   );
 };
-
 export default LevelHSSEPage;
