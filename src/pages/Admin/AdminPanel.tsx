@@ -55,13 +55,17 @@ interface VideoForm {
   videoLink: string; // For form input
 }
 
+interface CoverImage {
+  image_url: string;
+}
+
 const API_BASE = import.meta.env.VITE_API_LINK_BE;
 
 const AdminPanel: React.FC = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<"users" | "articles" | "videos">(
-    "users"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "users" | "articles" | "videos" | "cover"
+  >("users");
 
   // Users state
   const [users, setUsers] = useState<User[]>([]);
@@ -104,6 +108,13 @@ const AdminPanel: React.FC = () => {
   const [editingVideoId, setEditingVideoId] = useState<number | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
 
+  // Cover Image state
+  const [coverImage, setCoverImage] = useState<CoverImage>({ image_url: "" });
+  const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
+  const [coverImagePreview, setCoverImagePreview] = useState<string>("");
+  const [coverImageUploading, setCoverImageUploading] = useState(false);
+  const [coverImageError, setCoverImageError] = useState<string>("");
+
   // Loading states
   const [loading, setLoading] = useState(false);
 
@@ -112,6 +123,7 @@ const AdminPanel: React.FC = () => {
     fetchUsers();
     fetchArticles();
     fetchVideos();
+    fetchCoverImage();
   }, []);
 
   // Helper function to extract YouTube video ID and thumbnail from URL
@@ -222,6 +234,96 @@ const AdminPanel: React.FC = () => {
       }
     }
   }
+
+  // Cover Image functions
+  const fetchCoverImage = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_BASE}/api/home-page-image`, {
+        withCredentials: true,
+      });
+      console.log("cover image", response);
+      setCoverImage(response.data);
+    } catch (error) {
+      console.error("Error fetching cover image:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCoverImageSelect = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ): void => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        setCoverImageError("Please select an image file");
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        setCoverImageError("File size must be less than 5MB");
+        return;
+      }
+
+      setCoverImageFile(file);
+      setCoverImageError("");
+
+      const previewUrl = URL.createObjectURL(file);
+      setCoverImagePreview(previewUrl);
+    }
+  };
+
+  const clearCoverImageSelection = (): void => {
+    setCoverImageFile(null);
+    setCoverImagePreview("");
+    setCoverImageError("");
+
+    if (coverImagePreview) {
+      URL.revokeObjectURL(coverImagePreview);
+    }
+  };
+
+  const updateCoverImage = async () => {
+    try {
+      let imageFileName = coverImage.image_url;
+
+      if (coverImageFile) {
+        setCoverImageUploading(true);
+
+        // Delete old image if exists
+        if (coverImage.image_url) {
+          try {
+            await handleFileDelete(coverImage.image_url);
+          } catch (error) {
+            console.error("Error deleting old cover image:", error);
+          }
+        }
+
+        // Upload new image
+        imageFileName = await handleFileUpload(coverImageFile);
+      }
+
+      // Update cover image
+      await axios.put(
+        `${API_BASE}/api/home-page-image`,
+        { image_url: imageFileName },
+        {
+          withCredentials: true,
+        }
+      );
+
+      // Refresh data
+      await fetchCoverImage();
+      clearCoverImageSelection();
+      alert("Cover image updated successfully!");
+    } catch (error) {
+      console.error("Error updating cover image:", error);
+      setCoverImageError("Failed to update cover image");
+    } finally {
+      setCoverImageUploading(false);
+    }
+  };
 
   // API functions for Users
   const fetchUsers = async () => {
@@ -562,7 +664,7 @@ const AdminPanel: React.FC = () => {
           {/* Tab Navigation */}
           <div className="border-b border-gray-200 mb-6">
             <nav className="-mb-px flex space-x-8">
-              {["users", "articles", "videos"].map((tab) => (
+              {["users", "articles", "videos", "cover"].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab as typeof activeTab)}
@@ -572,7 +674,7 @@ const AdminPanel: React.FC = () => {
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                   }`}
                 >
-                  {tab}
+                  {tab === "cover" ? "Cover Image" : tab}
                 </button>
               ))}
             </nav>
@@ -788,6 +890,101 @@ const AdminPanel: React.FC = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Cover Image Tab */}
+          {activeTab === "cover" && (
+            <div>
+              <div className="mb-4">
+                <h2 className="text-xl font-semibold">
+                  Cover Image Management
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Update the main cover image for the home page
+                </p>
+              </div>
+
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                {/* Current Cover Image */}
+                {coverImage.image_url && !coverImagePreview && (
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Current Cover Image
+                    </label>
+                    <div className="relative inline-block">
+                      <img
+                        src={`${API_BASE}/api/images/${coverImage.image_url}`}
+                        alt="Current Cover"
+                        className="w-full max-w-2xl h-auto object-cover rounded-lg border-2 border-gray-300"
+                        style={{ aspectRatio: "1341/576" }}
+                        onError={(e) => {
+                          e.currentTarget.src = "frontImage.jpg";
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Preview New Image */}
+                {coverImagePreview && (
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      New Cover Image Preview
+                    </label>
+                    <div className="relative inline-block">
+                      <img
+                        src={coverImagePreview}
+                        alt="Preview"
+                        className="w-full max-w-2xl h-auto object-cover rounded-lg border-2 border-blue-500"
+                        style={{ aspectRatio: "1341/576" }}
+                      />
+                      <button
+                        onClick={clearCoverImageSelection}
+                        className="absolute top-2 right-2 bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Upload Section */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Upload New Cover Image
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleCoverImageSelect}
+                      className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Recommended size: 1341x576 pixels (aspect ratio 1341:576).
+                      Max file size: 5MB
+                    </p>
+                  </div>
+                  {coverImageError && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                      {coverImageError}
+                    </div>
+                  )}
+
+                  <div className="flex justify-end">
+                    <button
+                      onClick={updateCoverImage}
+                      disabled={!coverImageFile || coverImageUploading}
+                      className="px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {coverImageUploading
+                        ? "Uploading..."
+                        : "Update Cover Image"}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -1119,5 +1316,4 @@ const AdminPanel: React.FC = () => {
     </DefaultLayout>
   );
 };
-
 export default AdminPanel;

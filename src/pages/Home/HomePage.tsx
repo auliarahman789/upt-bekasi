@@ -1,9 +1,40 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import DefaultLayout from "../../layout/DefaultLayout";
-import Article from "./Article"; // Import the Article component
+import Article from "./Article";
 import Videos from "./Videos";
 
+const API_BASE = import.meta.env.VITE_API_LINK_BE;
+
 const HomePage: React.FC = () => {
+  const [coverImageUrl, setCoverImageUrl] = useState<string>("frontImage.jpg");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCoverImage = async () => {
+      try {
+        const response = await axios.get(`${API_BASE}/api/home-page-image`, {
+          withCredentials: true,
+        });
+
+        if (response.data.data.image_url) {
+          setCoverImageUrl(
+            `${API_BASE}/api/images/${response.data.data.image_url}`
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching cover image:", error);
+        // Keep default image on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCoverImage();
+  }, []);
+
+  const imageUrl = loading ? "frontImage.jpg" : coverImageUrl;
+
   return (
     <DefaultLayout>
       {/* Hero Section with Background and Image */}
@@ -22,12 +53,15 @@ const HomePage: React.FC = () => {
           {/* Front Image for Mobile */}
           <div className="relative w-full">
             <img
-              src="frontImage.jpg"
+              src={coverImageUrl}
               alt="PLN UPT Bekasi Team"
               className="w-full h-auto object-cover rounded-lg"
               style={{
                 aspectRatio: "1341/576",
                 minHeight: "200px",
+              }}
+              onError={(e) => {
+                e.currentTarget.src = "frontImage.jpg";
               }}
             />
 
@@ -49,12 +83,15 @@ const HomePage: React.FC = () => {
             {/* Front Image */}
             <div className="relative rounded-lg sm:rounded-2xl lg:rounded-3xl overflow-hidden">
               <img
-                src="frontImage.jpg"
+                src={imageUrl}
                 alt="PLN UPT Bekasi Team"
                 className="w-full h-auto object-cover"
                 style={{
                   aspectRatio: "1341/576",
                   minHeight: "200px",
+                }}
+                onError={(e) => {
+                  e.currentTarget.src = "frontImage.jpg";
                 }}
               />
 
