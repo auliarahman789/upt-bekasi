@@ -39,6 +39,7 @@ import HealthIndexPage from "./pages/DataAsset/HealthIndexPage";
 import LevelLingkunganPage from "./pages/Monitoring/HSSE/LevelLingkungan";
 import KinerjaULTGPage from "./pages/Kinerja/KinerjaULTGPage";
 import CommonEnemyPage from "./pages/Performance/CommonEnemy";
+import SertifikasiKompetensiPage from "./pages/Monitoring/HSSE/SertifikasiKompetensiPage";
 
 // Protected Route Component
 interface ProtectedRouteProps {
@@ -409,6 +410,15 @@ function AppContent() {
           <ProtectedRoute>
             <PageTitle title="UPT Bekasi - Maturing Level HSSE" />
             <LevelHSSEPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/monitoring/hsse/sertifikasikompetensi"
+        element={
+          <ProtectedRoute>
+            <PageTitle title="UPT Bekasi - Sertifikasi Kompetensi" />
+            <SertifikasiKompetensiPage />
           </ProtectedRoute>
         }
       />

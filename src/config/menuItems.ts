@@ -223,6 +223,12 @@ export const menuItems: MenuItem[] = [
             icon: "",
             route: "/monitoring/hsse/levellingkungan",
           },
+          {
+            id: "hsse-6",
+            label: "SERTIFIKASI KOMPETENSI",
+            icon: "",
+            route: "/monitoring/hsse/sertifikasikompetensi",
+          },
         ],
       },
     ],
