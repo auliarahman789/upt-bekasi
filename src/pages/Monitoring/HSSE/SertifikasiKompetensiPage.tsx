@@ -339,7 +339,7 @@ const SertifikasiKompetensiPage: React.FC = () => {
                 <YAxis />
                 <Tooltip />
                 <Bar dataKey="persentase" fill="#145C72">
-                  {chartData.map((entry, index) => (
+                  {chartData.map((_, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={COLORS[index % COLORS.length]}
@@ -365,7 +365,7 @@ const SertifikasiKompetensiPage: React.FC = () => {
                   fill="#8884d8"
                   dataKey="persentase"
                 >
-                  {chartData.map((entry, index) => (
+                  {chartData.map((_, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={COLORS[index % COLORS.length]}
