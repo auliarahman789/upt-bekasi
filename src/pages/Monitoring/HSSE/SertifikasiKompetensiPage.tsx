@@ -9,8 +9,6 @@ import {
   Legend,
   ResponsiveContainer,
   Cell,
-  PieChart,
-  Pie,
 } from "recharts";
 import { Award, Users, TrendingUp, FileText } from "lucide-react";
 import DefaultLayout from "../../../layout/DefaultLayout";
@@ -38,7 +36,7 @@ interface JenisSertifikatData {
   persentase: string;
 }
 
-interface KebutuhanData {
+interface AnalisaKebutuhanData {
   judul_diklat: string;
   damkar_kelas_d: string;
   damkar_kelas_c: string;
@@ -60,7 +58,9 @@ const SertifikasiKompetensiPage: React.FC = () => {
   const [jenisSertifikat, setJenisSertifikat] = useState<JenisSertifikatData[]>(
     []
   );
-  const [kebutuhanData, setKebutuhanData] = useState<KebutuhanData[]>([]);
+  const [analisaKebutuhan, setAnalisaKebutuhan] = useState<
+    AnalisaKebutuhanData[]
+  >([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedJenis, setSelectedJenis] = useState<string>("All");
@@ -78,6 +78,10 @@ const SertifikasiKompetensiPage: React.FC = () => {
     "#9ECFDF",
     "#BAE0F0",
     "#CDE9ED",
+    "#A5D8E0",
+    "#7BC4D4",
+    "#5AB5C8",
+    "#3AA6BC",
   ];
 
   useEffect(() => {
@@ -100,7 +104,7 @@ const SertifikasiKompetensiPage: React.FC = () => {
       if (response.data.status === "success") {
         setData(response.data.data_realisasi || []);
         setJenisSertifikat(response.data.data_jenis_sertifikat || []);
-        setKebutuhanData(response.data.data || []);
+        setAnalisaKebutuhan(response.data.data_analisa_kebutuhan || []);
       }
     } catch (err) {
       console.error("Error fetching Sertifikasi Kompetensi data:", err);
@@ -141,74 +145,58 @@ const SertifikasiKompetensiPage: React.FC = () => {
     persentase: parseFloat(item.persentase.replace("%", "")),
   }));
 
-  // Prepare kebutuhan comparison data
-  const kebutuhanChartData =
-    kebutuhanData.length >= 2
+  // Prepare data for analisa kebutuhan table
+  const kebutuhanTableData =
+    analisaKebutuhan.length > 0
       ? [
           {
-            category: "DAMKAR D",
-            minimal: parseInt(kebutuhanData[0].damkar_kelas_d) || 0,
-            existing: parseInt(kebutuhanData[1].damkar_kelas_d) || 0,
+            category: "DAMKAR Kelas D",
+            requirement: analisaKebutuhan[0].damkar_kelas_d,
           },
           {
-            category: "DAMKAR C",
-            minimal: parseInt(kebutuhanData[0].damkar_kelas_c) || 0,
-            existing: parseInt(kebutuhanData[1].damkar_kelas_c) || 0,
+            category: "DAMKAR Kelas C",
+            requirement: analisaKebutuhan[0].damkar_kelas_c,
           },
           {
-            category: "DAMKAR B",
-            minimal: parseInt(kebutuhanData[0].damkar_kelas_b) || 0,
-            existing: parseInt(kebutuhanData[1].damkar_kelas_b) || 0,
+            category: "DAMKAR Kelas B",
+            requirement: analisaKebutuhan[0].damkar_kelas_b,
           },
           {
-            category: "DAMKAR A",
-            minimal: parseInt(kebutuhanData[0].damkar_kelas_a) || 0,
-            existing: parseInt(kebutuhanData[1].damkar_kelas_a) || 0,
+            category: "DAMKAR Kelas A",
+            requirement: analisaKebutuhan[0].damkar_kelas_a,
           },
-          {
-            category: "P3K",
-            minimal: parseInt(kebutuhanData[0].p3k) || 0,
-            existing: parseInt(kebutuhanData[1].p3k) || 0,
-          },
+          { category: "P3K", requirement: analisaKebutuhan[0].p3k },
           {
             category: "Pengukuran",
-            minimal: parseInt(kebutuhanData[0].pengukuran) || 0,
-            existing: parseInt(kebutuhanData[1].pengukuran) || 0,
+            requirement: analisaKebutuhan[0].pengukuran,
           },
           {
             category: "Pengawasan K3",
-            minimal: parseInt(kebutuhanData[0].pengawasan_k3) || 0,
-            existing: parseInt(kebutuhanData[1].pengawasan_k3) || 0,
+            requirement: analisaKebutuhan[0].pengawasan_k3,
           },
           {
             category: "Ahli K3 Muda",
-            minimal: parseInt(kebutuhanData[0].ahli_k3_muda) || 0,
-            existing: parseInt(kebutuhanData[1].ahli_k3_muda) || 0,
+            requirement: analisaKebutuhan[0].ahli_k3_muda,
           },
           {
             category: "Ahli K3 Umum",
-            minimal: parseInt(kebutuhanData[0].ahli_k3_umum) || 0,
-            existing: parseInt(kebutuhanData[1].ahli_k3_umum) || 0,
+            requirement: analisaKebutuhan[0].ahli_k3_umum,
           },
           {
             category: "Auditor SMK3",
-            minimal: parseInt(kebutuhanData[0].auditor_smk3) || 0,
-            existing: parseInt(kebutuhanData[1].auditor_smk3) || 0,
+            requirement: analisaKebutuhan[0].auditor_smk3,
           },
           {
-            category: "Ahli K3 Listrik",
-            minimal: parseInt(kebutuhanData[0].ahli_k3_spesialis_listrik) || 0,
-            existing: parseInt(kebutuhanData[1].ahli_k3_spesialis_listrik) || 0,
+            category: "Ahli K3 Spesialis Listrik",
+            requirement: analisaKebutuhan[0].ahli_k3_spesialis_listrik,
           },
           {
             category: "Gada Utama",
-            minimal: parseInt(kebutuhanData[0].gada_utama) || 0,
-            existing: parseInt(kebutuhanData[1].gada_utama) || 0,
+            requirement: analisaKebutuhan[0].gada_utama,
           },
           {
             category: "Auditor SMP",
-            minimal: parseInt(kebutuhanData[0].auditor_smp) || 0,
-            existing: parseInt(kebutuhanData[1].auditor_smp) || 0,
+            requirement: analisaKebutuhan[0].auditor_smp,
           },
         ]
       : [];
@@ -236,15 +224,15 @@ const SertifikasiKompetensiPage: React.FC = () => {
   if (error) {
     return (
       <DefaultLayout>
-        <div className="p-8">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+        <div className="p-4 md:p-8">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 md:p-6">
             <h3 className="text-sm font-medium text-red-800">
               Error loading data
             </h3>
             <p className="mt-2 text-sm text-red-700">{error}</p>
             <button
               onClick={fetchSertifikasi}
-              className="mt-4 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
+              className="mt-4 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 text-sm"
             >
               Try Again
             </button>
@@ -256,170 +244,140 @@ const SertifikasiKompetensiPage: React.FC = () => {
 
   return (
     <DefaultLayout>
-      <div className="p-8 bg-gray-50 min-h-screen">
+      <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-[#145C72] flex items-center gap-2">
-            <Award size={32} />
+        <div className="mb-4 md:mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-[#145C72] flex items-center gap-2">
+            <Award className="w-6 h-6 md:w-8 md:h-8" />
             Sertifikasi Kompetensi
           </h1>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-xs md:text-sm text-gray-600 mt-1">
             UPT Bekasi - Monitoring dan Realisasi Sertifikasi
           </p>
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
+          <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">
+                <p className="text-xs md:text-sm font-medium text-gray-600">
                   Total Sertifikasi
                 </p>
-                <p className="text-3xl font-bold text-[#145C72] mt-2">
+                <p className="text-2xl md:text-3xl font-bold text-[#145C72] mt-1 md:mt-2">
                   {totalSertifikasi}
                 </p>
               </div>
-              <div className="p-3 rounded-full bg-[#CDE9ED]">
-                <FileText className="h-8 w-8 text-[#145C72]" />
+              <div className="p-2 md:p-3 rounded-full bg-[#CDE9ED]">
+                <FileText className="h-6 w-6 md:h-8 md:w-8 text-[#145C72]" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+          <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">
+                <p className="text-xs md:text-sm font-medium text-gray-600">
                   Sertifikat Berlaku
                 </p>
-                <p className="text-3xl font-bold text-green-600 mt-2">
+                <p className="text-2xl md:text-3xl font-bold text-green-600 mt-1 md:mt-2">
                   {berlakuCount}
                 </p>
               </div>
-              <div className="p-3 rounded-full bg-green-100">
-                <TrendingUp className="h-8 w-8 text-green-600" />
+              <div className="p-2 md:p-3 rounded-full bg-green-100">
+                <TrendingUp className="h-6 w-6 md:h-8 md:w-8 text-green-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+          <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow sm:col-span-2 lg:col-span-1">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">
+                <p className="text-xs md:text-sm font-medium text-gray-600">
                   Personel Tersertifikasi
                 </p>
-                <p className="text-3xl font-bold text-[#145C72] mt-2">
+                <p className="text-2xl md:text-3xl font-bold text-[#145C72] mt-1 md:mt-2">
                   {uniquePersonnel}
                 </p>
               </div>
-              <div className="p-3 rounded-full bg-[#CDE9ED]">
-                <Users className="h-8 w-8 text-[#145C72]" />
+              <div className="p-2 md:p-3 rounded-full bg-[#CDE9ED]">
+                <Users className="h-6 w-6 md:h-8 md:w-8 text-[#145C72]" />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Persentase Pencapaian Chart */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <h2 className="text-xl font-semibold text-[#145C72] mb-4">
-              Persentase Pencapaian Sertifikasi
+        {/* Analisa Kebutuhan Sertifikasi - Full Width */}
+        {kebutuhanTableData.length > 0 && (
+          <div className="bg-white p-3 md:p-4 rounded-xl shadow-sm border border-gray-200 mb-4 md:mb-6">
+            <h2 className="text-base md:text-lg font-semibold text-[#145C72] mb-2 md:mb-3">
+              Analisa Kebutuhan Sertifikasi
             </h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="name"
-                  angle={-45}
-                  textAnchor="end"
-                  height={120}
-                  tick={{ fontSize: 10 }}
-                />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="persentase" fill="#145C72">
-                  {chartData.map((_, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Pie Chart */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <h2 className="text-xl font-semibold text-[#145C72] mb-4">
-              Distribusi Jenis Sertifikasi
-            </h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="persentase"
-                >
-                  {chartData.map((_, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Kebutuhan vs Existing Chart */}
-        {kebutuhanChartData.length > 0 && (
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6">
-            <h2 className="text-xl font-semibold text-[#145C72] mb-4">
-              Kebutuhan Minimal vs Jumlah Existing
-            </h2>
-            <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={kebutuhanChartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="category"
-                  angle={-45}
-                  textAnchor="end"
-                  height={120}
-                  tick={{ fontSize: 11 }}
-                />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar
-                  dataKey="minimal"
-                  fill="#145C72"
-                  name="Kebutuhan Minimal"
-                />
-                <Bar dataKey="existing" fill="#66ADBD" name="Jumlah Existing" />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="overflow-x-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-2 md:gap-3">
+                {kebutuhanTableData.map((item, index) => (
+                  <div
+                    key={index}
+                    className="border border-gray-200 rounded-lg p-2 md:p-3 hover:shadow-md transition-shadow bg-gray-50"
+                  >
+                    <h3 className="text-xs md:text-sm font-semibold text-[#145C72] mb-1 md:mb-2">
+                      {item.category}
+                    </h3>
+                    <p className="text-[10px] md:text-xs text-gray-600 whitespace-pre-line leading-relaxed">
+                      {item.requirement}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
+        {/* Persentase Pencapaian Chart - Full Width */}
+        <div className="bg-white p-3 md:p-4 rounded-xl shadow-sm border border-gray-200 mb-4 md:mb-6">
+          <h2 className="text-base md:text-lg font-semibold text-[#145C72] mb-2 md:mb-3">
+            Persentase Pencapaian Sertifikasi
+          </h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="name"
+                angle={-45}
+                textAnchor="end"
+                height={100}
+                tick={{ fontSize: 9 }}
+                interval={0}
+              />
+              <YAxis tick={{ fontSize: 10 }} />
+              <Tooltip
+                contentStyle={{ fontSize: "11px" }}
+                formatter={(value: any) => `${value}%`}
+              />
+              <Legend wrapperStyle={{ fontSize: "11px" }} />
+              <Bar dataKey="persentase" fill="#145C72" name="Persentase (%)">
+                {chartData.map((_, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
         {/* Filters and Search */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
+        <div className="bg-white p-3 md:p-4 rounded-xl shadow-sm border border-gray-200 mb-4 md:mb-6">
+          <div className="flex flex-col md:flex-row gap-2 md:gap-3">
             <div className="flex-1">
-              <label className="block text-sm font-medium text-[#145C72] mb-2">
+              <label className="block text-xs font-medium text-[#145C72] mb-1.5">
                 Filter by Jenis
               </label>
               <select
                 value={selectedJenis}
                 onChange={(e) => setSelectedJenis(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#145C72] focus:border-transparent"
+                className="w-full px-2.5 md:px-3 py-1.5 md:py-2 text-xs md:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#145C72] focus:border-transparent"
               >
                 {uniqueJenis.map((jenis) => (
                   <option key={jenis} value={jenis}>
@@ -429,7 +387,7 @@ const SertifikasiKompetensiPage: React.FC = () => {
               </select>
             </div>
             <div className="flex-1">
-              <label className="block text-sm font-medium text-[#145C72] mb-2">
+              <label className="block text-xs font-medium text-[#145C72] mb-1.5">
                 Search
               </label>
               <input
@@ -437,7 +395,7 @@ const SertifikasiKompetensiPage: React.FC = () => {
                 placeholder="Search by nama, NIP, or kualifikasi..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#145C72] focus:border-transparent"
+                className="w-full px-2.5 md:px-3 py-1.5 md:py-2 text-xs md:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#145C72] focus:border-transparent"
               />
             </div>
           </div>
@@ -445,11 +403,11 @@ const SertifikasiKompetensiPage: React.FC = () => {
 
         {/* Data Table */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="px-6 py-4 border-b">
-            <h2 className="text-xl font-semibold text-[#145C72]">
+          <div className="px-3 md:px-4 py-2 md:py-3 border-b">
+            <h2 className="text-base md:text-lg font-semibold text-[#145C72]">
               Data Realisasi Sertifikasi
             </h2>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-[10px] md:text-xs text-gray-600 mt-0.5">
               Showing {filteredData.length} of {totalSertifikasi} records
             </p>
           </div>
@@ -458,28 +416,28 @@ const SertifikasiKompetensiPage: React.FC = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-[#CDE9ED]">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-[#145C72] uppercase tracking-wider">
+                  <th className="px-2 md:px-3 py-1.5 md:py-2 text-left text-[10px] md:text-xs font-bold text-[#145C72] uppercase tracking-wider">
                     No
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-[#145C72] uppercase tracking-wider">
+                  <th className="px-2 md:px-3 py-1.5 md:py-2 text-left text-[10px] md:text-xs font-bold text-[#145C72] uppercase tracking-wider">
                     NIP
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-[#145C72] uppercase tracking-wider">
+                  <th className="px-2 md:px-3 py-1.5 md:py-2 text-left text-[10px] md:text-xs font-bold text-[#145C72] uppercase tracking-wider">
                     Nama
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-[#145C72] uppercase tracking-wider">
+                  <th className="px-2 md:px-3 py-1.5 md:py-2 text-left text-[10px] md:text-xs font-bold text-[#145C72] uppercase tracking-wider">
                     Jenis
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-[#145C72] uppercase tracking-wider">
+                  <th className="px-2 md:px-3 py-1.5 md:py-2 text-left text-[10px] md:text-xs font-bold text-[#145C72] uppercase tracking-wider">
                     Kualifikasi
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-[#145C72] uppercase tracking-wider">
+                  <th className="px-2 md:px-3 py-1.5 md:py-2 text-left text-[10px] md:text-xs font-bold text-[#145C72] uppercase tracking-wider">
                     No Sertifikat
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-[#145C72] uppercase tracking-wider">
+                  <th className="px-2 md:px-3 py-1.5 md:py-2 text-left text-[10px] md:text-xs font-bold text-[#145C72] uppercase tracking-wider">
                     Berlaku S/D
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-[#145C72] uppercase tracking-wider">
+                  <th className="px-2 md:px-3 py-1.5 md:py-2 text-left text-[10px] md:text-xs font-bold text-[#145C72] uppercase tracking-wider">
                     Status
                   </th>
                 </tr>
@@ -492,30 +450,30 @@ const SertifikasiKompetensiPage: React.FC = () => {
                       index % 2 === 0 ? "bg-white" : "bg-gray-50"
                     } hover:bg-blue-50 transition-colors`}
                   >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#145C72]">
+                    <td className="px-2 md:px-3 py-2 md:py-2.5 whitespace-nowrap text-[10px] md:text-xs font-medium text-[#145C72]">
                       {indexOfFirstItem + index + 1}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#145C72]">
+                    <td className="px-2 md:px-3 py-2 md:py-2.5 whitespace-nowrap text-[10px] md:text-xs text-[#145C72]">
                       {item.nip}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#145C72]">
+                    <td className="px-2 md:px-3 py-2 md:py-2.5 whitespace-nowrap text-[10px] md:text-xs text-[#145C72]">
                       {item.nama}
                     </td>
-                    <td className="px-6 py-4 text-sm text-[#145C72]">
+                    <td className="px-2 md:px-3 py-2 md:py-2.5 text-[10px] md:text-xs text-[#145C72]">
                       {item.jenis}
                     </td>
-                    <td className="px-6 py-4 text-sm text-[#145C72]">
+                    <td className="px-2 md:px-3 py-2 md:py-2.5 text-[10px] md:text-xs text-[#145C72]">
                       {item.kualifikasi}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#145C72]">
+                    <td className="px-2 md:px-3 py-2 md:py-2.5 whitespace-nowrap text-[10px] md:text-xs text-[#145C72]">
                       {item.no_sertifikat}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#145C72]">
+                    <td className="px-2 md:px-3 py-2 md:py-2.5 whitespace-nowrap text-[10px] md:text-xs text-[#145C72]">
                       {item.tgl_akhir_berlaku}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 md:px-3 py-2 md:py-2.5 whitespace-nowrap">
                       <span
-                        className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        className={`px-1.5 py-0.5 text-[9px] md:text-[10px] font-medium rounded-full ${
                           item.berlaku === "Berlaku"
                             ? "bg-green-100 text-green-800"
                             : "bg-red-100 text-red-800"
@@ -531,9 +489,11 @@ const SertifikasiKompetensiPage: React.FC = () => {
           </div>
 
           {filteredData.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-lg text-gray-600">No data found</p>
-              <p className="text-sm text-gray-500 mt-2">
+            <div className="text-center py-6 md:py-8">
+              <p className="text-sm md:text-base text-gray-600">
+                No data found
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
                 Try adjusting your filters or search term
               </p>
             </div>
@@ -541,20 +501,20 @@ const SertifikasiKompetensiPage: React.FC = () => {
 
           {/* Pagination */}
           {filteredData.length > 0 && (
-            <div className="px-6 py-4 border-t border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-700">
+            <div className="px-3 md:px-4 py-2 md:py-3 border-t border-gray-200">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+                <div className="text-[10px] md:text-xs text-gray-700 text-center sm:text-left">
                   Menampilkan {indexOfFirstItem + 1} sampai{" "}
                   {Math.min(indexOfLastItem, filteredData.length)} dari{" "}
                   {filteredData.length} data
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex flex-wrap justify-center gap-1">
                   <button
                     onClick={() =>
                       setCurrentPage((prev) => Math.max(prev - 1, 1))
                     }
                     disabled={currentPage === 1}
-                    className="px-3 py-2 bg-gray-200 text-gray-700 rounded disabled:opacity-50 hover:bg-gray-300 transition-colors"
+                    className="px-2 md:px-2.5 py-1 text-[10px] md:text-xs bg-gray-200 text-gray-700 rounded disabled:opacity-50 hover:bg-gray-300 transition-colors"
                   >
                     Previous
                   </button>
@@ -567,7 +527,7 @@ const SertifikasiKompetensiPage: React.FC = () => {
                       <button
                         key={pageNum}
                         onClick={() => setCurrentPage(pageNum)}
-                        className={`px-3 py-2 rounded transition-colors ${
+                        className={`px-2 md:px-2.5 py-1 text-[10px] md:text-xs rounded transition-colors ${
                           currentPage === pageNum
                             ? "bg-[#145C72] text-white"
                             : "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -583,7 +543,7 @@ const SertifikasiKompetensiPage: React.FC = () => {
                       setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                     }
                     disabled={currentPage === totalPages}
-                    className="px-3 py-2 bg-gray-200 text-gray-700 rounded disabled:opacity-50 hover:bg-gray-300 transition-colors"
+                    className="px-2 md:px-2.5 py-1 text-[10px] md:text-xs bg-gray-200 text-gray-700 rounded disabled:opacity-50 hover:bg-gray-300 transition-colors"
                   >
                     Next
                   </button>

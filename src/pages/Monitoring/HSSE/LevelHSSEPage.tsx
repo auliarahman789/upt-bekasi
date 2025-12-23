@@ -166,23 +166,7 @@ const LevelHSSEPage: React.FC = () => {
 
       const config = SHEET_CONFIGS[sheetType];
 
-      // Try CSV export first
-      try {
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${config.spreadsheetId}/export?format=csv&gid=${config.sheetGid}`;
-        const response = await fetch(csvUrl);
-        if (response.ok) {
-          const csvText = await response.text();
-          const lines = csvText.split("\n").filter((line) => line.trim());
-          if (lines.length > 0) {
-            parseCsvData(lines);
-            return;
-          }
-        }
-      } catch (csvError) {
-        console.log("CSV method failed:", csvError);
-      }
-
-      // --- Service Account Auth Flow ---
+      // Use Service Account Auth directly (skip CSV export)
       const accessToken = await getAccessToken();
       const range = `'${config.sheetName}'!A1:G50`;
       const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${
@@ -214,12 +198,6 @@ const LevelHSSEPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const parseCSVLine = (line: string): string[] => {
-    return line
-      .split(",")
-      .map((cell) => cell.replace(/^["']|["']$/g, "").trim());
   };
 
   // Helper function to calculate averages for main criteria based on sub-criteria
@@ -257,207 +235,6 @@ const LevelHSSEPage: React.FC = () => {
 
       // Return original criteria if no sub-criteria found
       return criteria;
-    });
-  };
-
-  const parseCsvData = (lines: string[]) => {
-    // Parse summary data from RESUME section
-    const summary: CriteriaData[] = [];
-    let pencapaianSem1 = 0;
-    let pencapaianSem2 = 0;
-    let targetPlnSem1 = 0;
-    let targetPlnSem2 = 0;
-    let nilaiAkhirSem1 = 0;
-    let nilaiAkhirSem2 = 0;
-
-    // Look for the row that says "RESUME" and parse criteria after it
-    let resumeRowIndex = -1;
-    for (let i = 0; i < lines.length; i++) {
-      if (lines[i].toLowerCase().includes("resume")) {
-        resumeRowIndex = i;
-        break;
-      }
-    }
-
-    // Parse action plan details first (this should be above the RESUME section)
-    const details: { [key: number]: ActionPlanData[] } = {};
-
-    // Enhanced parsing for action plan details
-    for (let i = 1; i < lines.length; i++) {
-      // Start from row 1 to skip header
-      if (resumeRowIndex > 0 && i >= resumeRowIndex) break; // Stop when we reach RESUME section
-
-      const cells = parseCSVLine(lines[i]);
-      let subNo = cells[0]?.trim().replace(",", ".");
-      if (subNo && /^\d+\.\d+$/.test(subNo) && cells.length >= 6) {
-        const mainNo = parseInt(subNo.split(".")[0]);
-
-        if (!details[mainNo]) {
-          details[mainNo] = [];
-        }
-
-        // Enhanced action plan parsing - combine multiple columns if needed
-        let actionPlan = cells[1] || "";
-
-        // Sometimes action plans are split across multiple columns
-        // Check if there are additional text columns that should be part of the action plan
-        for (let j = 2; j < cells.length; j++) {
-          const cellValue = cells[j]?.trim();
-          // If the cell contains non-numeric data and isn't empty, it might be part of action plan
-          if (cellValue && isNaN(parseFloat(cellValue.replace(",", ".")))) {
-            actionPlan += " " + cellValue;
-          } else {
-            break; // We've reached numeric data, stop concatenating
-          }
-        }
-
-        // Find the actual data columns (target and realisasi)
-        const numericCells = cells.slice(1).filter((cell) => {
-          const val = cell?.trim();
-          return val && !isNaN(parseFloat(val.replace(",", ".")));
-        });
-
-        // Ensure we have at least 4 numeric values for target and realisasi
-        if (numericCells.length >= 4) {
-          details[mainNo].push({
-            subNo,
-            actionPlan: actionPlan.trim(),
-            targetSem1: parseNumber(numericCells[0]),
-            targetSem2: parseNumber(numericCells[1]),
-            realisasiSem1: parseNumber(numericCells[2]),
-            realisasiSem2: parseNumber(numericCells[3]),
-          });
-        }
-      }
-    }
-
-    if (resumeRowIndex >= 0) {
-      // Determine max criteria based on sheet type
-      const maxCriteria = activeSheet === "k3" ? 7 : 8;
-
-      // Parse criteria after the RESUME header (skip header row)
-      for (
-        let i = resumeRowIndex + 2;
-        i < resumeRowIndex + 2 + maxCriteria && i < lines.length;
-        i++
-      ) {
-        const cells = parseCSVLine(lines[i]);
-
-        // Check if this is a valid criteria row
-        const no = parseInt(cells[0]);
-        if (!isNaN(no) && no >= 1 && no <= maxCriteria && cells.length >= 6) {
-          const name = cells[1] || "";
-          if (name.trim() !== "") {
-            summary.push({
-              no,
-              name,
-              targetSem1: parseNumber(cells[2]),
-              targetSem2: parseNumber(cells[3]),
-              realisasiSem1: parseNumber(cells[4]),
-              realisasiSem2: parseNumber(cells[5]),
-            });
-          }
-        }
-      }
-    }
-
-    // Extract data based on sheet type with correct row indices (0-based)
-    if (activeSheet === "k3") {
-      // K3 Sheet Structure:
-      // Row 34 (index 33): Nilai Akhir - columns C and D (indices 2 and 3)
-      // Row 35 (index 34): Target PLN Pusat - columns C and D (indices 2 and 3)
-      // Row 37 (index 36): Pencapaian Semester 1 - column F (index 5)
-      // Row 38 (index 37): Pencapaian Semester 2 - column F (index 5)
-
-      if (lines.length > 33) {
-        const cells34 = parseCSVLine(lines[33]); // Row 34
-        if (cells34[1]?.toLowerCase().includes("nilai akhir")) {
-          nilaiAkhirSem1 = parseNumber(cells34[2]); // Column C
-          nilaiAkhirSem2 = parseNumber(cells34[3]); // Column D
-        }
-      }
-
-      if (lines.length > 34) {
-        const cells35 = parseCSVLine(lines[34]); // Row 35
-        if (cells35[1]?.toLowerCase().includes("target pln pusat")) {
-          targetPlnSem1 = parseNumber(cells35[2]); // Column C
-          targetPlnSem2 = parseNumber(cells35[3]); // Column D
-        }
-      }
-
-      if (lines.length > 36) {
-        const cells37 = parseCSVLine(lines[36]); // Row 37
-        if (cells37[4]?.toLowerCase().includes("semester 1")) {
-          pencapaianSem1 = parseNumber(cells37[5]); // Column F
-        }
-      }
-
-      if (lines.length > 37) {
-        const cells38 = parseCSVLine(lines[37]); // Row 38
-        if (cells38[4]?.toLowerCase().includes("semester 2")) {
-          pencapaianSem2 = parseNumber(cells38[5]); // Column F
-        }
-      }
-    } else if (activeSheet === "kam") {
-      // KAM Sheet Structure:
-      // Row 37 (index 36): Nilai Akhir - columns C and D (indices 2 and 3)
-      // Row 38 (index 37): Target PLN Pusat - columns C and D (indices 2 and 3)
-      // Row 40 (index 39): Pencapaian Semester 1 - column F (index 5)
-      // Row 41 (index 40): Pencapaian Semester 2 - column F (index 5)
-
-      if (lines.length > 36) {
-        const cells37 = parseCSVLine(lines[36]); // Row 37
-        if (cells37[1]?.toLowerCase().includes("nilai akhir")) {
-          nilaiAkhirSem1 = parseNumber(cells37[2]); // Column C
-          nilaiAkhirSem2 = parseNumber(cells37[3]); // Column D
-        }
-      }
-
-      if (lines.length > 37) {
-        const cells38 = parseCSVLine(lines[37]); // Row 38
-        if (cells38[1]?.toLowerCase().includes("target pln pusat")) {
-          targetPlnSem1 = parseNumber(cells38[2]); // Column C
-          targetPlnSem2 = parseNumber(cells38[3]); // Column D
-        }
-      }
-
-      if (lines.length > 39) {
-        const cells40 = parseCSVLine(lines[39]); // Row 40
-        if (cells40[4]?.toLowerCase().includes("semester 1")) {
-          pencapaianSem1 = parseNumber(cells40[5]); // Column F
-        }
-      }
-
-      if (lines.length > 40) {
-        const cells41 = parseCSVLine(lines[40]); // Row 41
-        if (cells41[4]?.toLowerCase().includes("semester 2")) {
-          pencapaianSem2 = parseNumber(cells41[5]); // Column F
-        }
-      }
-    }
-
-    // Calculate averages for criteria that have sub-criteria
-    const updatedSummary = calculateAveragesForCriteria(summary, details);
-
-    setSummaryData(updatedSummary);
-    setDetailData(details);
-
-    // Set total achievement (Nilai Akhir)
-    setTotalAchievement({
-      sem1: nilaiAkhirSem1,
-      sem2: nilaiAkhirSem2,
-    });
-
-    // Set pencapaian percentages
-    setPencapaianPercentages({
-      sem1: pencapaianSem1,
-      sem2: pencapaianSem2,
-    });
-
-    // Set Target PLN Pusat
-    setTargetPlnPusat({
-      sem1: targetPlnSem1,
-      sem2: targetPlnSem2,
     });
   };
 
@@ -568,60 +345,84 @@ const LevelHSSEPage: React.FC = () => {
     // Extract data based on sheet type with correct row indices (0-based)
     if (activeSheet === "k3") {
       // K3 Sheet Structure
+      // Row 34 (index 33) = Nilai Akhir
       if (rows.length > 33 && rows[33]) {
         if (rows[33][1]?.toString().toLowerCase().includes("nilai akhir")) {
-          nilaiAkhirSem1 = parseNumber(rows[33][2]);
-          nilaiAkhirSem2 = parseNumber(rows[33][3]);
+          nilaiAkhirSem1 = parseNumber(rows[33][2]); // Column C (3.96)
+          nilaiAkhirSem2 = parseNumber(rows[33][3]); // Column D (4.97)
+          // Pencapaian is in the same row as Nilai Akhir, columns E and F
+          pencapaianSem1 = parseNumber(rows[33][4]); // Column E (4.03)
+          pencapaianSem2 = parseNumber(rows[33][5]); // Column F (4.53)
         }
       }
 
+      // Row 35 (index 34) = Target PLN Pusat
       if (rows.length > 34 && rows[34]) {
         if (
           rows[34][1]?.toString().toLowerCase().includes("target pln pusat")
         ) {
-          targetPlnSem1 = parseNumber(rows[34][2]);
-          targetPlnSem2 = parseNumber(rows[34][3]);
+          targetPlnSem1 = parseNumber(rows[34][2]); // Column C (3.7)
+          targetPlnSem2 = parseNumber(rows[34][3]); // Column D (4.33)
         }
       }
 
+      // Keep the original percentage calculation
       if (rows.length > 36 && rows[36]) {
         if (rows[36][4]?.toString().toLowerCase().includes("semester 1")) {
-          pencapaianSem1 = parseNumber(rows[36][5]);
+          setPencapaianPercentages((prev) => ({
+            ...prev,
+            sem1: parseNumber(rows[36][5]),
+          }));
         }
       }
 
       if (rows.length > 37 && rows[37]) {
         if (rows[37][4]?.toString().toLowerCase().includes("semester 2")) {
-          pencapaianSem2 = parseNumber(rows[37][5]);
+          setPencapaianPercentages((prev) => ({
+            ...prev,
+            sem2: parseNumber(rows[37][5]),
+          }));
         }
       }
     } else if (activeSheet === "kam") {
       // KAM Sheet Structure
+      // Row 37 (index 36) = Nilai Akhir
       if (rows.length > 36 && rows[36]) {
         if (rows[36][1]?.toString().toLowerCase().includes("nilai akhir")) {
-          nilaiAkhirSem1 = parseNumber(rows[36][2]);
-          nilaiAkhirSem2 = parseNumber(rows[36][3]);
+          nilaiAkhirSem1 = parseNumber(rows[36][2]); // Column C (3.32)
+          nilaiAkhirSem2 = parseNumber(rows[36][3]); // Column D (3.74)
+          // Pencapaian is in the same row as Nilai Akhir, columns E and F
+          pencapaianSem1 = parseNumber(rows[36][4]); // Column E (4.10)
+          pencapaianSem2 = parseNumber(rows[36][5]); // Column F (4.70)
         }
       }
 
+      // Row 38 (index 37) = Target PLN Pusat
       if (rows.length > 37 && rows[37]) {
         if (
           rows[37][1]?.toString().toLowerCase().includes("target pln pusat")
         ) {
-          targetPlnSem1 = parseNumber(rows[37][2]);
-          targetPlnSem2 = parseNumber(rows[37][3]);
+          targetPlnSem1 = parseNumber(rows[37][2]); // Column C (3.3)
+          targetPlnSem2 = parseNumber(rows[37][3]); // Column D (3.7)
         }
       }
 
+      // Keep the original percentage calculation
       if (rows.length > 39 && rows[39]) {
         if (rows[39][4]?.toString().toLowerCase().includes("semester 1")) {
-          pencapaianSem1 = parseNumber(rows[39][5]);
+          setPencapaianPercentages((prev) => ({
+            ...prev,
+            sem1: parseNumber(rows[39][5]),
+          }));
         }
       }
 
       if (rows.length > 40 && rows[40]) {
         if (rows[40][4]?.toString().toLowerCase().includes("semester 2")) {
-          pencapaianSem2 = parseNumber(rows[40][5]);
+          setPencapaianPercentages((prev) => ({
+            ...prev,
+            sem2: parseNumber(rows[40][5]),
+          }));
         }
       }
     }
@@ -632,14 +433,8 @@ const LevelHSSEPage: React.FC = () => {
     setSummaryData(updatedSummary);
     setDetailData(details);
 
-    // Set total achievement (Nilai Akhir)
+    // Set total achievement (Pencapaian values from blue cells)
     setTotalAchievement({
-      sem1: nilaiAkhirSem1,
-      sem2: nilaiAkhirSem2,
-    });
-
-    // Set pencapaian percentages
-    setPencapaianPercentages({
       sem1: pencapaianSem1,
       sem2: pencapaianSem2,
     });
