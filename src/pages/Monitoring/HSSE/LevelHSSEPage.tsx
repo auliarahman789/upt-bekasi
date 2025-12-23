@@ -245,8 +245,8 @@ const LevelHSSEPage: React.FC = () => {
     let pencapaianSem2 = 0;
     let targetPlnSem1 = 0;
     let targetPlnSem2 = 0;
-    let nilaiAkhirSem1 = 0;
-    let nilaiAkhirSem2 = 0;
+    // let nilaiAkhirSem1 = 0;
+    // let nilaiAkhirSem2 = 0;
 
     // Look for RESUME section
     let resumeRowIndex = -1;
@@ -348,8 +348,8 @@ const LevelHSSEPage: React.FC = () => {
       // Row 34 (index 33) = Nilai Akhir
       if (rows.length > 33 && rows[33]) {
         if (rows[33][1]?.toString().toLowerCase().includes("nilai akhir")) {
-          nilaiAkhirSem1 = parseNumber(rows[33][2]); // Column C (3.96)
-          nilaiAkhirSem2 = parseNumber(rows[33][3]); // Column D (4.97)
+          // nilaiAkhirSem1 = parseNumber(rows[33][2]); // Column C (3.96)
+          // nilaiAkhirSem2 = parseNumber(rows[33][3]); // Column D (4.97)
           // Pencapaian is in the same row as Nilai Akhir, columns E and F
           pencapaianSem1 = parseNumber(rows[33][4]); // Column E (4.03)
           pencapaianSem2 = parseNumber(rows[33][5]); // Column F (4.53)
@@ -389,8 +389,8 @@ const LevelHSSEPage: React.FC = () => {
       // Row 37 (index 36) = Nilai Akhir
       if (rows.length > 36 && rows[36]) {
         if (rows[36][1]?.toString().toLowerCase().includes("nilai akhir")) {
-          nilaiAkhirSem1 = parseNumber(rows[36][2]); // Column C (3.32)
-          nilaiAkhirSem2 = parseNumber(rows[36][3]); // Column D (3.74)
+          // nilaiAkhirSem1 = parseNumber(rows[36][2]); // Column C (3.32)
+          // nilaiAkhirSem2 = parseNumber(rows[36][3]); // Column D (3.74)
           // Pencapaian is in the same row as Nilai Akhir, columns E and F
           pencapaianSem1 = parseNumber(rows[36][4]); // Column E (4.10)
           pencapaianSem2 = parseNumber(rows[36][5]); // Column F (4.70)
