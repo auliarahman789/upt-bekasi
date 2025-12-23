@@ -67,7 +67,7 @@ const SertifikasiKompetensiPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-
+  const [showAllKebutuhan, setShowAllKebutuhan] = useState<boolean>(false);
   const COLORS = [
     "#145C72",
     "#1A7A8A",
@@ -307,7 +307,6 @@ const SertifikasiKompetensiPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Analisa Kebutuhan Sertifikasi - Full Width */}
         {kebutuhanTableData.length > 0 && (
           <div className="bg-white p-3 md:p-4 rounded-xl shadow-sm border border-gray-200 mb-4 md:mb-6">
             <h2 className="text-base md:text-lg font-semibold text-[#145C72] mb-2 md:mb-3">
@@ -315,7 +314,10 @@ const SertifikasiKompetensiPage: React.FC = () => {
             </h2>
             <div className="overflow-x-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-2 md:gap-3">
-                {kebutuhanTableData.map((item, index) => (
+                {(showAllKebutuhan
+                  ? kebutuhanTableData
+                  : kebutuhanTableData.slice(0, 7)
+                ).map((item, index) => (
                   <div
                     key={index}
                     className="border border-gray-200 rounded-lg p-2 md:p-3 hover:shadow-md transition-shadow bg-gray-50"
@@ -330,6 +332,52 @@ const SertifikasiKompetensiPage: React.FC = () => {
                 ))}
               </div>
             </div>
+
+            {/* Expand/Collapse Button */}
+            {kebutuhanTableData.length > 7 && (
+              <div className="mt-3 md:mt-4 flex justify-center">
+                <button
+                  onClick={() => setShowAllKebutuhan(!showAllKebutuhan)}
+                  className="px-4 md:px-6 py-2 md:py-2.5 text-xs md:text-sm font-medium bg-[#145C72] text-white rounded-lg hover:bg-[#1A7A8A] transition-all flex items-center gap-2 shadow-sm hover:shadow-md"
+                >
+                  {showAllKebutuhan ? (
+                    <>
+                      <span>Show Less</span>
+                      <svg
+                        className="w-4 h-4 transition-transform"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 15l7-7 7 7"
+                        />
+                      </svg>
+                    </>
+                  ) : (
+                    <>
+                      <span>Show All ({kebutuhanTableData.length} items)</span>
+                      <svg
+                        className="w-4 h-4 transition-transform"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
